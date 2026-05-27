@@ -237,6 +237,26 @@
         .footer-text span {
             color: #ffd700;
         }
+        
+        /* 图片展示区 */
+        .gallery-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .gallery img {
+            width: 100%;
+            border-radius: 8px;
+            object-fit: cover;
+            aspect-ratio: 4/3;
+        }
     </style>
 </head>
 <body>
@@ -290,6 +310,19 @@
             <p class="intro-text" id="spotIntro">
                 八路军太行纪念馆位于山西省长治市武乡县，是全国唯一一座全面反映八路军和华北各根据地8年抗战史实的大型军事专题纪念馆。馆内收藏了大量珍贵的历史文物和照片，生动展现了八路军艰苦卓绝的抗战历程。
             </p>
+        </div>
+        
+        <!-- 馆内实景图片展示 -->
+        <div class="gallery-card">
+            <div class="intro-title">📸 馆内实景</div>
+            <div class="gallery">
+                <img src="images/interior1.jpg" alt="纪念馆内部">
+                <img src="images/interior2.jpg" alt="纪念馆内部">
+                <img src="images/interior3.jpg" alt="纪念馆内部">
+                <img src="images/interior4.jpg" alt="纪念馆内部">
+                <img src="images/interior5.jpg" alt="纪念馆内部">
+                <img src="images/interior6.jpg" alt="纪念馆内部">
+            </div>
         </div>
         
         <!-- 分享卡片 -->
