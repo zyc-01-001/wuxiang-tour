@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>武乡红色文化讲解</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding-top: 30px;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #c41e3a, #8b0000);
+            color: #ffd700;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            margin-bottom: 15px;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .spot-name {
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .spot-subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+        
+        .player-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .audio-visualizer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 80px;
+            margin-bottom: 20px;
+            gap: 4px;
+        }
+        
+        .bar {
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(to top, #c41e3a, #ffd700);
+            border-radius: 2px;
+            animation: none;
+        }
+        
+        .bar.active {
+            animation: sound 0.5s infinite alternate;
+        }
+        
+        @keyframes sound {
+            0% { height: 10px; }
+            100% { height: 60px; }
+        }
+        
+        .play-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #c41e3a, #8b0000);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 8px 30px rgba(196, 30, 58, 0.5);
+            transition: all 0.3s;
+        }
+        
+        .play-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .play-icon {
+            width: 0;
+            height: 0;
+            border-left: 20px solid #fff;
+            border-top: 12px solid transparent;
+            border-bottom: 12px solid transparent;
+            margin-left: 5px;
+        }
+        
+        .play-btn.playing .play-icon {
+            border-left: 8px solid #fff;
+            border-right: 8px solid #fff;
+            border-top: none;
+            border-bottom: none;
+            height: 20px;
+            width: 8px;
+            margin-left: 0;
+        }
+        
+        .play-hint {
+            text-align: center;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.85rem;
+        }
+        
+        .progress-container {
+            margin-top: 20px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #c41e3a, #ffd700);
+            width: 0%;
+            transition: width 0.1s;
+        }
+        
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .intro-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        
+        .intro-title {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #ffd700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .intro-text {
+            color: rgba(255,255,255,0.85);
+            line-height: 1.8;
+            font-size: 0.95rem;
+        }
+        
+        .gallery-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .gallery img {
+            width: 100%;
+            border-radius: 8px;
+            object-fit: cover;
+            aspect-ratio: 4/3;
+        }
+        
+        .share-card {
+            background: linear-gradient(135deg, rgba(196, 30, 58, 0.3), rgba(139, 0, 0, 0.3));
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .share-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #ffd700, #ffb700);
+            color: #8b0000;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .footer-text {
+            color: rgba(255,255,255,0.4);
+            font-size: 0.75rem;
+        }
+        
+        .footer-text span {
+            color: #ffd700;
+        }
+        
+        .memorial-img {
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            object-fit: cover;
+            max-height: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="badge">🏛️ 武乡县红色文化数字化工程</div>
+        
+        <img id="memorialImg" class="memorial-img" alt="八路军纪念馆">
+        <h1 class="spot-name">八路军纪念馆</h1>
+        <p class="spot-subtitle">全国重点文物保护单位 · 爱国主义教育基地</p>
+        
+        <div class="player-card">
+            <div class="audio-visualizer">
+                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                <div class="bar"></div><div class="bar"></div>
+            </div>
+            
+            <button class="play-btn" id="playBtn" onclick="togglePlay()">
+                <div class="play-icon"></div>
+            </button>
+            
+            <p class="play-hint" id="playHint">点击播放语音讲解</p>
+            
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="time-display">
+                    <span id="currentTime">0:00</span>
+                    <span id="duration">0:00</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="intro-card">
+            <div class="intro-title">📜 景点简介</div>
+            <p class="intro-text">
+                八路军太行纪念馆位于山西省长治市武乡县，是全国唯一一座全面反映八路军和华北各根据地8年抗战史实的大型军事专题纪念馆。馆内收藏了大量珍贵的历史文物和照片，生动展现了八路军艰苦卓绝的抗战历程。
+            </p>
+        </div>
+        
+        <div class="gallery-card">
+            <div class="intro-title">📸 馆内实景</div>
+            <div class="gallery" id="gallery"></div>
+        </div>
+        
+        <div class="share-card">
+            <p class="share-title" style="margin-bottom: 15px; color: rgba(255,255,255,0.9);">❤️ 听完讲解觉得不错？分享给朋友一起听</p>
+            <a href="javascript:void(0)" onclick="shareToFriend()" class="share-btn">分享到朋友圈</a>
+        </div>
+        
+        <div class="footer">
+            <p class="footer-text">由 <span>SOLO</span> 数字文旅平台提供技术支持</p>
+        </div>
+    </div>
+    
+    <script>
+        // jsDelivr CDN 基础路径
+        const CDN_BASE = 'https://cdn.jsdelivr.net/gh/zyc-01-001/wuxiang-tour@main';
+        
+        // 音频文件
+        const audio = new Audio(CDN_BASE + '/audio/guide.mp3');
+        let isPlaying = false;
+        
+        // 加载图片
+        function loadImages() {
+            // 纪念馆外观
+            document.getElementById('memorialImg').src = CDN_BASE + '/images/memorial.jpg';
+            
+            // 馆内实景图片
+            const gallery = document.getElementById('gallery');
+            for (let i = 1; i <= 6; i++) {
+                const img = document.createElement('img');
+                img.src = CDN_BASE + '/images/interior' + i + '.jpg';
+                img.alt = '纪念馆内部';
+                img.loading = 'lazy';
+                gallery.appendChild(img);
+            }
+        }
+        
+        // 初始化音频
+        function initAudio() {
+            audio.addEventListener('loadedmetadata', () => {
+                document.getElementById('duration').textContent = formatTime(audio.duration);
+            });
+            
+            audio.addEventListener('timeupdate', () => {
+                const progress = (audio.currentTime / audio.duration) * 100;
+                document.getElementById('progressFill').style.width = progress + '%';
+                document.getElementById('currentTime').textContent = formatTime(audio.currentTime);
+            });
+            
+            audio.addEventListener('ended', () => {
+                isPlaying = false;
+                document.getElementById('playBtn').classList.remove('playing');
+                document.getElementById('playHint').textContent = '播放完毕，再次点击重播';
+            });
+            
+            audio.addEventListener('error', () => {
+                document.getElementById('playHint').textContent = '音频加载失败，请刷新重试';
+            });
+        }
+        
+        function togglePlay() {
+            if (isPlaying) {
+                audio.pause();
+                isPlaying = false;
+                document.getElementById('playBtn').classList.remove('playing');
+                document.getElementById('playHint').textContent = '已暂停，点击继续播放';
+            } else {
+                audio.play();
+                isPlaying = true;
+                document.getElementById('playBtn').classList.add('playing');
+                document.getElementById('playHint').textContent = '正在播放...';
+            }
+        }
+        
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return mins + ':' + secs.toString().padStart(2, '0');
+        }
+        
+        function shareToFriend() {
+            if (navigator.share) {
+                navigator.share({
+                    title: '武乡红色文化讲解 - 八路军纪念馆',
+                    text: '我在武乡听了一个很棒的红色故事，你也来听听吧！',
+                    url: window.location.href
+                });
+            } else {
+                navigator.clipboard.writeText(window.location.href);
+                alert('链接已复制，快去分享给朋友吧！');
+            }
+        }
+        
+        // 动画条
+        const bars = document.querySelectorAll('.bar');
+        setInterval(() => {
+            bars.forEach(bar => {
+                if (isPlaying) {
+                    bar.classList.add('active');
+                    bar.style.animationDelay = Math.random() * 0.5 + 's';
+                } else {
+                    bar.classList.remove('active');
+                }
+            });
+        }, 100);
+        
+        // 初始化
+        loadImages();
+        initAudio();
+    </script>
+</body>
+</html>
