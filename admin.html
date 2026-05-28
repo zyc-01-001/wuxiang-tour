@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 - 武乡红色文旅数字化讲解系统</title>
+    <style>
+        /* ========== 全局重置 ========== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --red-primary: #C41E3A;
+            --red-dark: #8B0000;
+            --red-deeper: #5C0011;
+            --gold-primary: #FFD700;
+            --gold-dark: #B8960C;
+            --bg-dark: #0D0D0D;
+            --bg-card: rgba(255, 255, 255, 0.06);
+            --bg-card-hover: rgba(255, 255, 255, 0.1);
+            --text-primary: #FFFFFF;
+            --text-secondary: rgba(255, 255, 255, 0.75);
+            --text-muted: rgba(255, 255, 255, 0.45);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-gold: rgba(255, 215, 0, 0.25);
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+            min-height: 100vh;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ========== 登录页 ========== */
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+
+        .login-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .login-card {
+            width: 90%;
+            max-width: 380px;
+            text-align: center;
+        }
+
+        .login-logo {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--red-primary), var(--gold-primary));
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            margin: 0 auto 20px;
+        }
+
+        .login-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, #fff 30%, var(--gold-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .login-subtitle {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            margin-bottom: 32px;
+        }
+
+        .login-field {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .login-label {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        .login-input:focus {
+            border-color: var(--gold-primary);
+        }
+
+        .login-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 8px;
+            box-shadow: 0 8px 32px rgba(196, 30, 58, 0.35);
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(196, 30, 58, 0.5);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-error {
+            color: #F87171;
+            font-size: 0.82rem;
+            margin-top: 12px;
+            min-height: 20px;
+        }
+
+        /* ========== 主界面 ========== */
+        .admin-container {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 20px 16px 60px;
+        }
+
+        /* 顶部导航 */
+        .admin-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .admin-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-brand-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--red-primary), var(--gold-primary));
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            flex-shrink: 0;
+        }
+
+        .admin-brand-text {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .admin-brand-sub {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            display: block;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .admin-action-btn {
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .admin-action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .admin-action-btn.danger {
+            border-color: rgba(248, 113, 113, 0.3);
+            color: #F87171;
+        }
+
+        .admin-action-btn.danger:hover {
+            background: rgba(248, 113, 113, 0.15);
+        }
+
+        /* 统计卡片网格 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .stat-card.highlight {
+            border-color: var(--border-gold);
+            background: linear-gradient(145deg, rgba(196, 30, 58, 0.1), rgba(255, 215, 0, 0.04));
+        }
+
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+
+        .stat-icon.red {
+            background: linear-gradient(135deg, rgba(196, 30, 58, 0.2), rgba(139, 0, 0, 0.15));
+        }
+
+        .stat-icon.gold {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(184, 150, 12, 0.15));
+        }
+
+        .stat-icon.green {
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.2), rgba(34, 197, 94, 0.15));
+        }
+
+        .stat-icon.blue {
+            background: linear-gradient(135deg, rgba(96, 165, 250, 0.2), rgba(59, 130, 246, 0.15));
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .stat-value.gold-text {
+            background: linear-gradient(135deg, #fff, var(--gold-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .stat-change {
+            font-size: 0.7rem;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stat-change.up { color: #4ADE80; }
+        .stat-change.neutral { color: var(--text-muted); }
+
+        /* 数据面板 */
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--red-primary);
+        }
+
+        .panel-badge {
+            font-size: 0.68rem;
+            padding: 3px 10px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-muted);
+        }
+
+        /* 数据概览条 */
+        .overview-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .overview-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .overview-item-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.82rem;
+        }
+
+        .overview-item-label {
+            color: var(--text-secondary);
+        }
+
+        .overview-item-value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .overview-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .overview-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        .overview-bar-fill.red {
+            background: linear-gradient(90deg, var(--red-primary), var(--gold-primary));
+        }
+
+        .overview-bar-fill.green {
+            background: linear-gradient(90deg, #22C55E, #4ADE80);
+        }
+
+        .overview-bar-fill.blue {
+            background: linear-gradient(90deg, #3B82F6, #60A5FA);
+        }
+
+        .overview-bar-fill.gold {
+            background: linear-gradient(90deg, var(--gold-dark), var(--gold-primary));
+        }
+
+        /* 访问记录表格 */
+        .record-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .record-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+
+        .record-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .record-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .record-time {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .record-meta {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .record-tags {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .record-tag {
+            font-size: 0.65rem;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .record-tag.play {
+            background: rgba(196, 30, 58, 0.15);
+            color: #FCA5A5;
+        }
+
+        .record-tag.ai {
+            background: rgba(96, 165, 250, 0.15);
+            color: #93C5FD;
+        }
+
+        .record-tag.complete {
+            background: rgba(74, 222, 128, 0.15);
+            color: #86EFAC;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+            opacity: 0.3;
+        }
+
+        .empty-text {
+            font-size: 0.88rem;
+            margin-bottom: 6px;
+        }
+
+        .empty-hint {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* 提示信息框 */
+        .info-banner {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), rgba(255, 215, 0, 0.03));
+            border: 1px solid rgba(255, 215, 0, 0.15);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .info-banner-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            color: var(--gold-primary);
+            margin-top: 1px;
+        }
+
+        .info-banner-text {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .info-banner-text strong {
+            color: var(--gold-primary);
+        }
+
+        /* 底部 */
+        .admin-footer {
+            text-align: center;
+            margin-top: 32px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .admin-footer-text {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        .admin-footer-text span {
+            color: var(--gold-primary);
+        }
+
+        /* ========== Toast提示 ========== */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            z-index: 9999;
+            backdrop-filter: blur(10px);
+            animation: toast-in 0.3s ease;
+        }
+
+        @keyframes toast-in {
+            from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 400px) {
+            .stats-grid { gap: 8px; }
+            .stat-card { padding: 16px; }
+            .stat-value { font-size: 1.5rem; }
+            .admin-topbar { flex-direction: column; gap: 12px; align-items: flex-start; }
+        }
+
+        @media (min-width: 520px) {
+            .admin-container { padding: 24px 24px 60px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ========== 登录界面 ========== -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-card">
+            <div class="login-logo"></div>
+            <h1 class="login-title">管理后台</h1>
+            <p class="login-subtitle">武乡红色文旅数字化讲解系统</p>
+            <div class="login-field">
+                <label class="login-label">管理员密码</label>
+                <input type="password" class="login-input" id="passwordInput" placeholder="请输入管理密码" onkeydown="if(event.key==='Enter')doLogin()">
+            </div>
+            <button class="login-btn" onclick="doLogin()">登 录</button>
+            <div class="login-error" id="loginError"></div>
+        </div>
+    </div>
+
+    <!-- ========== 管理后台主界面 ========== -->
+    <div class="admin-container" id="adminPanel" style="display:none;">
+
+        <!-- 顶部导航 -->
+        <div class="admin-topbar">
+            <div class="admin-brand">
+                <div class="admin-brand-icon"></div>
+                <div>
+                    <div class="admin-brand-text">数据管理中心</div>
+                    <span class="admin-brand-sub">武乡红色文旅数字化讲解系统</span>
+                </div>
+            </div>
+            <div class="admin-actions">
+                <a href="index.html" class="admin-action-btn">返回前台</a>
+                <button class="admin-action-btn danger" onclick="doLogout()">退出登录</button>
+            </div>
+        </div>
+
+        <!-- 数据提示 -->
+        <div class="info-banner">
+            <svg class="info-banner-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <div class="info-banner-text">
+                <strong>数据说明：</strong>当前为纯前端演示版本，访客数据存储在浏览器的 localStorage 中。生产环境建议接入后端数据库以实现跨设备数据汇总。
+            </div>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card highlight">
+                <div class="stat-icon red">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+                <div class="stat-value gold-text" id="statTotalVisits">0</div>
+                <div class="stat-label">总访问量</div>
+                <div class="stat-change neutral" id="statTotalChange">累计数据</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon gold">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </div>
+                <div class="stat-value" id="statTodayVisits">0</div>
+                <div class="stat-label">今日访问</div>
+                <div class="stat-change up" id="statTodayChange">实时统计</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                </div>
+                <div class="stat-value" id="statPlayRate">0%</div>
+                <div class="stat-label">播放完成率</div>
+                <div class="stat-change neutral" id="statPlayDetail">0/0 次播放</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon blue">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </div>
+                <div class="stat-value" id="statAIUsage">0</div>
+                <div class="stat-label">AI问答次数</div>
+                <div class="stat-change neutral" id="statAIDetail">共 0 次提问</div>
+            </div>
+        </div>
+
+        <!-- 数据概览 -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <div class="panel-title-dot"></div>
+                    数据概览
+                </div>
+                <div class="panel-badge" id="panelUpdateTime">--</div>
+            </div>
+            <div class="overview-bars">
+                <div class="overview-item">
+                    <div class="overview-item-header">
+                        <span class="overview-item-label">音频播放使用率</span>
+                        <span class="overview-item-value" id="overviewPlayPercent">0%</span>
+                    </div>
+                    <div class="overview-bar">
+                        <div class="overview-bar-fill red" id="overviewPlayBar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="overview-item">
+                    <div class="overview-item-header">
+                        <span class="overview-item-label">播放完成率</span>
+                        <span class="overview-item-value" id="overviewCompletePercent">0%</span>
+                    </div>
+                    <div class="overview-bar">
+                        <div class="overview-bar-fill green" id="overviewCompleteBar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="overview-item">
+                    <div class="overview-item-header">
+                        <span class="overview-item-label">AI问答使用率</span>
+                        <span class="overview-item-value" id="overviewAIPercent">0%</span>
+                    </div>
+                    <div class="overview-bar">
+                        <div class="overview-bar-fill blue" id="overviewAIBar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="overview-item">
+                    <div class="overview-item-header">
+                        <span class="overview-item-label">平均播放时长</span>
+                        <span class="overview-item-value" id="overviewAvgDuration">0秒</span>
+                    </div>
+                    <div class="overview-bar">
+                        <div class="overview-bar-fill gold" id="overviewDurationBar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 访问记录 -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <div class="panel-title-dot"></div>
+                    访问记录
+                </div>
+                <div class="panel-badge" id="recordCount">0 条记录</div>
+            </div>
+            <div id="recordList"></div>
+        </div>
+
+        <!-- 底部 -->
+        <footer class="admin-footer">
+            <p class="admin-footer-text">
+                &copy; 2024-2026 武乡县八路军太行纪念馆 版权所有<br>
+                技术支持：<span>SOLO</span> 数字文旅平台
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // ================================================================
+        //  管理后台 - 武乡红色文旅数字化讲解系统
+        //  功能：访客数据统计、访问记录查看、密码保护
+        //  数据存储：localStorage（纯前端演示）
+        // ================================================================
+
+        const ADMIN_PASSWORD = 'admin123';
+        const SESSION_KEY = 'wx_admin_session';
+
+        // ========== 登录/登出 ==========
+
+        // 检查是否已登录
+        function checkSession() {
+            const session = sessionStorage.getItem(SESSION_KEY);
+            if (session === 'authenticated') {
+                showAdminPanel();
+            }
+        }
+
+        // 执行登录
+        function doLogin() {
+            const password = document.getElementById('passwordInput').value;
+            if (password === ADMIN_PASSWORD) {
+                sessionStorage.setItem(SESSION_KEY, 'authenticated');
+                document.getElementById('loginOverlay').classList.add('hidden');
+                showAdminPanel();
+            } else {
+                document.getElementById('loginError').textContent = '密码错误，请重新输入';
+                document.getElementById('passwordInput').value = '';
+                // 抖动效果
+                const input = document.getElementById('passwordInput');
+                input.style.animation = 'none';
+                input.offsetHeight; // 触发重排
+                input.style.animation = 'shake 0.4s ease';
+            }
+        }
+
+        // 退出登录
+        function doLogout() {
+            sessionStorage.removeItem(SESSION_KEY);
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('loginOverlay').classList.remove('hidden');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('loginError').textContent = '';
+        }
+
+        // 显示管理面板
+        function showAdminPanel() {
+            document.getElementById('adminPanel').style.display = 'block';
+            loadStats();
+        }
+
+        // ========== 数据统计 ==========
+
+        function loadStats() {
+            const records = JSON.parse(localStorage.getItem('wx_visit_records') || '[]');
+            const today = new Date().toISOString().split('T')[0];
+            const todayRecords = records.filter(r => r.visitTime && r.visitTime.startsWith(today));
+
+            // 基础统计
+            const totalVisits = records.length;
+            const todayVisits = todayRecords.length;
+
+            // 音频播放统计
+            const playRecords = records.filter(r => r.playDuration > 0);
+            const completedRecords = records.filter(r => r.playCompleted);
+            const playRate = playRecords.length > 0
+                ? Math.round((completedRecords.length / playRecords.length) * 100)
+                : 0;
+
+            // AI问答统计
+            const aiRecords = records.filter(r => r.aiUsed);
+            const aiQuestionTotal = records.reduce((sum, r) => sum + (r.aiQuestionCount || 0), 0);
+
+            // 平均播放时长
+            const avgDuration = playRecords.length > 0
+                ? Math.round(playRecords.reduce((sum, r) => sum + (r.playDuration || 0), 0) / playRecords.length)
+                : 0;
+
+            // 更新统计卡片
+            animateNumber('statTotalVisits', totalVisits);
+            animateNumber('statTodayVisits', todayVisits);
+            document.getElementById('statPlayRate').textContent = playRate + '%';
+            document.getElementById('statPlayDetail').textContent = `${completedRecords.length}/${playRecords.length} 次播放`;
+            animateNumber('statAIUsage', aiQuestionTotal);
+            document.getElementById('statAIDetail').textContent = `共 ${aiQuestionTotal} 次提问`;
+
+            // 更新数据概览
+            const playUsageRate = totalVisits > 0 ? Math.round((playRecords.length / totalVisits) * 100) : 0;
+            const aiUsageRate = totalVisits > 0 ? Math.round((aiRecords.length / totalVisits) * 100) : 0;
+            const durationPercent = Math.min(100, Math.round((avgDuration / 300) * 100)); // 假设300秒为满
+
+            document.getElementById('overviewPlayPercent').textContent = playUsageRate + '%';
+            document.getElementById('overviewCompletePercent').textContent = playRate + '%';
+            document.getElementById('overviewAIPercent').textContent = aiUsageRate + '%';
+            document.getElementById('overviewAvgDuration').textContent = formatDuration(avgDuration);
+
+            // 延迟设置进度条宽度以触发动画
+            setTimeout(() => {
+                document.getElementById('overviewPlayBar').style.width = playUsageRate + '%';
+                document.getElementById('overviewCompleteBar').style.width = playRate + '%';
+                document.getElementById('overviewAIBar').style.width = aiUsageRate + '%';
+                document.getElementById('overviewDurationBar').style.width = durationPercent + '%';
+            }, 200);
+
+            // 更新时间
+            document.getElementById('panelUpdateTime').textContent = '更新于 ' + new Date().toLocaleTimeString('zh-CN');
+
+            // 渲染访问记录
+            renderRecords(records);
+        }
+
+        // 数字动画效果
+        function animateNumber(elementId, target) {
+            const el = document.getElementById(elementId);
+            const duration = 800;
+            const start = parseInt(el.textContent) || 0;
+            const diff = target - start;
+            if (diff === 0) return;
+
+            const startTime = performance.now();
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // 缓动函数
+                const eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = Math.round(start + diff * eased);
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        // 格式化时长
+        function formatDuration(seconds) {
+            if (seconds < 60) return seconds + '秒';
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return mins + '分' + secs + '秒';
+        }
+
+        // 渲染访问记录列表
+        function renderRecords(records) {
+            const container = document.getElementById('recordList');
+            document.getElementById('recordCount').textContent = records.length + ' 条记录';
+
+            if (records.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.3"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        </div>
+                        <div class="empty-text">暂无访问记录</div>
+                        <div class="empty-hint">游客访问讲解页面后，数据将自动记录在此</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // 按时间倒序排列（最新的在前）
+            const sorted = [...records].reverse();
+
+            container.innerHTML = '<div class="record-list">' + sorted.map(record => {
+                const time = record.visitTime ? new Date(record.visitTime) : null;
+                const timeStr = time ? formatVisitTime(time) : '未知时间';
+                const dateStr = time ? time.toLocaleDateString('zh-CN') : '';
+
+                // 构建标签
+                let tags = '';
+                if (record.playDuration > 0) {
+                    tags += `<span class="record-tag play">播放 ${formatDuration(record.playDuration)}</span>`;
+                }
+                if (record.playCompleted) {
+                    tags += `<span class="record-tag complete">已听完</span>`;
+                }
+                if (record.aiUsed) {
+                    tags += `<span class="record-tag ai">AI问答 ${record.aiQuestionCount || 0}次</span>`;
+                }
+
+                const hasTags = tags.length > 0;
+
+                return `
+                    <div class="record-item">
+                        <div class="record-info">
+                            <div class="record-time">${timeStr}</div>
+                            <div class="record-meta">${dateStr} · 访客 ${record.visitorId ? record.visitorId.substring(0, 12) : '未知'}</div>
+                        </div>
+                        ${hasTags ? `<div class="record-tags">${tags}</div>` : ''}
+                    </div>
+                `;
+            }).join('') + '</div>';
+        }
+
+        // 格式化访问时间
+        function formatVisitTime(date) {
+            const now = new Date();
+            const diff = now - date;
+            const today = now.toISOString().split('T')[0];
+            const yesterday = new Date(now - 86400000).toISOString().split('T')[0];
+            const dateStr = date.toISOString().split('T')[0];
+
+            const timeStr = date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+
+            if (dateStr === today) {
+                return `今天 ${timeStr}`;
+            } else if (dateStr === yesterday) {
+                return `昨天 ${timeStr}`;
+            } else {
+                return `${date.getMonth() + 1}月${date.getDate()}日 ${timeStr}`;
+            }
+        }
+
+        // ========== 初始化 ==========
+
+        // 添加抖动动画样式
+        const shakeStyle = document.createElement('style');
+        shakeStyle.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                20% { transform: translateX(-8px); }
+                40% { transform: translateX(8px); }
+                60% { transform: translateX(-4px); }
+                80% { transform: translateX(4px); }
+            }
+        `;
+        document.head.appendChild(shakeStyle);
+
+        // 页面加载时检查登录状态
+        checkSession();
+
+        // 每30秒自动刷新数据
+        setInterval(() => {
+            if (sessionStorage.getItem(SESSION_KEY) === 'authenticated') {
+                loadStats();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
