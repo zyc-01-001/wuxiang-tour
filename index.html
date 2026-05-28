@@ -1019,6 +1019,39 @@
     <button class="hero-arrow next" id="heroNext">&#10095;</button>
 </section>
 
+<!-- ========== 3D场景演示入口 ========== -->
+<section style="padding: 40px 0 0;">
+    <div class="container">
+        <a href="scene3d.html" class="fade-up" style="
+            display: flex; align-items: center; gap: 20px;
+            padding: 28px 32px;
+            background: linear-gradient(135deg, rgba(196,30,58,0.12), rgba(212,168,83,0.08));
+            border: 1px solid rgba(196,30,58,0.25);
+            border-radius: var(--radius-lg);
+            text-decoration: none; color: inherit;
+            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+            cursor: pointer;
+        " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 32px rgba(196,30,58,0.2)';this.style.borderColor='rgba(212,168,83,0.5)'"
+           onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none';this.style.borderColor='rgba(196,30,58,0.25)'">
+            <div style="
+                width: 56px; height: 56px;
+                background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+                border-radius: var(--radius-md);
+                display: flex; align-items: center; justify-content: center;
+                font-size: 28px; flex-shrink: 0;
+            ">&#127918;</div>
+            <div style="flex: 1;">
+                <div style="font-size: 18px; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);">体验3D场景导览</div>
+                <div style="font-size: 14px; color: var(--text-secondary);">沉浸式3D教室场景，支持旋转、缩放、物品交互与AI智能讲解</div>
+            </div>
+            <div style="
+                font-size: 20px; color: var(--gold-accent);
+                transition: transform 0.3s;
+            ">&#10140;</div>
+        </a>
+    </div>
+</section>
+
 <!-- ========== 纪念馆介绍 + 侧边栏 ========== -->
 <section class="section" id="intro">
     <div class="container">
