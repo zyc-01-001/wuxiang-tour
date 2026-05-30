@@ -1249,41 +1249,42 @@ function createLeftWallExhibits() {
         // 加载图片纹理
         const picTexture = textureLoader.load('images/exhibit1.jpg');
 
-        // 图片平面
+        // 图片平面（旋转90度使其面向+x方向，即朝向展厅内部）
         const picGeo = new THREE.PlaneGeometry(picW, picH);
         const picMat = new THREE.MeshStandardMaterial({ map: picTexture });
         const picMesh = new THREE.Mesh(picGeo, picMat);
+        picMesh.rotation.y = Math.PI / 2; // 面向右方（+x）
         picMesh.position.set(-9.85, 2.0, pos.z);
         frameGroup.add(picMesh);
 
-        // 金色边框
+        // 金色边框（重新设计：图片在xz平面，边框围绕图片）
         // 上边框
         const ft = new THREE.Mesh(
-            new THREE.BoxGeometry(frameDepth, frameThickness, picW + frameThickness * 2),
+            new THREE.BoxGeometry(picW + frameThickness * 2, frameThickness, frameDepth),
             goldFrameMat
         );
-        ft.position.set(-9.88, 2.0 + picH / 2 + frameThickness / 2, pos.z);
+        ft.position.set(-9.85, 2.0 + picH / 2 + frameThickness / 2, pos.z);
         frameGroup.add(ft);
         // 下边框
         const fb = new THREE.Mesh(
-            new THREE.BoxGeometry(frameDepth, frameThickness, picW + frameThickness * 2),
+            new THREE.BoxGeometry(picW + frameThickness * 2, frameThickness, frameDepth),
             goldFrameMat
         );
-        fb.position.set(-9.88, 2.0 - picH / 2 - frameThickness / 2, pos.z);
+        fb.position.set(-9.85, 2.0 - picH / 2 - frameThickness / 2, pos.z);
         frameGroup.add(fb);
         // 左边框
         const fl = new THREE.Mesh(
-            new THREE.BoxGeometry(frameDepth, picH + frameThickness * 2, frameThickness),
+            new THREE.BoxGeometry(frameThickness, picH + frameThickness * 2, frameDepth),
             goldFrameMat
         );
-        fl.position.set(-9.88, 2.0, pos.z - picW / 2 - frameThickness / 2);
+        fl.position.set(-9.85, 2.0, pos.z - picW / 2 - frameThickness / 2);
         frameGroup.add(fl);
         // 右边框
         const fr = new THREE.Mesh(
-            new THREE.BoxGeometry(frameDepth, picH + frameThickness * 2, frameThickness),
+            new THREE.BoxGeometry(frameThickness, picH + frameThickness * 2, frameDepth),
             goldFrameMat
         );
-        fr.position.set(-9.88, 2.0, pos.z + picW / 2 + frameThickness / 2);
+        fr.position.set(-9.85, 2.0, pos.z + picW / 2 + frameThickness / 2);
         frameGroup.add(fr);
 
         // 展框下方射灯（小型SpotLight）
@@ -1305,6 +1306,7 @@ function createLeftWallExhibits() {
         const labelGeo = new THREE.PlaneGeometry(1.2, 0.22);
         const labelMat = new THREE.MeshBasicMaterial({ map: labelTexture, transparent: true });
         const label = new THREE.Mesh(labelGeo, labelMat);
+        label.rotation.y = Math.PI / 2; // 面向右方
         label.position.set(-9.85, 1.0, pos.z);
         frameGroup.add(label);
 
