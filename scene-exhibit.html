@@ -1,0 +1,2128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>展览馆3D漫游 - 武乡红色文旅</title>
+    <style>
+        /* ========== 全局重置与变量 ========== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0a0a0a;
+            --red-primary: #c41e3a;
+            --red-dark: #9a1830;
+            --gold-accent: #d4a853;
+            --gold-light: #e8c87a;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255,255,255,0.7);
+            --text-muted: rgba(255,255,255,0.45);
+            --border-subtle: rgba(255,255,255,0.08);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+        }
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            touch-action: none;
+        }
+        a { color: inherit; text-decoration: none; }
+
+        /* ========== 加载进度条 ========== */
+        .loading-bar-container {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: 4px; background: rgba(255,255,255,0.05);
+            z-index: 100000;
+        }
+        .loading-bar {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, var(--red-primary), var(--gold-accent));
+            transition: width 0.3s ease;
+        }
+        .loading-overlay {
+            position: fixed; inset: 0;
+            background: var(--bg-primary);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 99999;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        .loading-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .loader-ring {
+            width: 50px; height: 50px;
+            border: 3px solid rgba(196,30,58,0.15);
+            border-top-color: var(--red-primary);
+            border-right-color: var(--gold-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        .loader-text { font-size: 14px; color: var(--text-muted); letter-spacing: 3px; }
+        .loader-percent { font-size: 28px; font-weight: 700; color: var(--gold-accent); margin-bottom: 8px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ========== 开始界面 ========== */
+        .start-overlay {
+            position: fixed; inset: 0;
+            background: linear-gradient(135deg, rgba(10,10,10,0.97), rgba(20,5,5,0.97));
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 9000;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        .start-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .start-title {
+            font-size: 36px; font-weight: 800;
+            background: linear-gradient(135deg, var(--red-primary), var(--gold-accent));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+        }
+        .start-subtitle {
+            font-size: 16px; color: var(--text-muted);
+            margin-bottom: 40px;
+            letter-spacing: 4px;
+        }
+        .start-controls {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: var(--radius-md);
+            padding: 24px 36px;
+            margin-bottom: 36px;
+            text-align: center;
+        }
+        .start-controls .control-row {
+            font-size: 14px; color: var(--text-secondary);
+            margin-bottom: 8px;
+            line-height: 1.8;
+        }
+        .start-controls .control-row:last-child { margin-bottom: 0; }
+        .start-controls .key {
+            display: inline-block;
+            padding: 2px 10px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gold-light);
+            margin: 0 2px;
+        }
+        .start-btn {
+            padding: 16px 60px;
+            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            border: none; border-radius: var(--radius-md);
+            color: #fff; font-size: 18px; font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 3px;
+            transition: transform 0.2s, box-shadow 0.3s;
+            box-shadow: 0 4px 24px rgba(196,30,58,0.3);
+        }
+        .start-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 32px rgba(196,30,58,0.5); }
+        .start-btn:active { transform: scale(0.97); }
+        .start-mobile-controls { display: none; }
+        .start-desktop-controls { display: block; }
+
+        /* ========== 3D画布容器 ========== */
+        #scene-container {
+            width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0;
+        }
+        #scene-container canvas { display: block; }
+
+        /* ========== 准星 ========== */
+        .crosshair {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 800;
+            pointer-events: none;
+            display: none;
+        }
+        .crosshair.visible { display: block; }
+        .crosshair::before, .crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(255,255,255,0.7);
+            border-radius: 1px;
+        }
+        .crosshair::before {
+            width: 2px; height: 20px;
+            top: -10px; left: -1px;
+        }
+        .crosshair::after {
+            width: 20px; height: 2px;
+            top: -1px; left: -10px;
+        }
+        .crosshair.active::before, .crosshair.active::after {
+            background: var(--gold-accent);
+        }
+
+        /* ========== 物品名称标签（准星下方） ========== */
+        .item-label {
+            position: fixed;
+            top: calc(50% + 24px);
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 16px;
+            background: rgba(10,10,10,0.85);
+            border: 1px solid var(--gold-accent);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            color: var(--gold-light);
+            pointer-events: none;
+            z-index: 800;
+            opacity: 0;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+            backdrop-filter: blur(8px);
+        }
+        .item-label.visible { opacity: 1; }
+
+        /* ========== 交互提示 ========== */
+        .interact-hint {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 24px;
+            background: rgba(10,10,10,0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            pointer-events: none;
+            z-index: 800;
+            opacity: 0;
+            transition: opacity 0.25s;
+            backdrop-filter: blur(8px);
+        }
+        .interact-hint.visible { opacity: 1; }
+        .interact-hint .key-hint {
+            display: inline-block;
+            padding: 1px 8px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 3px;
+            font-weight: 600;
+            color: var(--gold-light);
+            margin: 0 3px;
+        }
+
+        /* ========== 自动讲解条 ========== */
+        .narration-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 600px;
+            width: 90%;
+            padding: 12px 20px;
+            background: rgba(10,10,10,0.85);
+            border: 1px solid rgba(196,30,58,0.3);
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            pointer-events: none;
+            z-index: 800;
+            opacity: 0;
+            transition: opacity 0.3s;
+            backdrop-filter: blur(12px);
+        }
+        .narration-bar.visible { opacity: 1; }
+        .narration-bar .nar-label {
+            font-size: 11px;
+            color: var(--red-primary);
+            font-weight: 600;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+
+        /* ========== 小地图 ========== */
+        .minimap-container {
+            position: fixed;
+            top: 16px; left: 16px;
+            z-index: 800;
+            pointer-events: none;
+            display: none;
+        }
+        .minimap-container.visible { display: block; }
+        .minimap-border {
+            width: 160px; height: 100px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            background: rgba(10,10,10,0.7);
+            backdrop-filter: blur(8px);
+        }
+        #minimapCanvas { display: block; }
+
+        /* ========== HUD 右上角提示 ========== */
+        .hud-esc {
+            position: fixed;
+            top: 16px; right: 16px;
+            padding: 6px 14px;
+            background: rgba(10,10,10,0.6);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            color: var(--text-muted);
+            z-index: 800;
+            pointer-events: none;
+            display: none;
+            backdrop-filter: blur(8px);
+        }
+        .hud-esc.visible { display: block; }
+
+        /* ========== 暂停菜单 ========== */
+        .pause-overlay {
+            position: fixed; inset: 0;
+            background: rgba(10,10,10,0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 8500;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .pause-overlay.visible { opacity: 1; visibility: visible; }
+        .pause-title {
+            font-size: 28px; font-weight: 700;
+            margin-bottom: 32px;
+            color: var(--text-primary);
+        }
+        .pause-btn {
+            display: block;
+            width: 240px;
+            padding: 14px 0;
+            margin-bottom: 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 15px;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .pause-btn:hover { background: rgba(196,30,58,0.2); border-color: var(--red-primary); }
+        .pause-btn.primary {
+            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            border: none;
+            font-weight: 600;
+        }
+        .pause-btn.primary:hover { opacity: 0.9; }
+        .pause-controls-info {
+            margin-top: 24px;
+            padding: 16px 24px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 2;
+            text-align: center;
+        }
+
+        /* ========== 讲解面板 ========== */
+        .info-panel {
+            position: fixed; top: 0; right: 0;
+            width: 400px; height: 100vh;
+            background: rgba(10,10,10,0.95);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-left: 1px solid rgba(212,168,83,0.2);
+            z-index: 2000;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .info-panel.open { transform: translateX(0); }
+
+        .panel-header {
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex; align-items: center; justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .panel-header h3 {
+            font-size: 20px; font-weight: 700;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .panel-close {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .panel-close:hover { background: rgba(196,30,58,0.3); }
+
+        .panel-body {
+            padding: 20px 24px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .panel-section { margin-bottom: 20px; }
+        .panel-section-title {
+            font-size: 11px; font-weight: 600;
+            color: var(--red-primary);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .panel-section-title::before {
+            content: ''; width: 12px; height: 2px;
+            background: var(--red-primary);
+        }
+        .panel-section p {
+            font-size: 14px; line-height: 1.8;
+            color: var(--text-secondary);
+        }
+
+        .panel-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            background: rgba(196,30,58,0.15);
+            border: 1px solid rgba(196,30,58,0.3);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--red-primary);
+            margin-bottom: 16px;
+        }
+
+        /* 语音朗读按钮 */
+        .btn-speak {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            border-radius: var(--radius-sm);
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.3s, transform 0.2s;
+            width: 100%;
+            justify-content: center;
+        }
+        .btn-speak:hover { opacity: 0.9; }
+        .btn-speak:active { transform: scale(0.98); }
+        .btn-speak.speaking { animation: pulse-speak 1.5s infinite; }
+        @keyframes pulse-speak {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(196,30,58,0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(196,30,58,0); }
+        }
+
+        /* AI问答区域 */
+        .panel-ai {
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 16px 24px 20px;
+            flex-shrink: 0;
+        }
+        .panel-ai-title {
+            font-size: 12px; color: var(--text-muted);
+            margin-bottom: 10px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .ai-chat-messages {
+            max-height: 150px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+        .ai-chat-messages::-webkit-scrollbar { width: 4px; }
+        .ai-chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+        .ai-msg {
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+            max-width: 95%;
+        }
+        .ai-msg.bot {
+            background: rgba(255,255,255,0.04);
+            color: var(--text-secondary);
+        }
+        .ai-msg.user {
+            background: rgba(196,30,58,0.15);
+            color: var(--text-primary);
+            margin-left: auto;
+            text-align: right;
+        }
+        .ai-input-row { display: flex; gap: 8px; }
+        .ai-input-row input {
+            flex: 1;
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .ai-input-row input:focus { border-color: var(--gold-accent); }
+        .ai-input-row button {
+            padding: 8px 16px;
+            background: var(--red-primary);
+            border-radius: var(--radius-sm);
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            border: none;
+            white-space: nowrap;
+            transition: background 0.3s;
+        }
+        .ai-input-row button:hover { background: var(--red-dark); }
+
+        /* ========== 虚拟摇杆（手机端） ========== */
+        .joystick-zone {
+            position: fixed;
+            bottom: 0;
+            width: 50%;
+            height: 40%;
+            z-index: 750;
+            display: none;
+        }
+        .joystick-zone.left { left: 0; }
+        .joystick-zone.right { right: 0; }
+        .joystick-base {
+            position: absolute;
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            border: 2px solid rgba(255,255,255,0.12);
+            display: none;
+            pointer-events: none;
+        }
+        .joystick-thumb {
+            position: absolute;
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            display: none;
+            pointer-events: none;
+        }
+
+        /* 手机端交互按钮 */
+        .mobile-interact-btn {
+            position: fixed;
+            bottom: 50%;
+            right: 20px;
+            transform: translateY(50%);
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            background: rgba(196,30,58,0.6);
+            border: 2px solid var(--red-primary);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 800;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+        }
+        .mobile-interact-btn.visible { display: flex; }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 768px) {
+            .info-panel { width: 100%; }
+            .start-title { font-size: 24px; }
+            .start-subtitle { font-size: 13px; margin-bottom: 24px; }
+            .start-controls { padding: 16px 24px; margin-bottom: 24px; }
+            .start-controls .control-row { font-size: 12px; }
+            .start-btn { padding: 14px 40px; font-size: 16px; }
+            .minimap-border { width: 120px; height: 75px; }
+        }
+
+        /* 检测触摸设备 */
+        @media (pointer: coarse) {
+            .start-mobile-controls { display: block; }
+            .start-desktop-controls { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ========== 加载界面 ========== -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loader-ring"></div>
+    <div class="loader-percent" id="loaderPercent">0%</div>
+    <div class="loader-text">正在加载展览馆...</div>
+</div>
+<div class="loading-bar-container">
+    <div class="loading-bar" id="loadingBar"></div>
+</div>
+
+<!-- ========== 开始界面 ========== -->
+<div class="start-overlay hidden" id="startOverlay">
+    <div class="start-title">展览馆3D漫游</div>
+    <div class="start-subtitle">武乡红色文旅 · 沉浸式展览体验</div>
+    <div class="start-controls">
+        <div class="start-desktop-controls">
+            <div class="control-row"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> 移动 &nbsp;|&nbsp; 鼠标 环顾</div>
+            <div class="control-row"><span class="key">E</span> 查看展品详情 &nbsp;|&nbsp; <span class="key">ESC</span> 暂停</div>
+            <div class="control-row" style="margin-top:8px;color:var(--text-muted);font-size:12px;">靠近展品自动触发语音讲解，靠近视频屏幕自动播放</div>
+        </div>
+        <div class="start-mobile-controls">
+            <div class="control-row">左侧摇杆 移动 &nbsp;|&nbsp; 右侧摇杆 视角</div>
+            <div class="control-row">点击按钮 查看展品详情</div>
+            <div class="control-row" style="margin-top:8px;color:var(--text-muted);font-size:12px;">靠近展品自动触发语音讲解</div>
+        </div>
+    </div>
+    <button class="start-btn" id="startBtn">进入展览馆</button>
+</div>
+
+<!-- ========== 暂停菜单 ========== -->
+<div class="pause-overlay" id="pauseOverlay">
+    <div class="pause-title">漫游暂停</div>
+    <button class="pause-btn primary" id="resumeBtn">继续漫游</button>
+    <a href="index.html" class="pause-btn">返回主站</a>
+    <div class="pause-controls-info">
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">W</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">A</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">S</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">D</span>
+        移动 &nbsp;|&nbsp; 鼠标 环顾 &nbsp;|&nbsp;
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">E</span>
+        交互
+    </div>
+</div>
+
+<!-- ========== 3D场景容器 ========== -->
+<div id="scene-container"></div>
+
+<!-- ========== 准星 ========== -->
+<div class="crosshair" id="crosshair"></div>
+
+<!-- ========== 物品名称标签 ========== -->
+<div class="item-label" id="itemLabel"></div>
+
+<!-- ========== 交互提示 ========== -->
+<div class="interact-hint" id="interactHint">
+    按 <span class="key-hint">E</span> 键查看详情
+</div>
+
+<!-- ========== 自动讲解条 ========== -->
+<div class="narration-bar" id="narrationBar">
+    <div class="nar-label">自动讲解</div>
+    <div id="narrationText"></div>
+</div>
+
+<!-- ========== 小地图 ========== -->
+<div class="minimap-container" id="minimapContainer">
+    <div class="minimap-border">
+        <canvas id="minimapCanvas" width="156" height="96"></canvas>
+    </div>
+</div>
+
+<!-- ========== HUD 右上角 ========== -->
+<div class="hud-esc" id="hudEsc">ESC 暂停</div>
+
+<!-- ========== 手机端虚拟摇杆 ========== -->
+<div class="joystick-zone left" id="joystickLeftZone">
+    <div class="joystick-base" id="joystickLeftBase"></div>
+    <div class="joystick-thumb" id="joystickLeftThumb"></div>
+</div>
+<div class="joystick-zone right" id="joystickRightZone">
+    <div class="joystick-base" id="joystickRightBase"></div>
+    <div class="joystick-thumb" id="joystickRightThumb"></div>
+</div>
+
+<!-- ========== 手机端交互按钮 ========== -->
+<div class="mobile-interact-btn" id="mobileInteractBtn">查看</div>
+
+<!-- ========== 讲解面板 ========== -->
+<div class="info-panel" id="infoPanel">
+    <div class="panel-header">
+        <h3 id="panelTitle"></h3>
+        <div class="panel-close" id="panelClose">&times;</div>
+    </div>
+    <div class="panel-body">
+        <div class="panel-tag" id="panelTag"></div>
+        <div class="panel-section">
+            <div class="panel-section-title">外观描述</div>
+            <p id="panelAppearance"></p>
+        </div>
+        <div class="panel-section">
+            <div class="panel-section-title">功能用途</div>
+            <p id="panelFunction"></p>
+        </div>
+        <div class="panel-section">
+            <div class="panel-section-title">趣味知识</div>
+            <p id="panelFun"></p>
+        </div>
+        <button class="btn-speak" id="btnSpeak" onclick="speakDescription()">
+            &#128266; 语音朗读
+        </button>
+    </div>
+    <div class="panel-ai">
+        <div class="panel-ai-title">&#129302; AI智能问答</div>
+        <div class="ai-chat-messages" id="panelAiMessages"></div>
+        <div class="ai-input-row">
+            <input type="text" id="panelAiInput" placeholder="关于此展品的问题..." onkeydown="if(event.key==='Enter')sendPanelAi()">
+            <button onclick="sendPanelAi()">发送</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== 视频元素（隐藏，用于VideoTexture） ========== -->
+<video id="exhibitVideo" style="display:none;" loop muted playsinline preload="auto">
+    <source src="media/exhibit1.mp4" type="video/mp4">
+</video>
+
+<!-- ========== Three.js CDN ========== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+
+<script>
+// ========== 展品数据 ==========
+const exhibits = [
+    {
+        id: 'video_screen',
+        name: '展览影像',
+        type: '视频展品',
+        description: '这是一段关于展览馆的影像资料，记录了馆内的珍贵文物和历史场景。',
+        appearance: '大型LED显示屏，播放高清视频影像',
+        fun: '现代博物馆越来越多地使用多媒体技术来增强参观体验，让观众身临其境地感受历史文化。'
+    },
+    {
+        id: 'photo_1',
+        name: '郑当时蜡像',
+        type: '人物蜡像',
+        description: '郑当时，字庄，西汉景帝、武帝时期陈郡（今河南淮阳）人。曾任太子舍人、鲁中尉、济南太守、江都相、大司农、右内史等职。以"好客"闻名，常举荐贤士。',
+        appearance: '身着汉代灰蓝色长袍，头戴黑色冠帽，留有胡须，双手拢于袖中，神态庄重',
+        fun: '郑当时向汉武帝建议开凿褒斜道，连接关中与汉中，这是中国古代交通史上的重大工程。'
+    },
+    {
+        id: 'photo_2',
+        name: '历史名人展区',
+        type: '人物展览',
+        description: '展览馆内展示了多位历史名人的蜡像，通过逼真的场景还原，让游客仿佛穿越时空。',
+        appearance: '仿岩石浮雕背景墙，金色书法字体，地面投影效果',
+        fun: '蜡像技术起源于18世纪的欧洲，现在已经被广泛应用于博物馆和历史展览中。'
+    },
+    {
+        id: 'photo_3',
+        name: '展览馆内景',
+        type: '场馆展示',
+        description: '展览馆采用传统中式建筑风格，花格门窗，配合现代灯光技术，营造出庄重而温馨的参观氛围。',
+        appearance: '传统中式花格门窗，仿岩石浮雕墙面，地面投影',
+        fun: '现代博物馆设计越来越注重"沉浸式体验"，通过声光电技术让观众全方位感受历史文化。'
+    },
+    {
+        id: 'center_exhibit',
+        name: '中央展品',
+        type: '核心展品',
+        description: '展厅中央的旋转展台，展示着本次展览的核心内容。',
+        appearance: '方形展台，展品缓慢旋转展示',
+        fun: '旋转展台是博物馆常用展示方式，可以让观众从各个角度欣赏展品细节。'
+    }
+];
+
+// ========== 全局变量 ==========
+let scene, camera, renderer, controls;
+let raycaster;
+let interactiveObjects = [];   // 可交互的3D物体
+let interactiveGroups = [];    // 每个物品的Group，用于获取世界坐标
+let hoveredObject = null;
+let selectedObject = null;
+let currentItem = null;
+
+// 视频相关
+let videoElement, videoTexture, videoScreenMesh;
+let videoIsPlaying = false;
+
+// 中央旋转展品
+let centerExhibitMesh;
+
+// 移动状态
+const moveState = { forward: false, backward: false, left: false, right: false };
+const MOVE_SPEED = 0.08;
+const PLAYER_HEIGHT = 1.6;
+
+// 展厅边界（AABB碰撞检测）
+// 展厅：长20(x:-10~10) 宽12(z:-6~6) 高4(y:0~4)
+const ROOM_BOUNDS = {
+    minX: -9.5, maxX: 9.5,
+    minZ: -5.5, maxZ: 5.5
+};
+
+// 游戏状态
+let isLocked = false;       // 鼠标是否锁定
+let isPlaying = false;      // 是否在游戏中
+let isPaused = false;       // 是否暂停
+let isPanelOpen = false;    // 讲解面板是否打开
+
+// 自动讲解
+let autoNarrating = false;
+let autoNarrateItem = null;
+let autoNarrateTimeout = null;
+
+// 手机端
+const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+let joystickLeft = { active: false, dx: 0, dy: 0, touchId: null };
+let joystickRight = { active: false, dx: 0, dy: 0, touchId: null };
+
+// ========== 加载进度模拟 ==========
+let loadProgress = 0;
+function updateLoading(progress) {
+    loadProgress = Math.min(progress, 100);
+    document.getElementById('loadingBar').style.width = loadProgress + '%';
+    document.getElementById('loaderPercent').textContent = Math.floor(loadProgress) + '%';
+    if (loadProgress >= 100) {
+        setTimeout(() => {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+            document.querySelector('.loading-bar-container').style.display = 'none';
+            // 显示开始界面
+            document.getElementById('startOverlay').classList.remove('hidden');
+        }, 400);
+    }
+}
+
+// ========== 创建Canvas文字纹理 ==========
+function createTextTexture(text, width, height, fontSize, bgColor, textColor) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    // 背景
+    ctx.fillStyle = bgColor || '#2a2a2a';
+    ctx.fillRect(0, 0, width, height);
+
+    // 文字
+    ctx.fillStyle = textColor || '#e8c87a';
+    ctx.font = (fontSize || 32) + 'px "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // 自动换行
+    const maxWidth = width - 40;
+    const lines = [];
+    let currentLine = '';
+    for (let i = 0; i < text.length; i++) {
+        const testLine = currentLine + text[i];
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && currentLine.length > 0) {
+            lines.push(currentLine);
+            currentLine = text[i];
+        } else {
+            currentLine = testLine;
+        }
+    }
+    if (currentLine) lines.push(currentLine);
+
+    const lineHeight = (fontSize || 32) * 1.4;
+    const startY = height / 2 - ((lines.length - 1) * lineHeight) / 2;
+    lines.forEach((line, index) => {
+        ctx.fillText(line, width / 2, startY + index * lineHeight);
+    });
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
+}
+
+// ========== 初始化场景 ==========
+function init() {
+    updateLoading(5);
+
+    // 创建场景
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1a1a1a);
+    scene.fog = new THREE.Fog(0x1a1a1a, 15, 30);
+
+    updateLoading(15);
+
+    // 创建相机（第一人称视角）
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, PLAYER_HEIGHT, 4); // 站在入口附近，面朝展厅内部
+
+    updateLoading(25);
+
+    // 创建渲染器
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    document.getElementById('scene-container').appendChild(renderer.domElement);
+
+    updateLoading(35);
+
+    // PointerLockControls（第一人称控制）
+    controls = new THREE.PointerLockControls(camera, renderer.domElement);
+
+    // 监听锁定/解锁事件
+    controls.addEventListener('lock', () => {
+        isLocked = true;
+        isPaused = false;
+        document.getElementById('pauseOverlay').classList.remove('visible');
+        showHUD(true);
+    });
+    controls.addEventListener('unlock', () => {
+        isLocked = false;
+        // 如果不是面板打开导致的解锁，显示暂停菜单
+        if (!isPanelOpen && isPlaying) {
+            isPaused = true;
+            document.getElementById('pauseOverlay').classList.add('visible');
+        }
+        showHUD(false);
+    });
+
+    updateLoading(45);
+
+    // 射线投射器
+    raycaster = new THREE.Raycaster();
+    raycaster.far = 4; // 最大交互距离4米（展厅较大）
+
+    // 创建光照
+    createLights();
+    updateLoading(55);
+
+    // 创建展厅
+    createExhibitionHall();
+    updateLoading(90);
+
+    // 事件监听
+    window.addEventListener('resize', onWindowResize);
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+
+    // 开始界面按钮
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    document.getElementById('resumeBtn').addEventListener('click', resumeGame);
+
+    // 面板关闭
+    document.getElementById('panelClose').addEventListener('click', closePanel);
+
+    // 手机端虚拟摇杆
+    if (isMobile) {
+        setupMobileControls();
+    }
+
+    updateLoading(100);
+
+    // 开始渲染循环
+    animate();
+}
+
+// ========== 显示/隐藏 HUD ==========
+function showHUD(show) {
+    const crosshair = document.getElementById('crosshair');
+    const minimap = document.getElementById('minimapContainer');
+    const hudEsc = document.getElementById('hudEsc');
+    if (show) {
+        crosshair.classList.add('visible');
+        minimap.classList.add('visible');
+        if (!isMobile) hudEsc.classList.add('visible');
+    } else {
+        crosshair.classList.remove('visible');
+        minimap.classList.remove('visible');
+        hudEsc.classList.remove('visible');
+        document.getElementById('itemLabel').classList.remove('visible');
+        document.getElementById('interactHint').classList.remove('visible');
+    }
+}
+
+// ========== 开始游戏 ==========
+function startGame() {
+    document.getElementById('startOverlay').classList.add('hidden');
+    isPlaying = true;
+
+    if (isMobile) {
+        // 手机端：显示虚拟摇杆
+        document.getElementById('joystickLeftZone').style.display = 'block';
+        document.getElementById('joystickRightZone').style.display = 'block';
+        showHUD(true);
+    } else {
+        // 电脑端：请求锁定鼠标
+        controls.lock();
+    }
+}
+
+// ========== 继续游戏 ==========
+function resumeGame() {
+    document.getElementById('pauseOverlay').classList.remove('visible');
+    if (isMobile) {
+        showHUD(true);
+    } else {
+        controls.lock();
+    }
+}
+
+// ========== 键盘按下 ==========
+function onKeyDown(event) {
+    if (!isPlaying) return;
+    switch (event.code) {
+        case 'KeyW': case 'ArrowUp':    moveState.forward = true; break;
+        case 'KeyS': case 'ArrowDown':   moveState.backward = true; break;
+        case 'KeyA': case 'ArrowLeft':   moveState.left = true; break;
+        case 'KeyD': case 'ArrowRight':  moveState.right = true; break;
+        case 'KeyE':
+            if (isLocked && hoveredObject) {
+                openItemPanel(hoveredObject);
+            }
+            break;
+    }
+}
+
+// ========== 键盘抬起 ==========
+function onKeyUp(event) {
+    switch (event.code) {
+        case 'KeyW': case 'ArrowUp':    moveState.forward = false; break;
+        case 'KeyS': case 'ArrowDown':   moveState.backward = false; break;
+        case 'KeyA': case 'ArrowLeft':   moveState.left = false; break;
+        case 'KeyD': case 'ArrowRight':  moveState.right = false; break;
+    }
+}
+
+// ========== 创建光照 ==========
+function createLights() {
+    // 环境光（较暗，营造展厅氛围）
+    const ambientLight = new THREE.AmbientLight(0xfff5e6, 0.4);
+    scene.add(ambientLight);
+
+    // 中央天花板点光源
+    const centerLight = new THREE.PointLight(0xfff0d4, 0.6, 20);
+    centerLight.position.set(0, 3.8, 0);
+    centerLight.castShadow = true;
+    centerLight.shadow.mapSize.width = 1024;
+    centerLight.shadow.mapSize.height = 1024;
+    scene.add(centerLight);
+
+    // 射灯1：照向入口墙（z=6方向，即视频屏幕）
+    const spot1 = new THREE.SpotLight(0xffeedd, 0.8, 15, Math.PI / 6, 0.5, 1);
+    spot1.position.set(0, 3.5, 2);
+    spot1.target.position.set(0, 2, 5.5);
+    scene.add(spot1);
+    scene.add(spot1.target);
+
+    // 射灯2：照向左墙（x=-6方向）
+    const spot2 = new THREE.SpotLight(0xffeedd, 0.6, 15, Math.PI / 6, 0.5, 1);
+    spot2.position.set(-3, 3.5, 0);
+    spot2.target.position.set(-5.5, 2, 0);
+    scene.add(spot2);
+    scene.add(spot2.target);
+
+    // 射灯3：照向右墙（x=6方向）
+    const spot3 = new THREE.SpotLight(0xffeedd, 0.6, 15, Math.PI / 6, 0.5, 1);
+    spot3.position.set(3, 3.5, 0);
+    spot3.target.position.set(5.5, 2, 0);
+    scene.add(spot3);
+    scene.add(spot3.target);
+
+    // 射灯4：照向中央展台
+    const spot4 = new THREE.SpotLight(0xfff5e0, 1.0, 12, Math.PI / 5, 0.3, 1);
+    spot4.position.set(0, 3.8, 1);
+    spot4.target.position.set(0, 1, 0);
+    spot4.castShadow = true;
+    spot4.shadow.mapSize.width = 1024;
+    spot4.shadow.mapSize.height = 1024;
+    scene.add(spot4);
+    scene.add(spot4.target);
+}
+
+// ========== 创建展厅 ==========
+function createExhibitionHall() {
+    // 展厅尺寸：长20(x:-10~10) 宽12(z:-6~6) 高4(y:0~4)
+    const roomL = 20, roomW = 12, roomH = 4;
+
+    // --- 地板：深灰色大理石纹理（用程序化纹理模拟） ---
+    const floorCanvas = document.createElement('canvas');
+    floorCanvas.width = 512;
+    floorCanvas.height = 512;
+    const floorCtx = floorCanvas.getContext('2d');
+    // 基础颜色
+    floorCtx.fillStyle = '#3a3a3a';
+    floorCtx.fillRect(0, 0, 512, 512);
+    // 大理石纹理效果
+    for (let i = 0; i < 3000; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        const alpha = Math.random() * 0.15;
+        floorCtx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
+        floorCtx.fillRect(x, y, Math.random() * 3 + 1, Math.random() * 3 + 1);
+    }
+    // 网格线（地砖效果）
+    floorCtx.strokeStyle = 'rgba(255,255,255,0.05)';
+    floorCtx.lineWidth = 1;
+    for (let i = 0; i <= 512; i += 64) {
+        floorCtx.beginPath();
+        floorCtx.moveTo(i, 0);
+        floorCtx.lineTo(i, 512);
+        floorCtx.stroke();
+        floorCtx.beginPath();
+        floorCtx.moveTo(0, i);
+        floorCtx.lineTo(512, i);
+        floorCtx.stroke();
+    }
+    const floorTexture = new THREE.CanvasTexture(floorCanvas);
+    floorTexture.wrapS = THREE.RepeatWrapping;
+    floorTexture.wrapT = THREE.RepeatWrapping;
+    floorTexture.repeat.set(5, 3);
+
+    const floorGeo = new THREE.PlaneGeometry(roomL, roomW);
+    const floorMat = new THREE.MeshStandardMaterial({
+        map: floorTexture,
+        roughness: 0.6,
+        metalness: 0.1
+    });
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // --- 天花板：白色 ---
+    const ceilGeo = new THREE.PlaneGeometry(roomL, roomW);
+    const ceilMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f0, roughness: 0.9 });
+    const ceil = new THREE.Mesh(ceilGeo, ceilMat);
+    ceil.rotation.x = Math.PI / 2;
+    ceil.position.y = roomH;
+    scene.add(ceil);
+
+    // --- 墙壁材质：浅灰色 ---
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0xe8e8e0, roughness: 0.85, metalness: 0 });
+
+    // 入口墙（z=6，视频屏幕所在）
+    const entranceWallGeo = new THREE.BoxGeometry(roomL, roomH, 0.2);
+    const entranceWall = new THREE.Mesh(entranceWallGeo, wallMat);
+    entranceWall.position.set(0, roomH / 2, 6);
+    entranceWall.receiveShadow = true;
+    scene.add(entranceWall);
+
+    // 后墙（z=-6）
+    const backWallGeo = new THREE.BoxGeometry(roomL, roomH, 0.2);
+    const backWall = new THREE.Mesh(backWallGeo, wallMat);
+    backWall.position.set(0, roomH / 2, -6);
+    backWall.receiveShadow = true;
+    scene.add(backWall);
+
+    // 左墙（x=-10）
+    const leftWallGeo = new THREE.BoxGeometry(0.2, roomH, roomW);
+    const leftWall = new THREE.Mesh(leftWallGeo, wallMat);
+    leftWall.position.set(-10, roomH / 2, 0);
+    leftWall.receiveShadow = true;
+    scene.add(leftWall);
+
+    // 右墙（x=10）
+    const rightWallGeo = new THREE.BoxGeometry(0.2, roomH, roomW);
+    const rightWall = new THREE.Mesh(rightWallGeo, wallMat);
+    rightWall.position.set(10, roomH / 2, 0);
+    rightWall.receiveShadow = true;
+    scene.add(rightWall);
+
+    // --- 装饰踢脚线 ---
+    const baseboardMat = new THREE.MeshStandardMaterial({ color: 0x4a4a4a, roughness: 0.5 });
+    const baseboardH = 0.15;
+    // 入口墙踢脚线
+    const bb1 = new THREE.Mesh(new THREE.BoxGeometry(roomL, baseboardH, 0.25), baseboardMat);
+    bb1.position.set(0, baseboardH / 2, 6);
+    scene.add(bb1);
+    // 后墙踢脚线
+    const bb2 = new THREE.Mesh(new THREE.BoxGeometry(roomL, baseboardH, 0.25), baseboardMat);
+    bb2.position.set(0, baseboardH / 2, -6);
+    scene.add(bb2);
+    // 左墙踢脚线
+    const bb3 = new THREE.Mesh(new THREE.BoxGeometry(0.25, baseboardH, roomW), baseboardMat);
+    bb3.position.set(-10, baseboardH / 2, 0);
+    scene.add(bb3);
+    // 右墙踢脚线
+    const bb4 = new THREE.Mesh(new THREE.BoxGeometry(0.25, baseboardH, roomW), baseboardMat);
+    bb4.position.set(10, baseboardH / 2, 0);
+    scene.add(bb4);
+
+    // ========== 1. 入口墙视频屏幕（z=6，中央） ==========
+    createVideoScreen();
+
+    // ========== 2. 左墙展框（x=-10，3个展框） ==========
+    createLeftWallExhibits();
+
+    // ========== 3. 右墙展板（x=10，2个展板） ==========
+    createRightWallExhibits();
+
+    // ========== 4. 中央展台（z=0） ==========
+    createCenterExhibit();
+}
+
+// ========== 创建视频屏幕 ==========
+function createVideoScreen() {
+    videoElement = document.getElementById('exhibitVideo');
+
+    // 创建VideoTexture
+    videoTexture = new THREE.VideoTexture(videoElement);
+    videoTexture.minFilter = THREE.LinearFilter;
+    videoTexture.magFilter = THREE.LinearFilter;
+    videoTexture.format = THREE.RGBFormat;
+
+    // 视频屏幕（4x3米）
+    const screenGroup = new THREE.Group();
+    screenGroup.userData = { itemName: '展览影像' };
+
+    // 屏幕主体
+    const screenGeo = new THREE.PlaneGeometry(4, 3);
+    const screenMat = new THREE.MeshBasicMaterial({ map: videoTexture });
+    videoScreenMesh = new THREE.Mesh(screenGeo, screenMat);
+    videoScreenMesh.position.set(0, 2.2, 5.85);
+    screenGroup.add(videoScreenMesh);
+
+    // 屏幕外框（深色边框）
+    const frameMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.3, metalness: 0.5 });
+    const frameW = 0.12;
+    // 上边框
+    const ft = new THREE.Mesh(new THREE.BoxGeometry(4.3, frameW, 0.15), frameMat);
+    ft.position.set(0, 3.76, 5.85);
+    screenGroup.add(ft);
+    // 下边框
+    const fb = new THREE.Mesh(new THREE.BoxGeometry(4.3, frameW, 0.15), frameMat);
+    fb.position.set(0, 0.64, 5.85);
+    screenGroup.add(fb);
+    // 左边框
+    const fl = new THREE.Mesh(new THREE.BoxGeometry(frameW, 3.24, 0.15), frameMat);
+    fl.position.set(-2.15, 2.2, 5.85);
+    screenGroup.add(fl);
+    // 右边框
+    const fr = new THREE.Mesh(new THREE.BoxGeometry(frameW, 3.24, 0.15), frameMat);
+    fr.position.set(2.15, 2.2, 5.85);
+    screenGroup.add(fr);
+
+    // 屏幕下方标题（金色）
+    const titleTexture = createTextTexture('展览影像', 512, 64, 36, 'rgba(0,0,0,0)', '#d4a853');
+    const titleGeo = new THREE.PlaneGeometry(2, 0.25);
+    const titleMat = new THREE.MeshBasicMaterial({ map: titleTexture, transparent: true });
+    const titleMesh = new THREE.Mesh(titleGeo, titleMat);
+    titleMesh.position.set(0, 0.35, 5.85);
+    screenGroup.add(titleMesh);
+
+    // 屏幕发光效果（微弱的蓝色光）
+    const screenGlow = new THREE.PointLight(0x4488ff, 0.3, 5);
+    screenGlow.position.set(0, 2.2, 5);
+    screenGroup.add(screenGlow);
+
+    scene.add(screenGroup);
+    registerInteractive(screenGroup, '展览影像');
+}
+
+// ========== 创建左墙展框 ==========
+function createLeftWallExhibits() {
+    const textureLoader = new THREE.TextureLoader();
+    const goldFrameMat = new THREE.MeshStandardMaterial({
+        color: 0xd4a853,
+        roughness: 0.3,
+        metalness: 0.6
+    });
+
+    // 3个展框，间隔3米，沿z轴分布
+    const framePositions = [
+        { z: -2, name: '郑当时蜡像' },
+        { z: 1, name: '历史名人展区' },
+        { z: 4, name: '展览馆内景' }
+    ];
+
+    framePositions.forEach((pos, index) => {
+        const frameGroup = new THREE.Group();
+        frameGroup.userData = { itemName: pos.name };
+
+        // 展框尺寸
+        const picW = 2.0, picH = 1.5;
+        const frameThickness = 0.08;
+        const frameDepth = 0.06;
+
+        // 加载图片纹理
+        const picTexture = textureLoader.load('images/exhibit1.jpg');
+
+        // 图片平面
+        const picGeo = new THREE.PlaneGeometry(picW, picH);
+        const picMat = new THREE.MeshStandardMaterial({ map: picTexture });
+        const picMesh = new THREE.Mesh(picGeo, picMat);
+        picMesh.position.set(-9.85, 2.0, pos.z);
+        frameGroup.add(picMesh);
+
+        // 金色边框
+        // 上边框
+        const ft = new THREE.Mesh(
+            new THREE.BoxGeometry(frameDepth, frameThickness, picW + frameThickness * 2),
+            goldFrameMat
+        );
+        ft.position.set(-9.88, 2.0 + picH / 2 + frameThickness / 2, pos.z);
+        frameGroup.add(ft);
+        // 下边框
+        const fb = new THREE.Mesh(
+            new THREE.BoxGeometry(frameDepth, frameThickness, picW + frameThickness * 2),
+            goldFrameMat
+        );
+        fb.position.set(-9.88, 2.0 - picH / 2 - frameThickness / 2, pos.z);
+        frameGroup.add(fb);
+        // 左边框
+        const fl = new THREE.Mesh(
+            new THREE.BoxGeometry(frameDepth, picH + frameThickness * 2, frameThickness),
+            goldFrameMat
+        );
+        fl.position.set(-9.88, 2.0, pos.z - picW / 2 - frameThickness / 2);
+        frameGroup.add(fl);
+        // 右边框
+        const fr = new THREE.Mesh(
+            new THREE.BoxGeometry(frameDepth, picH + frameThickness * 2, frameThickness),
+            goldFrameMat
+        );
+        fr.position.set(-9.88, 2.0, pos.z + picW / 2 + frameThickness / 2);
+        frameGroup.add(fr);
+
+        // 展框下方射灯（小型SpotLight）
+        const spotLight = new THREE.SpotLight(0xfff5e0, 0.5, 6, Math.PI / 8, 0.6, 1);
+        spotLight.position.set(-9, 3.5, pos.z);
+        spotLight.target.position.set(-9.85, 2.0, pos.z);
+        frameGroup.add(spotLight);
+        frameGroup.add(spotLight.target);
+
+        // 射灯灯具模型（小圆柱）
+        const lampMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.3, metalness: 0.5 });
+        const lampGeo = new THREE.CylinderGeometry(0.06, 0.1, 0.15, 8);
+        const lamp = new THREE.Mesh(lampGeo, lampMat);
+        lamp.position.set(-9, 3.55, pos.z);
+        frameGroup.add(lamp);
+
+        // 展框下方名牌
+        const labelTexture = createTextTexture(pos.name, 256, 48, 24, 'rgba(0,0,0,0)', '#d4a853');
+        const labelGeo = new THREE.PlaneGeometry(1.2, 0.22);
+        const labelMat = new THREE.MeshBasicMaterial({ map: labelTexture, transparent: true });
+        const label = new THREE.Mesh(labelGeo, labelMat);
+        label.position.set(-9.85, 1.0, pos.z);
+        frameGroup.add(label);
+
+        scene.add(frameGroup);
+        registerInteractive(frameGroup, pos.name);
+    });
+}
+
+// ========== 创建右墙展板 ==========
+function createRightWallExhibits() {
+    // 2个展板
+    const boardPositions = [
+        {
+            z: -1.5,
+            title: '展览馆简介',
+            text: '本展览馆以武乡历史文化为主题，通过蜡像、影像、实物等多种形式，全面展示武乡深厚的历史底蕴和红色文化传承。'
+        },
+        {
+            z: 2.5,
+            title: '参观须知',
+            text: '请保持安静参观，不要触摸展品。拍照时请关闭闪光灯。展厅内禁止饮食。感谢您的配合！'
+        }
+    ];
+
+    const boardMat = new THREE.MeshStandardMaterial({ color: 0xf0ece0, roughness: 0.8 });
+    const goldTrimMat = new THREE.MeshStandardMaterial({ color: 0xd4a853, roughness: 0.3, metalness: 0.6 });
+
+    boardPositions.forEach((pos) => {
+        const boardGroup = new THREE.Group();
+
+        // 展板底板
+        const boardW = 3.0, boardH = 2.2;
+        const boardGeo = new THREE.BoxGeometry(0.05, boardH, boardW);
+        const board = new THREE.Mesh(boardGeo, boardMat);
+        board.position.set(9.85, 2.2, pos.z);
+        boardGroup.add(board);
+
+        // 金色外框
+        const trimT = 0.06;
+        // 上
+        const t1 = new THREE.Mesh(new THREE.BoxGeometry(0.08, trimT, boardW + trimT * 2), goldTrimMat);
+        t1.position.set(9.85, 2.2 + boardH / 2 + trimT / 2, pos.z);
+        boardGroup.add(t1);
+        // 下
+        const t2 = new THREE.Mesh(new THREE.BoxGeometry(0.08, trimT, boardW + trimT * 2), goldTrimMat);
+        t2.position.set(9.85, 2.2 - boardH / 2 - trimT / 2, pos.z);
+        boardGroup.add(t2);
+        // 左
+        const t3 = new THREE.Mesh(new THREE.BoxGeometry(0.08, boardH + trimT * 2, trimT), goldTrimMat);
+        t3.position.set(9.85, 2.2, pos.z - boardW / 2 - trimT / 2);
+        boardGroup.add(t3);
+        // 右
+        const t4 = new THREE.Mesh(new THREE.BoxGeometry(0.08, boardH + trimT * 2, trimT), goldTrimMat);
+        t4.position.set(9.85, 2.2, pos.z + boardW / 2 + trimT / 2);
+        boardGroup.add(t4);
+
+        // 标题文字纹理
+        const titleTex = createTextTexture(pos.title, 512, 64, 32, 'rgba(0,0,0,0)', '#c41e3a');
+        const titleGeo = new THREE.PlaneGeometry(2.0, 0.25);
+        const titleMat = new THREE.MeshBasicMaterial({ map: titleTex, transparent: true });
+        const titleMesh = new THREE.Mesh(titleGeo, titleMat);
+        titleMesh.position.set(9.82, 3.0, pos.z);
+        boardGroup.add(titleMesh);
+
+        // 正文文字纹理
+        const textTex = createTextTexture(pos.text, 512, 256, 22, 'rgba(0,0,0,0)', '#333333');
+        const textGeo = new THREE.PlaneGeometry(2.5, 1.25);
+        const textMat = new THREE.MeshBasicMaterial({ map: textTex, transparent: true });
+        const textMesh = new THREE.Mesh(textGeo, textMat);
+        textMesh.position.set(9.82, 2.1, pos.z);
+        boardGroup.add(textMesh);
+
+        scene.add(boardGroup);
+    });
+}
+
+// ========== 创建中央展台 ==========
+function createCenterExhibit() {
+    const textureLoader = new THREE.TextureLoader();
+
+    const exhibitGroup = new THREE.Group();
+    exhibitGroup.userData = { itemName: '中央展品' };
+
+    // 展台底座（方形，高0.8米）
+    const pedestalMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.3, metalness: 0.4 });
+    const pedestalGeo = new THREE.BoxGeometry(1.2, 0.8, 1.2);
+    const pedestal = new THREE.Mesh(pedestalGeo, pedestalMat);
+    pedestal.position.set(0, 0.4, 0);
+    pedestal.castShadow = true;
+    pedestal.receiveShadow = true;
+    exhibitGroup.add(pedestal);
+
+    // 展台顶部装饰线
+    const trimMat = new THREE.MeshStandardMaterial({ color: 0xd4a853, roughness: 0.3, metalness: 0.6 });
+    const topTrim = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.04, 1.3), trimMat);
+    topTrim.position.set(0, 0.82, 0);
+    exhibitGroup.add(topTrim);
+
+    // 底部装饰线
+    const bottomTrim = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.04, 1.3), trimMat);
+    bottomTrim.position.set(0, 0.02, 0);
+    exhibitGroup.add(bottomTrim);
+
+    // 旋转展品（用立方体模拟，贴上图片纹理）
+    const exhibitTex = textureLoader.load('images/exhibit1.jpg');
+    const exhibitMat = new THREE.MeshStandardMaterial({
+        map: exhibitTex,
+        roughness: 0.4,
+        metalness: 0.2
+    });
+    const exhibitGeo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
+    centerExhibitMesh = new THREE.Mesh(exhibitGeo, exhibitMat);
+    centerExhibitMesh.position.set(0, 1.3, 0);
+    centerExhibitMesh.castShadow = true;
+    exhibitGroup.add(centerExhibitMesh);
+
+    // 展品底部支撑柱
+    const pillarMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.3, metalness: 0.5 });
+    const pillarGeo = new THREE.CylinderGeometry(0.05, 0.08, 0.3, 8);
+    const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+    pillar.position.set(0, 1.0, 0);
+    exhibitGroup.add(pillar);
+
+    scene.add(exhibitGroup);
+    registerInteractive(exhibitGroup, '中央展品');
+}
+
+// ========== 注册可交互物品 ==========
+function registerInteractive(group, itemName) {
+    interactiveGroups.push(group);
+    group.traverse(child => {
+        if (child.isMesh) {
+            child.userData.itemName = itemName;
+            interactiveObjects.push(child);
+        }
+    });
+}
+
+// ========== 碰撞检测（AABB） ==========
+function checkCollision(newX, newZ) {
+    // 展厅边界检测
+    if (newX < ROOM_BOUNDS.minX || newX > ROOM_BOUNDS.maxX) return true;
+    if (newZ < ROOM_BOUNDS.minZ || newZ > ROOM_BOUNDS.maxZ) return true;
+
+    // 中央展台碰撞检测
+    const pedestalBox = { cx: 0, cz: 0, hw: 0.8, hd: 0.8 };
+    const playerRadius = 0.3;
+
+    if (newX + playerRadius > pedestalBox.cx - pedestalBox.hw &&
+        newX - playerRadius < pedestalBox.cx + pedestalBox.hw &&
+        newZ + playerRadius > pedestalBox.cz - pedestalBox.hd &&
+        newZ - playerRadius < pedestalBox.cz + pedestalBox.hd) {
+        return true;
+    }
+
+    return false;
+}
+
+// ========== 处理移动 ==========
+function handleMovement() {
+    if (!isLocked && !isMobile) return;
+    if (isPaused || isPanelOpen) return;
+
+    // 获取相机方向
+    const direction = new THREE.Vector3();
+    camera.getWorldDirection(direction);
+    direction.y = 0;
+    direction.normalize();
+
+    // 右方向
+    const right = new THREE.Vector3();
+    right.crossVectors(direction, new THREE.Vector3(0, 1, 0)).normalize();
+
+    // 计算移动向量
+    let moveX = 0, moveZ = 0;
+
+    // 键盘输入
+    if (moveState.forward)  { moveX += direction.x; moveZ += direction.z; }
+    if (moveState.backward) { moveX -= direction.x; moveZ -= direction.z; }
+    if (moveState.left)     { moveX -= right.x; moveZ -= right.z; }
+    if (moveState.right)    { moveX += right.x; moveZ += right.z; }
+
+    // 手机端摇杆输入
+    if (isMobile && joystickLeft.active) {
+        moveX += direction.x * (-joystickLeft.dy) + right.x * joystickLeft.dx;
+        moveZ += direction.z * (-joystickLeft.dy) + right.z * joystickLeft.dx;
+    }
+
+    // 归一化
+    const len = Math.sqrt(moveX * moveX + moveZ * moveZ);
+    if (len > 0) {
+        moveX = (moveX / len) * MOVE_SPEED;
+        moveZ = (moveZ / len) * MOVE_SPEED;
+    }
+
+    // 尝试移动（分轴碰撞检测，允许沿墙滑动）
+    const newX = camera.position.x + moveX;
+    const newZ = camera.position.z + moveZ;
+
+    if (!checkCollision(newX, camera.position.z)) {
+        camera.position.x = newX;
+    }
+    if (!checkCollision(camera.position.x, newZ)) {
+        camera.position.z = newZ;
+    }
+
+    // 保持固定高度
+    camera.position.y = PLAYER_HEIGHT;
+}
+
+// ========== Raycaster物品检测 ==========
+function checkItemFocus() {
+    if (!isLocked && !isMobile) return;
+    if (isPanelOpen) return;
+
+    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+    const intersects = raycaster.intersectObjects(interactiveObjects, false);
+
+    const itemLabel = document.getElementById('itemLabel');
+    const interactHint = document.getElementById('interactHint');
+    const crosshair = document.getElementById('crosshair');
+    const mobileBtn = document.getElementById('mobileInteractBtn');
+
+    if (intersects.length > 0) {
+        const obj = intersects[0].object;
+        const itemName = obj.userData.itemName;
+
+        if (hoveredObject !== obj) {
+            // 恢复之前悬停物体
+            if (hoveredObject) resetObjectEmissive(hoveredObject);
+            hoveredObject = obj;
+            // 高亮
+            if (obj.material && obj.material.emissive) {
+                obj.material.emissive.setHex(0x444444);
+            }
+        }
+
+        // 显示物品名称
+        const exhibitData = exhibits.find(d => d.name === itemName);
+        if (exhibitData) {
+            itemLabel.textContent = exhibitData.name;
+        } else {
+            itemLabel.textContent = itemName;
+        }
+        itemLabel.classList.add('visible');
+        crosshair.classList.add('active');
+
+        // 显示交互提示
+        if (isMobile) {
+            mobileBtn.classList.add('visible');
+            interactHint.classList.remove('visible');
+        } else {
+            interactHint.classList.add('visible');
+            mobileBtn.classList.remove('visible');
+        }
+    } else {
+        if (hoveredObject) {
+            resetObjectEmissive(hoveredObject);
+            hoveredObject = null;
+        }
+        itemLabel.classList.remove('visible');
+        interactHint.classList.remove('visible');
+        crosshair.classList.remove('active');
+        mobileBtn.classList.remove('visible');
+    }
+}
+
+// ========== 视频自动播放/暂停检测 ==========
+function checkVideoPlayback() {
+    if (!videoElement || !videoTexture) return;
+
+    const playerPos = camera.position;
+    // 视频屏幕位置 (0, 2.2, 5.85)
+    const videoPos = new THREE.Vector3(0, 2.2, 5.85);
+    const dist = playerPos.distanceTo(videoPos);
+
+    if (dist < 3 && !videoIsPlaying && isPlaying) {
+        // 靠近屏幕，播放视频
+        videoElement.play().then(() => {
+            videoIsPlaying = true;
+        }).catch(() => {
+            // 自动播放可能被阻止，静音状态下重试
+            videoElement.muted = true;
+            videoElement.play().then(() => {
+                videoIsPlaying = true;
+            }).catch(() => {});
+        });
+    } else if (dist >= 3 && videoIsPlaying) {
+        // 走远，暂停视频
+        videoElement.pause();
+        videoIsPlaying = false;
+    }
+}
+
+// ========== 自动讲解检测 ==========
+function checkAutoNarration() {
+    if (isPanelOpen || isPaused) return;
+
+    const playerPos = camera.position;
+    let closestItem = null;
+    let closestDist = Infinity;
+
+    // 遍历所有交互物品组，找最近的
+    interactiveGroups.forEach(group => {
+        const itemPos = new THREE.Vector3();
+        group.getWorldPosition(itemPos);
+        const dist = playerPos.distanceTo(itemPos);
+        if (dist < closestDist) {
+            closestDist = dist;
+            closestItem = group.userData.itemName;
+        }
+    });
+
+    const narrationBar = document.getElementById('narrationBar');
+    const narrationText = document.getElementById('narrationText');
+
+    if (closestDist < 2.5 && closestItem) {
+        // 靠近物品，触发自动讲解
+        if (autoNarrateItem !== closestItem) {
+            // 切换到新物品
+            stopAutoNarration();
+            autoNarrateItem = closestItem;
+            autoNarrating = true;
+
+            const exhibitData = exhibits.find(d => d.name === closestItem);
+            if (exhibitData) {
+                narrationText.textContent = exhibitData.name + '：' + exhibitData.description;
+                narrationBar.classList.add('visible');
+
+                // 语音朗读
+                const synth = window.speechSynthesis;
+                synth.cancel();
+                const text = exhibitData.name + '。' + exhibitData.description;
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-CN';
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
+                synth.speak(utterance);
+            }
+        }
+    } else if (closestDist > 3.5) {
+        // 走远了，停止讲解
+        stopAutoNarration();
+    }
+}
+
+// ========== 停止自动讲解 ==========
+function stopAutoNarration() {
+    if (autoNarrating) {
+        window.speechSynthesis.cancel();
+        autoNarrating = false;
+        autoNarrateItem = null;
+        document.getElementById('narrationBar').classList.remove('visible');
+    }
+}
+
+// ========== 重置物体发光 ==========
+function resetObjectEmissive(obj) {
+    if (obj.material && obj.material.emissive) {
+        obj.material.emissive.setHex(0x000000);
+    }
+}
+
+// ========== 打开物品讲解面板 ==========
+function openItemPanel(obj) {
+    const itemName = obj.userData.itemName;
+    currentItem = exhibits.find(item => item.name === itemName);
+    if (!currentItem) return;
+
+    // 停止自动讲解
+    stopAutoNarration();
+
+    // 高亮选中物品
+    if (selectedObject) resetObjectEmissive(selectedObject);
+    selectedObject = obj;
+    if (obj.material && obj.material.emissive) {
+        obj.material.emissive.setHex(0x333333);
+    }
+
+    // 显示面板
+    showPanel(currentItem);
+    isPanelOpen = true;
+
+    // 电脑端解锁鼠标
+    if (!isMobile && controls.isLocked) {
+        controls.unlock();
+    }
+}
+
+// ========== 显示讲解面板 ==========
+function showPanel(item) {
+    document.getElementById('panelTitle').textContent = item.name;
+    document.getElementById('panelTag').textContent = item.type;
+    document.getElementById('panelAppearance').textContent = item.appearance;
+    document.getElementById('panelFunction').textContent = item.description;
+    document.getElementById('panelFun').textContent = item.fun;
+
+    // 清空AI对话
+    document.getElementById('panelAiMessages').innerHTML = '';
+    document.getElementById('panelAiInput').value = '';
+
+    // 重置语音按钮
+    const btn = document.getElementById('btnSpeak');
+    btn.classList.remove('speaking');
+    btn.innerHTML = '&#128266; 语音朗读';
+
+    // 打开面板
+    document.getElementById('infoPanel').classList.add('open');
+}
+
+// ========== 关闭面板 ==========
+function closePanel() {
+    document.getElementById('infoPanel').classList.remove('open');
+    if (selectedObject) {
+        resetObjectEmissive(selectedObject);
+        selectedObject = null;
+    }
+    isPanelOpen = false;
+    currentItem = null;
+
+    // 停止语音
+    window.speechSynthesis.cancel();
+    const btn = document.getElementById('btnSpeak');
+    btn.classList.remove('speaking');
+    btn.innerHTML = '&#128266; 语音朗读';
+
+    // 电脑端重新锁定鼠标
+    if (!isMobile && isPlaying) {
+        controls.lock();
+    }
+}
+
+// ========== 语音朗读 ==========
+function speakDescription() {
+    if (!currentItem) return;
+
+    const synth = window.speechSynthesis;
+    const btn = document.getElementById('btnSpeak');
+
+    if (synth.speaking) {
+        synth.cancel();
+        btn.classList.remove('speaking');
+        btn.innerHTML = '&#128266; 语音朗读';
+        return;
+    }
+
+    const text = currentItem.name + '。' + currentItem.description + '。' + currentItem.appearance + '。' + currentItem.fun;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+
+    utterance.onstart = () => {
+        btn.classList.add('speaking');
+        btn.innerHTML = '&#128264; 停止朗读';
+    };
+    utterance.onend = () => {
+        btn.classList.remove('speaking');
+        btn.innerHTML = '&#128266; 语音朗读';
+    };
+    utterance.onerror = () => {
+        btn.classList.remove('speaking');
+        btn.innerHTML = '&#128266; 语音朗读';
+    };
+
+    synth.speak(utterance);
+}
+
+// ========== 面板AI问答 ==========
+async function sendPanelAi() {
+    const input = document.getElementById('panelAiInput');
+    const msgContainer = document.getElementById('panelAiMessages');
+    const question = input.value.trim();
+    if (!question || !currentItem) return;
+
+    const userMsg = document.createElement('div');
+    userMsg.className = 'ai-msg user';
+    userMsg.textContent = question;
+    msgContainer.appendChild(userMsg);
+    input.value = '';
+
+    const botMsg = document.createElement('div');
+    botMsg.className = 'ai-msg bot';
+    botMsg.textContent = '';
+    msgContainer.appendChild(botMsg);
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+
+    try {
+        const response = await fetch('https://api.freegpt4.ddns.net/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [
+                    {
+                        role: 'system',
+                        content: '你是一个关于展览馆展品的科普助手。当前正在查看的展品是"' + currentItem.name + '"（' + currentItem.type + '）。请用简洁生动的中文回答用户的问题。回答控制在100字以内。'
+                    },
+                    { role: 'user', content: question }
+                ],
+                max_tokens: 200,
+                temperature: 0.7
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            const answer = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content ? data.choices[0].message.content : getLocalAnswer(question, currentItem);
+            await typeWriter(botMsg, answer);
+        } else {
+            await typeWriter(botMsg, getLocalAnswer(question, currentItem));
+        }
+    } catch (e) {
+        await typeWriter(botMsg, getLocalAnswer(question, currentItem));
+    }
+
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+}
+
+// ========== 本地知识库后备 ==========
+function getLocalAnswer(question, item) {
+    const answers = {
+        '展览影像': ['这段影像记录了展览馆内的珍贵场景，是了解历史文化的重要资料。', '多媒体展示是现代博物馆的重要特色，让观众更直观地感受历史。', '视频展示技术让静态的展品"活"了起来，增强了参观体验。'],
+        '郑当时蜡像': ['郑当时是西汉时期著名官员，以举荐贤士闻名于世。', '蜡像制作需要经过雕塑、翻模、上色等多道工序，非常精细。', '郑当时建议开凿的褒斜道，是中国古代连接关中与汉中的重要通道。'],
+        '历史名人展区': ['这个展区展示了多位历史名人的蜡像，通过场景还原让游客穿越时空。', '蜡像技术起源于18世纪的法国，现已被广泛应用于博物馆展览。', '每个蜡像都经过精心制作，力求还原历史人物的真实面貌。'],
+        '展览馆内景': ['展览馆融合了传统中式建筑风格和现代展示技术。', '花格门窗是中国传统建筑的经典元素，体现了东方美学。', '现代博物馆注重"沉浸式体验"，通过声光电技术增强参观感受。'],
+        '中央展品': ['旋转展台是博物馆常用的展示方式，方便观众从各个角度欣赏。', '展台设计既要突出展品，又要保证安全性和观赏性。', '中央展台通常展示展览中最重要或最具代表性的展品。']
+    };
+    const itemAnswers = answers[item.name] || ['这是一个很好的问题！让我想想...'];
+    return itemAnswers[Math.floor(Math.random() * itemAnswers.length)];
+}
+
+// ========== 打字机效果 ==========
+function typeWriter(element, text) {
+    return new Promise(resolve => {
+        let i = 0;
+        const speed = 30;
+        function type() {
+            if (i < text.length) {
+                element.textContent += text.charAt(i);
+                i++;
+                setTimeout(type, speed);
+            } else {
+                resolve();
+            }
+        }
+        type();
+    });
+}
+
+// ========== 小地图绘制 ==========
+function drawMinimap() {
+    const canvas = document.getElementById('minimapCanvas');
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // 展厅映射参数（展厅20x12 -> 画布156x96）
+    const scaleX = w / 20;
+    const scaleZ = h / 12;
+    const offsetX = w / 2;
+    const offsetZ = h / 2;
+
+    // 画展厅背景
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillRect(offsetX - 10 * scaleX, offsetZ - 6 * scaleZ, 20 * scaleX, 12 * scaleZ);
+
+    // 画展厅边框
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(offsetX - 10 * scaleX, offsetZ - 6 * scaleZ, 20 * scaleX, 12 * scaleZ);
+
+    // 画展品位置
+    interactiveGroups.forEach(group => {
+        const pos = new THREE.Vector3();
+        group.getWorldPosition(pos);
+        const mx = offsetX + pos.x * scaleX;
+        const mz = offsetZ + pos.z * scaleZ;
+
+        ctx.fillStyle = 'rgba(196,30,58,0.6)';
+        ctx.beginPath();
+        ctx.arc(mx, mz, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    // 画中央展台
+    ctx.fillStyle = 'rgba(212,168,83,0.4)';
+    ctx.fillRect(offsetX - 0.8 * scaleX, offsetZ - 0.8 * scaleZ, 1.6 * scaleX, 1.6 * scaleZ);
+
+    // 画玩家位置和方向
+    const px = offsetX + camera.position.x * scaleX;
+    const pz = offsetZ + camera.position.z * scaleZ;
+
+    // 玩家方向
+    const dir = new THREE.Vector3();
+    camera.getWorldDirection(dir);
+    const angle = Math.atan2(dir.x, dir.z);
+
+    ctx.save();
+    ctx.translate(px, pz);
+    ctx.rotate(-angle);
+
+    // 方向三角形
+    ctx.fillStyle = '#d4a853';
+    ctx.beginPath();
+    ctx.moveTo(0, -6);
+    ctx.lineTo(-4, 4);
+    ctx.lineTo(4, 4);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+
+    // 玩家圆点
+    ctx.fillStyle = '#d4a853';
+    ctx.beginPath();
+    ctx.arc(px, pz, 3, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+// ========== 手机端虚拟摇杆 ==========
+function setupMobileControls() {
+    const leftZone = document.getElementById('joystickLeftZone');
+    const rightZone = document.getElementById('joystickRightZone');
+    const leftBase = document.getElementById('joystickLeftBase');
+    const leftThumb = document.getElementById('joystickLeftThumb');
+    const rightBase = document.getElementById('joystickRightBase');
+    const rightThumb = document.getElementById('joystickRightThumb');
+    const interactBtn = document.getElementById('mobileInteractBtn');
+
+    const JOYSTICK_RADIUS = 50;
+    const THUMB_MAX = 35;
+
+    // 左摇杆（移动）
+    leftZone.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.changedTouches[0];
+        joystickLeft.active = true;
+        joystickLeft.touchId = touch.identifier;
+
+        const rect = leftZone.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+
+        leftBase.style.display = 'block';
+        leftBase.style.left = (cx - JOYSTICK_RADIUS) + 'px';
+        leftBase.style.top = (cy - JOYSTICK_RADIUS) + 'px';
+        leftThumb.style.display = 'block';
+        leftThumb.style.left = (cx - 25) + 'px';
+        leftThumb.style.top = (cy - 25) + 'px';
+    }, { passive: false });
+
+    leftZone.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        for (const touch of e.changedTouches) {
+            if (touch.identifier === joystickLeft.touchId) {
+                const rect = leftBase.getBoundingClientRect();
+                const bcx = rect.left + JOYSTICK_RADIUS;
+                const bcy = rect.top + JOYSTICK_RADIUS;
+
+                let dx = touch.clientX - bcx;
+                let dy = touch.clientY - bcy;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist > THUMB_MAX) {
+                    dx = (dx / dist) * THUMB_MAX;
+                    dy = (dy / dist) * THUMB_MAX;
+                }
+
+                joystickLeft.dx = dx / THUMB_MAX;
+                joystickLeft.dy = dy / THUMB_MAX;
+
+                leftThumb.style.left = (bcx + dx - 25) + 'px';
+                leftThumb.style.top = (bcy + dy - 25) + 'px';
+            }
+        }
+    }, { passive: false });
+
+    leftZone.addEventListener('touchend', (e) => {
+        for (const touch of e.changedTouches) {
+            if (touch.identifier === joystickLeft.touchId) {
+                joystickLeft.active = false;
+                joystickLeft.dx = 0;
+                joystickLeft.dy = 0;
+                joystickLeft.touchId = null;
+                leftBase.style.display = 'none';
+                leftThumb.style.display = 'none';
+            }
+        }
+    });
+
+    // 右摇杆（视角）
+    let rightStartX = 0, rightStartY = 0;
+    let cameraEulerX = 0, cameraEulerY = 0;
+
+    rightZone.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.changedTouches[0];
+        joystickRight.active = true;
+        joystickRight.touchId = touch.identifier;
+        rightStartX = touch.clientX;
+        rightStartY = touch.clientY;
+
+        // 获取当前相机旋转
+        cameraEulerX = camera.rotation.x;
+        cameraEulerY = camera.rotation.y;
+
+        const rect = rightZone.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+
+        rightBase.style.display = 'block';
+        rightBase.style.left = (cx - JOYSTICK_RADIUS) + 'px';
+        rightBase.style.top = (cy - JOYSTICK_RADIUS) + 'px';
+        rightThumb.style.display = 'block';
+        rightThumb.style.left = (cx - 25) + 'px';
+        rightThumb.style.top = (cy - 25) + 'px';
+    }, { passive: false });
+
+    rightZone.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        for (const touch of e.changedTouches) {
+            if (touch.identifier === joystickRight.touchId) {
+                const dx = touch.clientX - rightStartX;
+                const dy = touch.clientY - rightStartY;
+
+                // 水平旋转
+                camera.rotation.y = cameraEulerY - dx * 0.004;
+                // 垂直旋转（限制角度）
+                let newPitch = cameraEulerX - dy * 0.004;
+                const minPitch = -Math.PI / 3;
+                const maxPitch = Math.PI * 80 / 180;
+                newPitch = Math.max(minPitch, Math.min(maxPitch, newPitch));
+                camera.rotation.x = newPitch;
+
+                // 更新摇杆视觉
+                const rect = rightBase.getBoundingClientRect();
+                const bcx = rect.left + JOYSTICK_RADIUS;
+                const bcy = rect.top + JOYSTICK_RADIUS;
+
+                let jdx = dx * 0.3;
+                let jdy = dy * 0.3;
+                const jdist = Math.sqrt(jdx * jdx + jdy * jdy);
+                if (jdist > THUMB_MAX) {
+                    jdx = (jdx / jdist) * THUMB_MAX;
+                    jdy = (jdy / jdist) * THUMB_MAX;
+                }
+
+                rightThumb.style.left = (bcx + jdx - 25) + 'px';
+                rightThumb.style.top = (bcy + jdy - 25) + 'px';
+            }
+        }
+    }, { passive: false });
+
+    rightZone.addEventListener('touchend', (e) => {
+        for (const touch of e.changedTouches) {
+            if (touch.identifier === joystickRight.touchId) {
+                joystickRight.active = false;
+                joystickRight.touchId = null;
+                rightBase.style.display = 'none';
+                rightThumb.style.display = 'none';
+            }
+        }
+    });
+
+    // 手机端交互按钮
+    interactBtn.addEventListener('click', () => {
+        if (hoveredObject) {
+            openItemPanel(hoveredObject);
+        }
+    });
+}
+
+// ========== 窗口大小变化 ==========
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// ========== 渲染循环 ==========
+function animate() {
+    requestAnimationFrame(animate);
+
+    // 处理移动
+    handleMovement();
+
+    // 检测准星对准的物品
+    checkItemFocus();
+
+    // 检测自动讲解
+    checkAutoNarration();
+
+    // 检测视频播放/暂停
+    checkVideoPlayback();
+
+    // 中央展品旋转动画
+    if (centerExhibitMesh) {
+        centerExhibitMesh.rotation.y += 0.008;
+    }
+
+    // 更新视频纹理
+    if (videoTexture && videoIsPlaying) {
+        videoTexture.needsUpdate = true;
+    }
+
+    // 绘制小地图
+    if (isPlaying) {
+        drawMinimap();
+    }
+
+    // 渲染
+    renderer.render(scene, camera);
+}
+
+// ========== 启动 ==========
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
