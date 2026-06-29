@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>武乡红色文旅 · 场景导览演示系统</title>
+<style>
+/* ========== 全局重置与基础样式 ========== */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-primary: #0f1923;
+  --bg-panel: rgba(15, 25, 35, 0.95);
+  --floor-color: #d4a574;
+  --floor-dark: #c49464;
+  --accent-gold: #d4a853;
+  --accent-red: #c41e3a;
+  --text-white: #ffffff;
+  --text-muted: #8899aa;
+  --border-color: rgba(212, 168, 83, 0.3);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-white);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ========== 加载动画 ========== */
+.loading-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+.loading-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.loading-spinner::before,
+.loading-spinner::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+}
+
+.loading-spinner::before {
+  width: 60px; height: 60px;
+  border: 3px solid transparent;
+  border-top-color: var(--accent-gold);
+  border-right-color: var(--accent-gold);
+  animation: spin 1s linear infinite;
+}
+
+.loading-spinner::after {
+  width: 40px; height: 40px;
+  top: 7px; left: 7px;
+  border: 3px solid transparent;
+  border-bottom-color: var(--accent-red);
+  border-left-color: var(--accent-red);
+  animation: spin 0.7s linear infinite reverse;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: var(--accent-gold);
+  font-size: 16px;
+  letter-spacing: 2px;
+  animation: pulse-text 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-text {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ========== 顶部标题栏 ========== */
+.header {
+  text-align: center;
+  padding: 20px 20px 12px;
+  background: linear-gradient(180deg, rgba(15,25,35,1) 0%, rgba(15,25,35,0.8) 100%);
+  position: relative;
+  z-index: 10;
+}
+
+.header h1 {
+  font-size: clamp(18px, 3vw, 28px);
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent-gold), #f0d78c, var(--accent-gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 3px;
+}
+
+.header .subtitle {
+  font-size: clamp(12px, 2vw, 15px);
+  color: var(--text-muted);
+  margin-top: 6px;
+  letter-spacing: 1px;
+}
+
+/* ========== 主内容区域 ========== */
+.main-content {
+  display: flex;
+  height: calc(100vh - 90px);
+  position: relative;
+}
+
+/* ========== 教室平面图容器 ========== */
+.classroom-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ========== 教室俯视图 ========== */
+.classroom {
+  width: min(90%, 700px);
+  aspect-ratio: 4 / 3;
+  position: relative;
+  border-radius: 12px;
+  /* 木地板纹理 */
+  background:
+    repeating-linear-gradient(
+      90deg,
+      var(--floor-color) 0px,
+      var(--floor-color) 38px,
+      var(--floor-dark) 38px,
+      var(--floor-dark) 40px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 80px,
+      rgba(0,0,0,0.04) 80px,
+      rgba(0,0,0,0.04) 82px
+    );
+  background-color: var(--floor-color);
+  box-shadow:
+    0 0 0 4px rgba(139, 90, 43, 0.6),
+    0 0 0 8px rgba(100, 60, 20, 0.3),
+    0 20px 60px rgba(0,0,0,0.5);
+  overflow: visible;
+}
+
+/* 教室墙壁 */
+.classroom::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border: 8px solid #8b5a2b;
+  border-radius: 16px;
+  pointer-events: none;
+}
+
+/* ========== 墙壁标签 ========== */
+.wall-label {
+  position: absolute;
+  font-size: 10px;
+  color: rgba(139, 90, 43, 0.6);
+  letter-spacing: 4px;
+  pointer-events: none;
+}
+
+.wall-label.top { top: -22px; left: 50%; transform: translateX(-50%); }
+.wall-label.bottom { bottom: -22px; left: 50%; transform: translateX(-50%); }
+.wall-label.left { left: -30px; top: 50%; transform: translateY(-50%) rotate(-90deg); }
+.wall-label.right { right: -30px; top: 50%; transform: translateY(-50%) rotate(90deg); }
+
+/* ========== 黑板（前墙/底部） ========== */
+.blackboard {
+  position: absolute;
+  bottom: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 55%;
+  height: 8%;
+  background: linear-gradient(180deg, #2d5a3d, #1a3a28);
+  border-radius: 4px;
+  border: 2px solid #8b7355;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+}
+
+/* 黑板上的粉笔字 */
+.blackboard::after {
+  content: '好好学习 天天向上';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: clamp(8px, 1.5vw, 12px);
+  white-space: nowrap;
+  letter-spacing: 2px;
+}
+
+/* ========== 讲台 ========== */
+.podium {
+  position: absolute;
+  bottom: 13%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 25%;
+  height: 5%;
+  background: linear-gradient(180deg, #a0724e, #8b5a2b);
+  border-radius: 3px;
+  border: 1px solid #6b3a1b;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+/* ========== 窗户（后墙/顶部） ========== */
+.windows-group {
+  position: absolute;
+  top: 3%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 8%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.window {
+  flex: 1;
+  margin: 0 2%;
+  background: linear-gradient(180deg, #87ceeb, #b0e0f6);
+  border: 2px solid #c0c0c0;
+  border-radius: 2px;
+  position: relative;
+  box-shadow: inset 0 0 8px rgba(135, 206, 235, 0.5);
+}
+
+/* 窗户十字框 */
+.window::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: #c0c0c0;
+  transform: translateX(-50%);
+}
+
+.window::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  top: 50%;
+  height: 2px;
+  background: #c0c0c0;
+  transform: translateY(-50%);
+}
+
+/* ========== 空调（左墙） ========== */
+.air-conditioner {
+  position: absolute;
+  left: 2%;
+  top: 25%;
+  width: 6%;
+  height: 18%;
+  background: linear-gradient(180deg, #f5f5f5, #e8e8e8);
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* 空调出风口 */
+.air-conditioner::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 10%;
+  width: 80%;
+  height: 4px;
+  background: repeating-linear-gradient(90deg, #ccc 0px, #ccc 3px, transparent 3px, transparent 6px);
+  border-radius: 2px;
+}
+
+/* ========== 课桌椅组 ========== */
+.desks-container {
+  position: absolute;
+  top: 18%;
+  left: 15%;
+  width: 70%;
+  height: 55%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 8%;
+  align-content: space-evenly;
+}
+
+.desk-group {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* 课桌 */
+.desk {
+  position: absolute;
+  top: 0;
+  left: 10%;
+  width: 80%;
+  height: 55%;
+  background: linear-gradient(180deg, #b8860b, #a0724e);
+  border-radius: 3px;
+  border: 1px solid #8b5a2b;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* 桌面高光 */
+.desk::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  height: 30%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15), transparent);
+  border-radius: 2px 2px 0 0;
+}
+
+/* 电脑（在桌子上） */
+.computer {
+  position: absolute;
+  top: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50%;
+  height: 40%;
+  background: linear-gradient(180deg, #555, #333);
+  border-radius: 2px;
+  border: 1px solid #666;
+}
+
+/* 电脑屏幕 */
+.computer::before {
+  content: '';
+  position: absolute;
+  top: 15%;
+  left: 15%;
+  width: 70%;
+  height: 55%;
+  background: linear-gradient(135deg, #4a90d9, #357abd);
+  border-radius: 1px;
+}
+
+/* 椅子（在桌子前面/下方） */
+.chair {
+  position: absolute;
+  bottom: 0;
+  left: 20%;
+  width: 60%;
+  height: 30%;
+  background: linear-gradient(180deg, #4a7ab5, #3a6aa5);
+  border-radius: 3px 3px 0 0;
+  border: 1px solid #2a5a85;
+}
+
+/* ========== 水杯（在讲台上） ========== */
+.water-cup {
+  position: absolute;
+  bottom: 14.5%;
+  left: 62%;
+  width: 2.5%;
+  height: 3.5%;
+  background: linear-gradient(180deg, #fff, #f0f0f0);
+  border-radius: 50% 50% 2px 2px;
+  border: 1px solid #ddd;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* 水杯红色图案 */
+.water-cup::after {
+  content: '';
+  position: absolute;
+  top: 20%;
+  left: 20%;
+  width: 60%;
+  height: 30%;
+  background: var(--accent-red);
+  border-radius: 50%;
+  opacity: 0.7;
+}
+
+/* ========== 热点标记 ========== */
+.hotspot {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  z-index: 20;
+}
+
+.hotspot-dot {
+  width: 12px;
+  height: 12px;
+  background: var(--accent-red);
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 6px rgba(196, 30, 58, 0.6);
+  z-index: 2;
+  transition: transform 0.2s ease;
+}
+
+.hotspot:hover .hotspot-dot {
+  transform: translate(-50%, -50%) scale(1.3);
+}
+
+/* 脉冲动画 */
+.hotspot-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(196, 30, 58, 0.4);
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+.hotspot-pulse:nth-child(2) {
+  animation-delay: 0.6s;
+}
+
+.hotspot-pulse:nth-child(3) {
+  animation-delay: 1.2s;
+}
+
+@keyframes pulse-ring {
+  0% {
+    width: 12px;
+    height: 12px;
+    opacity: 0.6;
+  }
+  100% {
+    width: 40px;
+    height: 40px;
+    opacity: 0;
+  }
+}
+
+/* 热点tooltip */
+.hotspot-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-panel);
+  color: var(--text-white);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+  pointer-events: none;
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
+}
+
+.hotspot-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--bg-panel);
+}
+
+.hotspot:hover .hotspot-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ========== 讲解面板 ========== */
+.panel-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.panel-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.info-panel {
+  position: fixed;
+  top: 0;
+  right: -420px;
+  width: 400px;
+  max-width: 90vw;
+  height: 100vh;
+  background: var(--bg-panel);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 101;
+  transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border-color);
+  box-shadow: -10px 0 40px rgba(0,0,0,0.3);
+}
+
+.info-panel.active {
+  right: 0;
+}
+
+/* 面板头部 */
+.panel-header {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.panel-header h2 {
+  font-size: 20px;
+  color: var(--accent-gold);
+  font-weight: 600;
+}
+
+.panel-close {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: var(--text-white);
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.panel-close:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* 面板内容 */
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+/* 物品图标区 */
+.item-icon-area {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.item-emoji {
+  font-size: 64px;
+  display: block;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+
+.item-type-tag {
+  display: inline-block;
+  padding: 3px 12px;
+  background: rgba(212, 168, 83, 0.15);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--accent-gold);
+}
+
+/* 讲解内容 */
+.content-section {
+  margin-bottom: 18px;
+}
+
+.content-section h3 {
+  font-size: 14px;
+  color: var(--accent-gold);
+  margin-bottom: 6px;
+  padding-left: 10px;
+  border-left: 3px solid var(--accent-gold);
+}
+
+.content-section p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.85);
+}
+
+/* AI问答区域 */
+.qa-section {
+  border-top: 1px solid var(--border-color);
+  padding-top: 16px;
+  margin-top: 8px;
+}
+
+.qa-section h3 {
+  font-size: 14px;
+  color: var(--accent-gold);
+  margin-bottom: 10px;
+}
+
+.qa-messages {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+
+.qa-message {
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.qa-message.user {
+  background: rgba(212, 168, 83, 0.15);
+  border: 1px solid rgba(212, 168, 83, 0.2);
+  margin-left: 20%;
+}
+
+.qa-message.ai {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  margin-right: 10%;
+}
+
+.qa-message .label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.qa-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.qa-input {
+  flex: 1;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  color: var(--text-white);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.qa-input::placeholder {
+  color: var(--text-muted);
+}
+
+.qa-input:focus {
+  border-color: var(--accent-gold);
+}
+
+.qa-send-btn {
+  padding: 10px 16px;
+  background: linear-gradient(135deg, var(--accent-gold), #c49843);
+  border: none;
+  border-radius: 8px;
+  color: #1a1a1a;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+}
+
+.qa-send-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(212, 168, 83, 0.3);
+}
+
+.qa-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 面板底部操作栏 */
+.panel-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.voice-btn {
+  flex: 1;
+  padding: 12px;
+  background: rgba(196, 30, 58, 0.15);
+  border: 1px solid rgba(196, 30, 58, 0.3);
+  border-radius: 8px;
+  color: var(--text-white);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.voice-btn:hover {
+  background: rgba(196, 30, 58, 0.25);
+}
+
+.voice-btn.playing {
+  background: rgba(196, 30, 58, 0.4);
+  animation: voice-pulse 1s ease-in-out infinite;
+}
+
+@keyframes voice-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(196, 30, 58, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(196, 30, 58, 0); }
+}
+
+/* ========== 底部提示 ========== */
+.footer-hint {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 12px;
+  background: linear-gradient(0deg, rgba(15,25,35,1) 0%, transparent 100%);
+  color: var(--text-muted);
+  font-size: 13px;
+  letter-spacing: 1px;
+  z-index: 5;
+  pointer-events: none;
+  animation: hint-fade 3s ease-in-out infinite;
+}
+
+@keyframes hint-fade {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ========== 装饰粒子 ========== */
+.particles {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: var(--accent-gold);
+  border-radius: 50%;
+  opacity: 0;
+  animation: float-particle linear infinite;
+}
+
+@keyframes float-particle {
+  0% {
+    opacity: 0;
+    transform: translateY(100vh) scale(0);
+  }
+  10% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10vh) scale(1);
+  }
+}
+
+/* ========== 滚动条美化 ========== */
+.panel-body::-webkit-scrollbar,
+.qa-messages::-webkit-scrollbar {
+  width: 4px;
+}
+
+.panel-body::-webkit-scrollbar-track,
+.qa-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.panel-body::-webkit-scrollbar-thumb,
+.qa-messages::-webkit-scrollbar-thumb {
+  background: rgba(212, 168, 83, 0.3);
+  border-radius: 2px;
+}
+
+/* ========== 响应式设计 ========== */
+
+/* 平板端 */
+@media (max-width: 1023px) {
+  .info-panel {
+    top: auto;
+    bottom: -100%;
+    right: 0;
+    left: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 65vh;
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+    border-radius: 16px 16px 0 0;
+    transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .info-panel.active {
+    bottom: 0;
+    right: 0;
+  }
+
+  .panel-header::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+  }
+}
+
+/* 手机端 */
+@media (max-width: 767px) {
+  .header {
+    padding: 14px 16px 8px;
+  }
+
+  .header h1 {
+    font-size: 16px;
+    letter-spacing: 1px;
+  }
+
+  .header .subtitle {
+    font-size: 11px;
+  }
+
+  .classroom-container {
+    padding: 10px;
+  }
+
+  .info-panel {
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .panel-footer {
+    flex-direction: column;
+  }
+
+  .hotspot {
+    width: 16px;
+    height: 16px;
+  }
+
+  .hotspot-dot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .hotspot-pulse {
+    width: 10px;
+    height: 10px;
+  }
+
+  .footer-hint {
+    font-size: 11px;
+    padding: 8px;
+  }
+}
+
+/* ========== 打字动画 ========== */
+.typing-indicator {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.typing-indicator span {
+  width: 6px;
+  height: 6px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  animation: typing-bounce 1.4s ease-in-out infinite;
+}
+
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+</style>
+</head>
+<body>
+
+<!-- 加载动画 -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">正在加载场景导览...</div>
+</div>
+
+<!-- 背景粒子 -->
+<div class="particles" id="particles"></div>
+
+<!-- 顶部标题栏 -->
+<header class="header">
+  <h1>武乡红色文旅 · 场景导览演示系统</h1>
+  <div class="subtitle">教室模拟场景</div>
+</header>
+
+<!-- 主内容区域 -->
+<div class="main-content">
+  <!-- 教室平面图容器 -->
+  <div class="classroom-container">
+    <div class="classroom" id="classroom">
+      <!-- 墙壁标签 -->
+      <div class="wall-label top">后 墙</div>
+      <div class="wall-label bottom">前 墙</div>
+      <div class="wall-label left">左 墙</div>
+      <div class="wall-label right">右 墙</div>
+
+      <!-- 窗户（后墙） -->
+      <div class="windows-group">
+        <div class="window"></div>
+        <div class="window"></div>
+        <div class="window"></div>
+      </div>
+
+      <!-- 空调（左墙） -->
+      <div class="air-conditioner"></div>
+
+      <!-- 课桌椅组 -->
+      <div class="desks-container">
+        <!-- 第1行 -->
+        <div class="desk-group">
+          <div class="desk"><div class="computer"></div></div>
+          <div class="chair"></div>
+        </div>
+        <div class="desk-group">
+          <div class="desk"><div class="computer"></div></div>
+          <div class="chair"></div>
+        </div>
+        <div class="desk-group">
+          <div class="desk"><div class="computer"></div></div>
+          <div class="chair"></div>
+        </div>
+        <!-- 第2行 -->
+        <div class="desk-group">
+          <div class="desk"><div class="computer"></div></div>
+          <div class="chair"></div>
+        </div>
+        <div class="desk-group">
+          <div class="desk"><div class="computer"></div></div>
+          <div class="chair"></div>
+        </div>
+        <div class="desk-group">
+          <div class="desk"><div class="computer"></div></div>
+          <div class="chair"></div>
+        </div>
+      </div>
+
+      <!-- 黑板（前墙） -->
+      <div class="blackboard"></div>
+
+      <!-- 讲台 -->
+      <div class="podium"></div>
+
+      <!-- 水杯（在讲台上） -->
+      <div class="water-cup"></div>
+
+      <!-- 热点标记将由JS动态生成 -->
+    </div>
+  </div>
+</div>
+
+<!-- 底部提示 -->
+<div class="footer-hint">点击热点标记，了解每个物品的故事</div>
+
+<!-- 面板遮罩 -->
+<div class="panel-overlay" id="panelOverlay"></div>
+
+<!-- 讲解面板 -->
+<div class="info-panel" id="infoPanel">
+  <div class="panel-header">
+    <h2 id="panelTitle">物品名称</h2>
+    <button class="panel-close" id="panelClose" aria-label="关闭面板">&times;</button>
+  </div>
+  <div class="panel-body" id="panelBody">
+    <!-- 物品图标区 -->
+    <div class="item-icon-area">
+      <span class="item-emoji" id="itemEmoji"></span>
+      <span class="item-type-tag" id="itemType"></span>
+    </div>
+    <!-- 讲解内容 -->
+    <div class="content-section">
+      <h3>外观描述</h3>
+      <p id="descAppearance"></p>
+    </div>
+    <div class="content-section">
+      <h3>功能用途</h3>
+      <p id="descFunction"></p>
+    </div>
+    <div class="content-section">
+      <h3>趣味知识</h3>
+      <p id="descFunFact"></p>
+    </div>
+    <!-- AI问答 -->
+    <div class="qa-section">
+      <h3>继续提问</h3>
+      <div class="qa-messages" id="qaMessages"></div>
+      <div class="qa-input-row">
+        <input type="text" class="qa-input" id="qaInput" placeholder="输入你想了解的问题...">
+        <button class="qa-send-btn" id="qaSendBtn">发送</button>
+      </div>
+    </div>
+  </div>
+  <div class="panel-footer">
+    <button class="voice-btn" id="voiceBtn">
+      <span>&#x1f50a;</span>
+      <span id="voiceBtnText">语音朗读</span>
+    </button>
+  </div>
+</div>
+
+<script>
+// ========== 物品数据 ==========
+const itemsData = [
+  {
+    id: 'computer',
+    name: '电脑',
+    emoji: '\u{1F4BB}',
+    type: '电子设备',
+    appearance: '银灰色笔记本电脑，15.6英寸高清屏幕，金属机身质感十足，键盘区带有背光设计，整体轻薄便携，是现代课堂学习的好帮手。',
+    function: '用于学习、编程、上网查资料、观看教学视频，是信息时代不可或缺的学习工具。在课堂上，同学们可以通过电脑进行在线学习和协作。',
+    funFact: '世界上第一台通用电子计算机ENIAC于1946年诞生，重达27吨，占地170平方米，每秒只能进行5000次加法运算。而今天你手中的笔记本电脑，性能已经是ENIAC的数百万倍！',
+    // 热点位置（百分比，相对于教室容器）
+    hotspotPos: { top: '30%', left: '30%' },
+    // 本地知识库问答
+    localQA: {
+      '电脑是谁发明的': '现代计算机的奠基人是英国数学家艾伦·图灵，他提出了"图灵机"的概念。而第一台通用电子计算机ENIAC则是由美国宾夕法尼亚大学的约翰·莫奇利和J·普雷斯珀·埃克特于1946年研制成功的。',
+      '电脑有哪些种类': '电脑主要分为台式机、笔记本电脑、平板电脑和智能手机等。在教室里常见的是笔记本电脑，它兼顾了性能和便携性。',
+      '电脑对学习有什么帮助': '电脑可以帮助我们快速查找资料、在线学习、编程实践、制作演示文稿等。在信息时代，掌握电脑技能是非常重要的基本能力。'
+    }
+  },
+  {
+    id: 'water-cup',
+    name: '水杯',
+    emoji: '\u{1F964}',
+    type: '生活用品',
+    appearance: '白色不锈钢保温杯，杯身印有红色花纹图案，杯盖设计为旋拧式密封盖，容量约500毫升，是老师讲课时不可或缺的贴心伙伴。',
+    function: '用于喝水、保持水温。保温杯利用真空隔热层，可以让热水保温数小时，也可以保持冷饮的低温，四季皆宜。',
+    funFact: '保温杯的原理来自苏格兰物理学家詹姆斯·杜瓦于1892年发明的"杜瓦瓶"。他原本是为了储存液化气体而设计的，后来才被人们改良成了日常使用的保温杯。',
+    hotspotPos: { top: '84%', left: '62%' },
+    localQA: {
+      '保温杯能保温多久': '一般来说，质量好的保温杯可以保温6-12小时。真空隔热层越厚、密封性越好，保温效果就越持久。',
+      '为什么保温杯不能装碳酸饮料': '碳酸饮料中含有大量二氧化碳气体，在保温杯的密闭环境中，气体会不断产生压力，可能导致杯盖弹开或杯体破裂，存在安全隐患。',
+      '每天应该喝多少水': '成年人每天建议饮水1500-1700毫升，大约相当于普通保温杯容量的3-4杯。在上课时保持充足的水分摄入，有助于集中注意力和保持良好的学习状态。'
+    }
+  },
+  {
+    id: 'chair',
+    name: '椅子',
+    emoji: '\u{1FA91}',
+    type: '家具',
+    appearance: '蓝色塑料椅子，带有可调节高度的金属支架，椅背弧形设计贴合人体脊柱曲线，坐垫带有轻微纹理防滑，简约而实用。',
+    function: '供学生坐立使用，是课堂学习的基本 seating 设施。可调节高度的设计适应不同身高的学生，确保良好的坐姿。',
+    funFact: '人体工学椅的概念最早由挪威设计师彼得·奥普斯维克在1976年提出。他认为人类天生不适合久坐，因此设计了可以动态调节的椅子，鼓励坐者变换姿势。',
+    hotspotPos: { top: '52%', left: '30%' },
+    localQA: {
+      '坐姿不正确有什么危害': '长期坐姿不正确可能导致脊柱侧弯、颈椎病、腰椎间盘突出等问题。正确的坐姿应该是：双脚平放地面，膝盖弯曲90度，背部挺直贴靠椅背。',
+      '为什么椅子要有靠背': '椅背可以支撑脊柱，减轻背部肌肉的负担。没有靠背的凳子让人容易疲劳，而带有合适靠背的椅子能让人更舒适地久坐。',
+      '古代人坐什么': '中国古代人在唐宋之前主要使用"席地而坐"的方式，坐在编织的席子上。后来才逐渐发展出了椅子、凳子等高坐具。'
+    }
+  },
+  {
+    id: 'desk',
+    name: '课桌',
+    emoji: '\u{1F5C4}\u{FE0F}',
+    type: '家具',
+    appearance: '棕色木质课桌，桌面平整光滑，带有凹槽可以放置笔和尺子，下方设有抽屉可以存放书本和文具，桌腿稳固结实。',
+    function: '用于写字、放置书本和学习用品。课桌是学生每天接触时间最长的家具，一个整洁的课桌有助于提高学习效率。',
+    funFact: '古代中国学生使用的是"案几"，一种低矮的小桌子，学生需要跪坐在地上使用。直到宋代以后，高脚桌椅才逐渐普及开来，改变了人们的学习和生活方式。',
+    hotspotPos: { top: '30%', left: '30%' },
+    localQA: {
+      '课桌的标准尺寸是多少': '根据国家标准，中小学课桌的高度一般在60-76厘米之间，根据不同年级学生的身高进行调节。桌面宽度通常为60厘米，深度为40厘米。',
+      '如何保持课桌整洁': '建议定期整理抽屉，将不需要的物品带回家；书本按大小顺序摆放；文具放入笔袋中；每天放学后清理桌面垃圾。',
+      '课桌椅的高度怎么调': '正确的桌椅高度应该是：双脚能平放在地面上，手臂自然放在桌面上时肘部弯曲约90度。如果桌椅不合适，可以请老师帮忙调节。'
+    }
+  },
+  {
+    id: 'air-conditioner',
+    name: '空调',
+    emoji: '\u{1F321}\u{FE0F}',
+    type: '电器设备',
+    appearance: '白色壁挂式空调，流线型机身设计，下方带有数码温度显示屏和导风板，运行时几乎静音，是教室里调节温度的"神器"。',
+    function: '调节室内温度，夏季制冷、冬季制热，还可以除湿和净化空气。适宜的温度环境有助于学生集中注意力，提高学习效率。',
+    funFact: '空调是由美国工程师威利斯·开利于1902年发明的。他最初是为了解决印刷厂的湿度问题而设计的，没想到后来成为了改变人类生活方式的重要发明。开利也因此被称为"空调之父"。',
+    hotspotPos: { top: '34%', left: '5%' },
+    localQA: {
+      '空调多少度最合适': '夏季建议将空调温度设定在26°C左右，既节能又舒适。冬季制热时建议设定在20°C左右。室内外温差不宜过大，一般不超过5-7°C。',
+      '空调为什么叫空调': '"空调"是"空气调节器"的简称，英文为Air Conditioner（简称AC）。它不仅能调节温度，还能控制湿度、净化空气、调节气流速度等。',
+      '一直吹空调对身体有害吗': '长期待在空调房间可能导致"空调病"，症状包括头晕、头痛、乏力等。建议每隔2小时开窗通风15分钟，适当增加户外活动。'
+    }
+  },
+  {
+    id: 'blackboard',
+    name: '黑板',
+    emoji: '\u{1F4DD}',
+    type: '教学设备',
+    appearance: '深绿色黑板，表面略带磨砂质感，边框为木质材料，上方设有粉笔槽。黑板上残留着白色和彩色粉笔字迹，充满了知识的气息。',
+    function: '用于教学板书，老师可以在上面书写公式、绘制图表、讲解重点知识。黑板是课堂教学中最传统也最重要的教学工具之一。',
+    funFact: '在19世纪之前，学生们使用的是各自的小石板来写字。直到1801年，苏格兰地理学家詹姆斯·皮尔森才发明了在墙上用黑板漆涂刷制作大型黑板的方法，从此改变了教学方式。',
+    hotspotPos: { top: '90%', left: '50%' },
+    localQA: {
+      '黑板为什么是绿色的': '早期的黑板确实是黑色的，使用的是深色石板。后来人们发现绿色黑板对眼睛更友好，反光更少，而且绿色能让人感到放松，有助于集中注意力。',
+      '粉笔是用什么做的': '传统的粉笔主要由碳酸钙（石灰石）制成。彩色粉笔则添加了各种颜料。现在还有无尘粉笔，使用更环保的材料制成，减少了粉笔灰对健康的影响。',
+      '现在还用黑板吗': '虽然现在很多教室使用了白板和电子屏幕，但黑板仍然在很多学校广泛使用。研究表明，手写板书比电子展示更有利于学生记忆和理解知识。'
+    }
+  },
+  {
+    id: 'window',
+    name: '窗户',
+    emoji: '\u{1FA9F}',
+    type: '建筑构件',
+    appearance: '铝合金推拉窗，双层中空玻璃设计，窗框为银白色，玻璃通透明亮。窗外可以看到校园的绿树和蓝天，自然光线柔和地照进教室。',
+    function: '采光和通风是窗户最重要的两大功能。充足的自然光线有助于保护视力，而良好的通风则能保持室内空气清新，创造舒适的学习环境。',
+    funFact: '古罗马人是最早使用玻璃窗的文明。公元1世纪左右，罗马人开始在宫殿和公共浴场中使用玻璃窗。不过那时的玻璃窗并不透明，而是半透明的，直到中世纪才出现了更清晰的平板玻璃。',
+    hotspotPos: { top: '7%', left: '50%' },
+    localQA: {
+      '为什么教室要朝南': '朝南的教室可以获得更多的自然光照，尤其是在冬季，阳光可以深入室内，既明亮又温暖。同时，朝南的方向可以避免北风的直接吹入。',
+      '双层玻璃有什么好处': '双层中空玻璃中间有一层空气隔热层，可以有效隔热保温，减少能量损失。夏天阻挡室外热气，冬天保持室内温暖，还能起到一定的隔音效果。',
+      '窗户多久清洁一次': '教室窗户建议每周至少清洁一次，保持玻璃通透。良好的采光条件有助于保护学生视力，减少眼睛疲劳。'
+    }
+  },
+  {
+    id: 'podium',
+    name: '讲台',
+    emoji: '\u{1F3A4}',
+    type: '教学设备',
+    appearance: '木质讲台，棕色漆面，台面略带倾斜方便放置教案和课本，侧面设有麦克风支架和电源插座，前方带有学校标志的铭牌。',
+    function: '老师授课时使用的平台，可以放置教案、课本、笔记本电脑等教学用品。讲台上的麦克风可以让老师的声音传遍整个教室，确保每位同学都能听清。',
+    funFact: '在中国古代，讲台被称为"讲席"，是学者讲学的地方。宋代的书院制度中，"讲席"是非常重要的学术活动，著名理学家朱熹就曾在白鹿洞书院设"讲席"讲学，影响深远。',
+    hotspotPos: { top: '82%', left: '50%' },
+    localQA: {
+      '讲台上一般放什么': '讲台上通常放置教案、课本、粉笔、黑板擦、麦克风、笔记本电脑、投影仪遥控器等教学用品。有些讲台还集成了多媒体控制面板。',
+      '为什么老师要站在讲台上': '讲台的高度设计让老师站立时略高于坐着的同学，这样老师可以看到全班同学的状态，同学也能清楚地看到老师。同时，站在讲台上也体现了对教学活动的重视。',
+      '现代讲台有什么新功能': '现代多媒体讲台集成了电脑、投影仪控制、音响系统、电子白板等功能，有些还配备了录播系统，可以将课堂教学过程录制下来供学生课后复习。'
+    }
+  }
+];
+
+// ========== 全局变量 ==========
+let currentItem = null;          // 当前选中的物品
+let isSpeaking = false;          // 是否正在朗读
+let qaHistory = [];              // 问答历史
+
+// ========== 页面初始化 ==========
+document.addEventListener('DOMContentLoaded', () => {
+  // 创建背景粒子
+  createParticles();
+
+  // 创建热点标记
+  createHotspots();
+
+  // 绑定面板关闭事件
+  document.getElementById('panelClose').addEventListener('click', closePanel);
+  document.getElementById('panelOverlay').addEventListener('click', closePanel);
+
+  // 绑定语音朗读按钮
+  document.getElementById('voiceBtn').addEventListener('click', toggleVoice);
+
+  // 绑定AI问答发送
+  document.getElementById('qaSendBtn').addEventListener('click', sendQuestion);
+  document.getElementById('qaInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendQuestion();
+  });
+
+  // 隐藏加载动画
+  setTimeout(() => {
+    document.getElementById('loadingOverlay').classList.add('hidden');
+  }, 1500);
+});
+
+// ========== 创建背景粒子 ==========
+function createParticles() {
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 20; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.animationDuration = (8 + Math.random() * 12) + 's';
+    particle.style.animationDelay = Math.random() * 10 + 's';
+    particle.style.width = (1 + Math.random() * 2) + 'px';
+    particle.style.height = particle.style.width;
+    container.appendChild(particle);
+  }
+}
+
+// ========== 创建热点标记 ==========
+function createHotspots() {
+  const classroom = document.getElementById('classroom');
+  itemsData.forEach(item => {
+    const hotspot = document.createElement('div');
+    hotspot.className = 'hotspot';
+    hotspot.style.top = item.hotspotPos.top;
+    hotspot.style.left = item.hotspotPos.left;
+    hotspot.setAttribute('data-id', item.id);
+
+    // 脉冲动画圈
+    for (let i = 0; i < 3; i++) {
+      const pulse = document.createElement('div');
+      pulse.className = 'hotspot-pulse';
+      hotspot.appendChild(pulse);
+    }
+
+    // 中心红点
+    const dot = document.createElement('div');
+    dot.className = 'hotspot-dot';
+    hotspot.appendChild(dot);
+
+    // Tooltip
+    const tooltip = document.createElement('div');
+    tooltip.className = 'hotspot-tooltip';
+    tooltip.textContent = item.name;
+    hotspot.appendChild(tooltip);
+
+    // 点击事件
+    hotspot.addEventListener('click', () => openPanel(item));
+
+    classroom.appendChild(hotspot);
+  });
+}
+
+// ========== 打开讲解面板 ==========
+function openPanel(item) {
+  currentItem = item;
+  qaHistory = [];
+
+  // 停止之前的朗读
+  stopVoice();
+
+  // 更新面板内容
+  document.getElementById('panelTitle').textContent = item.name;
+  document.getElementById('itemEmoji').textContent = item.emoji;
+  document.getElementById('itemType').textContent = item.type;
+  document.getElementById('descAppearance').textContent = item.appearance;
+  document.getElementById('descFunction').textContent = item.function;
+  document.getElementById('descFunFact').textContent = item.funFact;
+
+  // 清空问答区域
+  document.getElementById('qaMessages').innerHTML = '';
+  document.getElementById('qaInput').value = '';
+
+  // 重置语音按钮
+  const voiceBtn = document.getElementById('voiceBtn');
+  voiceBtn.classList.remove('playing');
+  document.getElementById('voiceBtnText').textContent = '语音朗读';
+
+  // 显示面板
+  document.getElementById('panelOverlay').classList.add('active');
+  document.getElementById('infoPanel').classList.add('active');
+}
+
+// ========== 关闭讲解面板 ==========
+function closePanel() {
+  stopVoice();
+  document.getElementById('panelOverlay').classList.remove('active');
+  document.getElementById('infoPanel').classList.remove('active');
+  currentItem = null;
+}
+
+// ========== 语音朗读功能 ==========
+function toggleVoice() {
+  if (!currentItem) return;
+
+  if (isSpeaking) {
+    stopVoice();
+  } else {
+    startVoice();
+  }
+}
+
+function startVoice() {
+  if (!currentItem) return;
+  if (!('speechSynthesis' in window)) {
+    alert('您的浏览器不支持语音朗读功能');
+    return;
+  }
+
+  // 停止之前的朗读
+  window.speechSynthesis.cancel();
+
+  // 组合讲解文本
+  const text = `${currentItem.name}。${currentItem.appearance}。${currentItem.function}。${currentItem.funFact}`;
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'zh-CN';
+  utterance.rate = 0.9;
+  utterance.pitch = 1;
+
+  // 尝试选择中文语音
+  const voices = window.speechSynthesis.getVoices();
+  const zhVoice = voices.find(v => v.lang.startsWith('zh'));
+  if (zhVoice) utterance.voice = zhVoice;
+
+  utterance.onstart = () => {
+    isSpeaking = true;
+    const voiceBtn = document.getElementById('voiceBtn');
+    voiceBtn.classList.add('playing');
+    document.getElementById('voiceBtnText').textContent = '停止朗读';
+  };
+
+  utterance.onend = () => {
+    isSpeaking = false;
+    const voiceBtn = document.getElementById('voiceBtn');
+    voiceBtn.classList.remove('playing');
+    document.getElementById('voiceBtnText').textContent = '语音朗读';
+  };
+
+  utterance.onerror = () => {
+    isSpeaking = false;
+    const voiceBtn = document.getElementById('voiceBtn');
+    voiceBtn.classList.remove('playing');
+    document.getElementById('voiceBtnText').textContent = '语音朗读';
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+
+function stopVoice() {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+  isSpeaking = false;
+  const voiceBtn = document.getElementById('voiceBtn');
+  if (voiceBtn) {
+    voiceBtn.classList.remove('playing');
+    document.getElementById('voiceBtnText').textContent = '语音朗读';
+  }
+}
+
+// 确保语音列表加载
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.onvoiceschanged = () => {
+    window.speechSynthesis.getVoices();
+  };
+}
+
+// ========== AI问答功能 ==========
+async function sendQuestion() {
+  const input = document.getElementById('qaInput');
+  const question = input.value.trim();
+  if (!question || !currentItem) return;
+
+  // 添加用户消息
+  addQAMessage('user', question);
+  input.value = '';
+
+  // 禁用发送按钮
+  const sendBtn = document.getElementById('qaSendBtn');
+  sendBtn.disabled = true;
+
+  // 显示加载指示
+  const loadingId = addLoadingIndicator();
+
+  try {
+    // 先尝试本地知识库匹配
+    const localAnswer = matchLocalQA(currentItem, question);
+    if (localAnswer) {
+      removeLoadingIndicator(loadingId);
+      addQAMessage('ai', localAnswer);
+    } else {
+      // 尝试调用AI API
+      const aiAnswer = await callAIAPI(currentItem, question);
+      removeLoadingIndicator(loadingId);
+      addQAMessage('ai', aiAnswer);
+    }
+  } catch (error) {
+    removeLoadingIndicator(loadingId);
+    // API失败时使用通用回复
+    addQAMessage('ai', getFallbackAnswer(currentItem, question));
+  }
+
+  sendBtn.disabled = false;
+}
+
+// 本地知识库匹配
+function matchLocalQA(item, question) {
+  if (!item.localQA) return null;
+
+  // 精确匹配
+  for (const [key, value] of Object.entries(item.localQA)) {
+    if (question.includes(key) || key.includes(question)) {
+      return value;
+    }
+  }
+
+  // 关键词匹配
+  const keywords = question.replace(/[？?！!。，,、]/g, '').split('');
+  for (const [key, value] of Object.entries(item.localQA)) {
+    const keyChars = key.replace(/[？?！!。，,、]/g, '').split('');
+    const matchCount = keyChars.filter(c => keywords.includes(c)).length;
+    if (matchCount >= Math.ceil(keyChars.length * 0.5)) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+// 调用AI API
+async function callAIAPI(item, question) {
+  const systemPrompt = `你是一个场景导览AI助手，正在为用户讲解教室里的物品。当前物品是"${item.name}"（${item.type}）。
+外观：${item.appearance}
+功能：${item.function}
+趣味知识：${item.funFact}
+
+请用生动有趣的语言回答用户的问题。回答要简洁明了，控制在100字以内。如果问题与当前物品无关，请巧妙地引导回当前物品的话题。`;
+
+  // 构建对话历史（最近3轮）
+  const messages = [
+    { role: 'system', content: systemPrompt }
+  ];
+
+  // 添加历史对话
+  const recentHistory = qaHistory.slice(-6);
+  recentHistory.forEach(msg => {
+    messages.push(msg);
+  });
+
+  // 添加当前问题
+  messages.push({ role: 'user', content: question });
+
+  // 记录到历史
+  qaHistory.push({ role: 'user', content: question });
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000); // 8秒超时
+
+  try {
+    const response = await fetch('https://api.freegpt4.ddns.net/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: messages,
+        max_tokens: 200,
+        temperature: 0.7
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`API返回错误: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const answer = data.choices?.[0]?.message?.content || getFallbackAnswer(item, question);
+
+    // 记录AI回复到历史
+    qaHistory.push({ role: 'assistant', content: answer });
+
+    return answer;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+}
+
+// 后备回答
+function getFallbackAnswer(item, question) {
+  const fallbacks = [
+    `关于${item.name}的这个问题很有趣！${item.funFact}`,
+    `这是一个很好的问题。${item.name}在教室中扮演着重要的角色。${item.function}`,
+    `让我想想...关于${item.name}，${item.appearance}。如果你想了解更多，可以试着问一些更具体的问题哦！`
+  ];
+  return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+}
+
+// 添加问答消息
+function addQAMessage(role, content) {
+  const container = document.getElementById('qaMessages');
+  const msg = document.createElement('div');
+  msg.className = `qa-message ${role}`;
+
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.textContent = role === 'user' ? '你' : 'AI助手';
+
+  const text = document.createElement('div');
+  text.textContent = content;
+
+  msg.appendChild(label);
+  msg.appendChild(text);
+  container.appendChild(msg);
+
+  // 滚动到底部
+  container.scrollTop = container.scrollHeight;
+}
+
+// 添加加载指示器
+function addLoadingIndicator() {
+  const container = document.getElementById('qaMessages');
+  const msg = document.createElement('div');
+  msg.className = 'qa-message ai';
+  msg.id = 'loading-indicator';
+
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.textContent = 'AI助手';
+
+  const typing = document.createElement('div');
+  typing.className = 'typing-indicator';
+  typing.innerHTML = '<span></span><span></span><span></span>';
+
+  msg.appendChild(label);
+  msg.appendChild(typing);
+  container.appendChild(msg);
+  container.scrollTop = container.scrollHeight;
+
+  return 'loading-indicator';
+}
+
+// 移除加载指示器
+function removeLoadingIndicator(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+// ========== 键盘快捷键 ==========
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closePanel();
+  }
+});
+</script>
+
+</body>
+</html>

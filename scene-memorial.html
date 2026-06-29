@@ -1,0 +1,3517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>八路军太行纪念馆 · 精品展厅3D漫游</title>
+    <style>
+        /* ========== 全局重置与变量 ========== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0a0a0a;
+            --red-primary: #c41e3a;
+            --red-dark: #9a1830;
+            --gold-accent: #d4a853;
+            --gold-light: #e8c87a;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255,255,255,0.7);
+            --text-muted: rgba(255,255,255,0.45);
+            --border-subtle: rgba(255,255,255,0.08);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+        }
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            touch-action: none;
+        }
+        a { color: inherit; text-decoration: none; }
+
+        /* ========== 加载进度条 ========== */
+        .loading-bar-container {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: 4px; background: rgba(255,255,255,0.05);
+            z-index: 100000;
+        }
+        .loading-bar {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, var(--red-primary), var(--gold-accent));
+            transition: width 0.3s ease;
+        }
+        .loading-overlay {
+            position: fixed; inset: 0;
+            background: var(--bg-primary);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 99999;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        .loading-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .loader-ring {
+            width: 50px; height: 50px;
+            border: 3px solid rgba(196,30,58,0.15);
+            border-top-color: var(--red-primary);
+            border-right-color: var(--gold-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        .loader-text { font-size: 14px; color: var(--text-muted); letter-spacing: 3px; }
+        .loader-percent { font-size: 28px; font-weight: 700; color: var(--gold-accent); margin-bottom: 8px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ========== 开始界面 ========== */
+        .start-overlay {
+            position: fixed; inset: 0;
+            background: linear-gradient(135deg, rgba(10,10,10,0.97), rgba(40,5,5,0.97));
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 9000;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        .start-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .start-title {
+            font-size: 32px; font-weight: 800;
+            background: linear-gradient(135deg, var(--red-primary), var(--gold-accent));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+        .start-subtitle {
+            font-size: 16px; color: var(--text-muted);
+            margin-bottom: 40px;
+            letter-spacing: 4px;
+        }
+        .start-controls {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: var(--radius-md);
+            padding: 24px 36px;
+            margin-bottom: 36px;
+            text-align: center;
+        }
+        .start-controls .control-row {
+            font-size: 14px; color: var(--text-secondary);
+            margin-bottom: 8px;
+            line-height: 1.8;
+        }
+        .start-controls .control-row:last-child { margin-bottom: 0; }
+        .start-controls .key {
+            display: inline-block;
+            padding: 2px 10px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gold-light);
+            margin: 0 2px;
+        }
+        .start-btn {
+            padding: 16px 60px;
+            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            border: none; border-radius: var(--radius-md);
+            color: #fff; font-size: 18px; font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 3px;
+            transition: transform 0.2s, box-shadow 0.3s;
+            box-shadow: 0 4px 24px rgba(196,30,58,0.3);
+        }
+        .start-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 32px rgba(196,30,58,0.5); }
+        .start-btn:active { transform: scale(0.97); }
+        .start-mobile-controls { display: none; }
+        .start-desktop-controls { display: block; }
+
+        /* ========== 3D画布容器 ========== */
+        #scene-container {
+            width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0;
+        }
+        #scene-container canvas { display: block; }
+
+        /* ========== 准星 ========== */
+        .crosshair {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 800;
+            pointer-events: none;
+            display: none;
+        }
+        .crosshair.visible { display: block; }
+        .crosshair::before, .crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(255,255,255,0.7);
+            border-radius: 1px;
+        }
+        .crosshair::before {
+            width: 2px; height: 20px;
+            top: -10px; left: -1px;
+        }
+        .crosshair::after {
+            width: 20px; height: 2px;
+            top: -1px; left: -10px;
+        }
+        .crosshair.active::before, .crosshair.active::after {
+            background: var(--gold-accent);
+        }
+
+        /* ========== 物品名称标签（准星下方） ========== */
+        .item-label {
+            position: fixed;
+            top: calc(50% + 24px);
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 16px;
+            background: rgba(10,10,10,0.85);
+            border: 1px solid var(--gold-accent);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            color: var(--gold-light);
+            pointer-events: none;
+            z-index: 800;
+            opacity: 0;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+            backdrop-filter: blur(8px);
+        }
+        .item-label.visible { opacity: 1; }
+
+        /* ========== 交互提示 ========== */
+        .interact-hint {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 24px;
+            background: rgba(10,10,10,0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            pointer-events: none;
+            z-index: 800;
+            opacity: 0;
+            transition: opacity 0.25s;
+            backdrop-filter: blur(8px);
+        }
+        .interact-hint.visible { opacity: 1; }
+        .interact-hint .key-hint {
+            display: inline-block;
+            padding: 1px 8px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 3px;
+            font-weight: 600;
+            color: var(--gold-light);
+            margin: 0 3px;
+        }
+
+        /* ========== 自动讲解条 ========== */
+        .narration-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 600px;
+            width: 90%;
+            padding: 12px 20px;
+            background: rgba(10,10,10,0.85);
+            border: 1px solid rgba(196,30,58,0.3);
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            pointer-events: none;
+            z-index: 800;
+            opacity: 0;
+            transition: opacity 0.3s;
+            backdrop-filter: blur(12px);
+        }
+        .narration-bar.visible { opacity: 1; }
+        .narration-bar .nar-label {
+            font-size: 11px;
+            color: var(--red-primary);
+            font-weight: 600;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+
+        /* ========== 小地图 ========== */
+        .minimap-container {
+            position: fixed;
+            top: 16px; left: 16px;
+            z-index: 800;
+            pointer-events: none;
+            display: none;
+        }
+        .minimap-container.visible { display: block; }
+        .minimap-border {
+            width: 160px; height: 107px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            background: rgba(10,10,10,0.7);
+            backdrop-filter: blur(8px);
+        }
+        #minimapCanvas { display: block; }
+
+        /* ========== HUD 右上角提示 ========== */
+        .hud-esc {
+            position: fixed;
+            top: 16px; right: 16px;
+            padding: 6px 14px;
+            background: rgba(10,10,10,0.6);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            color: var(--text-muted);
+            z-index: 800;
+            pointer-events: none;
+            display: none;
+            backdrop-filter: blur(8px);
+        }
+        .hud-esc.visible { display: block; }
+
+        /* ========== 暂停菜单 ========== */
+        .pause-overlay {
+            position: fixed; inset: 0;
+            background: rgba(10,10,10,0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 8500;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .pause-overlay.visible { opacity: 1; visibility: visible; }
+        .pause-title {
+            font-size: 28px; font-weight: 700;
+            margin-bottom: 32px;
+            color: var(--text-primary);
+        }
+        .pause-btn {
+            display: block;
+            width: 240px;
+            padding: 14px 0;
+            margin-bottom: 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 15px;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .pause-btn:hover { background: rgba(196,30,58,0.2); border-color: var(--red-primary); }
+        .pause-btn.primary {
+            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            border: none;
+            font-weight: 600;
+        }
+        .pause-btn.primary:hover { opacity: 0.9; }
+        .pause-controls-info {
+            margin-top: 24px;
+            padding: 16px 24px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 2;
+            text-align: center;
+        }
+
+        /* ========== 讲解面板 ========== */
+        .info-panel {
+            position: fixed; top: 0; right: 0;
+            width: 400px; height: 100vh;
+            background: rgba(10,10,10,0.95);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-left: 1px solid rgba(212,168,83,0.2);
+            z-index: 2000;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .info-panel.open { transform: translateX(0); }
+
+        .panel-header {
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex; align-items: center; justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .panel-header h3 {
+            font-size: 20px; font-weight: 700;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .panel-close {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .panel-close:hover { background: rgba(196,30,58,0.3); }
+
+        .panel-body {
+            padding: 20px 24px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .panel-section { margin-bottom: 20px; }
+        .panel-section-title {
+            font-size: 11px; font-weight: 600;
+            color: var(--red-primary);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .panel-section-title::before {
+            content: ''; width: 12px; height: 2px;
+            background: var(--red-primary);
+        }
+        .panel-section p {
+            font-size: 14px; line-height: 1.8;
+            color: var(--text-secondary);
+        }
+
+        .panel-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            background: rgba(196,30,58,0.15);
+            border: 1px solid rgba(196,30,58,0.3);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--red-primary);
+            margin-bottom: 16px;
+        }
+
+        /* 语音朗读按钮 */
+        .btn-speak {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            border-radius: var(--radius-sm);
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.3s, transform 0.2s;
+            width: 100%;
+            justify-content: center;
+        }
+        .btn-speak:hover { opacity: 0.9; }
+        .btn-speak:active { transform: scale(0.98); }
+        .btn-speak.speaking { animation: pulse-speak 1.5s infinite; }
+        @keyframes pulse-speak {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(196,30,58,0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(196,30,58,0); }
+        }
+
+        /* AI问答区域 */
+        .panel-ai {
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 16px 24px 20px;
+            flex-shrink: 0;
+        }
+        .panel-ai-title {
+            font-size: 12px; color: var(--text-muted);
+            margin-bottom: 10px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .ai-chat-messages {
+            max-height: 150px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+        .ai-chat-messages::-webkit-scrollbar { width: 4px; }
+        .ai-chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+        .ai-msg {
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+            max-width: 95%;
+        }
+        .ai-msg.bot {
+            background: rgba(255,255,255,0.04);
+            color: var(--text-secondary);
+        }
+        .ai-msg.user {
+            background: rgba(196,30,58,0.15);
+            color: var(--text-primary);
+            margin-left: auto;
+            text-align: right;
+        }
+        .ai-input-row { display: flex; gap: 8px; }
+        .ai-input-row input {
+            flex: 1;
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .ai-input-row input:focus { border-color: var(--gold-accent); }
+        .ai-input-row button {
+            padding: 8px 16px;
+            background: var(--red-primary);
+            border-radius: var(--radius-sm);
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            border: none;
+            white-space: nowrap;
+            transition: background 0.3s;
+        }
+        .ai-input-row button:hover { background: var(--red-dark); }
+
+        /* ========== 虚拟摇杆（手机端） ========== */
+        .joystick-zone {
+            position: fixed;
+            bottom: 0;
+            width: 50%;
+            height: 40%;
+            z-index: 750;
+            display: none;
+        }
+        .joystick-zone.left { left: 0; }
+        .joystick-zone.right { right: 0; }
+        .joystick-base {
+            position: absolute;
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            border: 2px solid rgba(255,255,255,0.12);
+            display: none;
+            pointer-events: none;
+        }
+        .joystick-thumb {
+            position: absolute;
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            display: none;
+            pointer-events: none;
+        }
+
+        /* 手机端交互按钮 */
+        .mobile-interact-btn {
+            position: fixed;
+            bottom: 50%;
+            right: 20px;
+            transform: translateY(50%);
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            background: rgba(196,30,58,0.6);
+            border: 2px solid var(--red-primary);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 800;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+        }
+        .mobile-interact-btn.visible { display: flex; }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 768px) {
+            .info-panel { width: 100%; }
+            .start-title { font-size: 22px; }
+            .start-subtitle { font-size: 13px; margin-bottom: 24px; }
+            .start-controls { padding: 16px 24px; margin-bottom: 24px; }
+            .start-controls .control-row { font-size: 12px; }
+            .start-btn { padding: 14px 40px; font-size: 16px; }
+            .minimap-border { width: 120px; height: 80px; }
+        }
+
+        /* 检测触摸设备 */
+        @media (pointer: coarse) {
+            .start-mobile-controls { display: block; }
+            .start-desktop-controls { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ========== 加载界面 ========== -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loader-ring"></div>
+    <div class="loader-percent" id="loaderPercent">0%</div>
+    <div class="loader-text">正在加载精品展厅...</div>
+</div>
+<div class="loading-bar-container">
+    <div class="loading-bar" id="loadingBar"></div>
+</div>
+
+<!-- ========== 开始界面 ========== -->
+<div class="start-overlay hidden" id="startOverlay">
+    <div class="start-title">八路军太行纪念馆<br>精品展厅3D漫游</div>
+    <div class="start-subtitle">沉浸式红色文化体验</div>
+    <div class="start-controls">
+        <div class="start-desktop-controls">
+            <div class="control-row"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> 移动 &nbsp;|&nbsp; 鼠标 环顾</div>
+            <div class="control-row"><span class="key">E</span> 查看展品详情 &nbsp;|&nbsp; <span class="key">Ctrl+C</span> 停止朗读 &nbsp;|&nbsp; <span class="key">ESC</span> 暂停</div>
+            <div class="control-row" style="margin-top:8px;color:var(--text-muted);font-size:12px;">靠近展品自动触发语音讲解</div>
+        </div>
+        <div class="start-mobile-controls">
+            <div class="control-row">左侧摇杆 移动 &nbsp;|&nbsp; 右侧摇杆 视角</div>
+            <div class="control-row">点击按钮 查看展品详情</div>
+            <div class="control-row" style="margin-top:8px;color:var(--text-muted);font-size:12px;">靠近展品自动触发语音讲解</div>
+        </div>
+    </div>
+    <button class="start-btn" id="startBtn">进入展厅</button>
+</div>
+
+<!-- ========== 暂停菜单 ========== -->
+<div class="pause-overlay" id="pauseOverlay">
+    <div class="pause-title">导览暂停</div>
+    <button class="pause-btn primary" id="resumeBtn">继续导览</button>
+    <a href="index.html" class="pause-btn">返回主站</a>
+    <div class="pause-controls-info">
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">W</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">A</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">S</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">D</span>
+        移动 &nbsp;|&nbsp; 鼠标 环顾 &nbsp;|&nbsp;
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">E</span>
+        交互
+    </div>
+</div>
+
+<!-- ========== 3D场景容器 ========== -->
+<div id="scene-container"></div>
+
+<!-- ========== 准星 ========== -->
+<div class="crosshair" id="crosshair"></div>
+
+<!-- ========== 物品名称标签 ========== -->
+<div class="item-label" id="itemLabel"></div>
+
+<!-- ========== 交互提示 ========== -->
+<div class="interact-hint" id="interactHint">
+    按 <span class="key-hint">E</span> 键查看详情
+</div>
+
+<!-- ========== 自动讲解条 ========== -->
+<div class="narration-bar" id="narrationBar">
+    <div class="nar-label">自动讲解</div>
+    <div id="narrationText"></div>
+</div>
+
+<!-- ========== 小地图 ========== -->
+<div class="minimap-container" id="minimapContainer">
+    <div class="minimap-border">
+        <canvas id="minimapCanvas" width="156" height="104"></canvas>
+    </div>
+</div>
+
+<!-- ========== HUD 右上角 ========== -->
+<div class="hud-esc" id="hudEsc">ESC 暂停</div>
+
+<!-- ========== 手机端虚拟摇杆 ========== -->
+<div class="joystick-zone left" id="joystickLeftZone">
+    <div class="joystick-base" id="joystickLeftBase"></div>
+    <div class="joystick-thumb" id="joystickLeftThumb"></div>
+</div>
+<div class="joystick-zone right" id="joystickRightZone">
+    <div class="joystick-base" id="joystickRightBase"></div>
+    <div class="joystick-thumb" id="joystickRightThumb"></div>
+</div>
+
+<!-- ========== 手机端交互按钮 ========== -->
+<div class="mobile-interact-btn" id="mobileInteractBtn">查看</div>
+
+<!-- ========== 讲解面板 ========== -->
+<div class="info-panel" id="infoPanel">
+    <div class="panel-header">
+        <h3 id="panelTitle"></h3>
+        <div class="panel-close" id="panelClose">&times;</div>
+    </div>
+    <div class="panel-body">
+        <div class="panel-tag" id="panelTag"></div>
+        <div class="panel-section">
+            <div class="panel-section-title">外观描述</div>
+            <p id="panelAppearance"></p>
+        </div>
+        <div class="panel-section">
+            <div class="panel-section-title">历史背景</div>
+            <p id="panelHistory"></p>
+        </div>
+        <div class="panel-section">
+            <div class="panel-section-title">精神内涵</div>
+            <p id="panelSpirit"></p>
+        </div>
+        <button class="btn-speak" id="btnSpeak" onclick="speakDescription()">
+            &#128266; 语音朗读
+        </button>
+    </div>
+    <div class="panel-ai">
+        <div class="panel-ai-title">&#129302; AI智能问答</div>
+        <div class="ai-chat-messages" id="panelAiMessages"></div>
+        <div class="ai-input-row">
+            <input type="text" id="panelAiInput" placeholder="关于此展品的问题..." onkeydown="if(event.key==='Enter')sendPanelAi()">
+            <button onclick="sendPanelAi()">发送</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== Three.js 本地加载（避免CDN不稳定） ========== -->
+<script src="js/three.min.js"></script>
+<script src="js/PointerLockControls.js"></script>
+
+<script>
+// ========== 展品数据（精简为精品展厅核心展品） ==========
+const itemsData = [
+    {
+        name: '行军锅',
+        emoji: '\u2692',
+        type: '国家一级文物',
+        appearance: '圆形直口宽平沿，锅底直径71厘米，通高49厘米，铁皮打制而成，深腹平底，口沿有两提耳。底部和周围共钉有17块铁补丁，呈铁褐色，用来补锅上的弹孔和磨损。锅底凹凸不平，补丁颜色深浅不一，记录着无数次修补的痕迹。',
+        history: '这口行军锅跟随红军完成了两万五千里长征，过草地时煮过草根、皮带，救活过无数战友。后又随八路军东渡黄河，开赴华北抗日前线。1938年春，日军出动3万余人分九路向晋东南根据地进攻，八路军展开反九路围攻的长乐村战斗。一位伤势严重的八路军战士紧紧抱着这口锅不放，牺牲前再三请求老乡把锅带走。1939年10月，八路军总部驻扎王家峪村，彭德怀听说此事后深受感动，嘱托"好好保存，待到全国解放后送进博物馆，让后人知道革命的艰辛"。',
+        spirit: '一口锅见证了红军长征的艰苦卓绝和八路军抗战的浴血奋战，17个补丁是革命艰辛最生动的注脚。'
+    },
+    {
+        name: '叶成焕的草鞋',
+        emoji: '\uD83E\uDE70',
+        type: '珍贵革命文物',
+        appearance: '一双磨损严重的草鞋，草编鞋底已磨薄，上面的棉线早已断裂，鞋面残破不堪。就是这样一双破旧的草鞋，陪伴着一位年轻的团长走过了最后的战斗岁月。',
+        history: '叶成焕，八路军第129师386旅772团团长，率部先后参加长生口、神头岭、响堂铺等著名战斗，为129师"三战三捷"作出重大贡献。1938年长乐村战斗中，他在高坡上观察敌情时被子弹射中头部。当战士们抬着他后撤时，他留下的最后一句话是："队伍，队伍呢？"牺牲时年仅24岁。长乐村村民董来旺为他整理遗物时，看到叶团长还穿着这双破旧的草鞋，赶忙拿来一双布鞋给他换上，并将这双草鞋保存下来。朱德特地从八路军总部赶来向遗体告别，刘伯承在追悼会上说："叶团长没有辜负党的教育，终于成为一个很好的布尔什维克。"',
+        spirit: '一双草鞋，承载着24岁铁血战将的赤诚与担当，"队伍呢"三个字重若千钧，是八路军将领舍生忘死的真实写照。'
+    },
+    {
+        name: '胡春花的小木勺',
+        emoji: '\uD83E\uDEA9',
+        type: '革命文物',
+        appearance: '一把手工制作的小木勺，勺柄有使用痕迹，木纹清晰可见，边缘已被磨得圆润光滑。看似普通，却承载着深厚的军民情谊。',
+        history: '胡春花是武乡县著名的拥军模范。抗战时期，她带领妇女们日夜操劳，为八路军伤员喂饭、换药、缝补衣物。这把小木勺就是她亲手制作，用来给伤员喂饭的工具。在艰苦的战争年代，武乡县12.5万人口中，有9万多人参加了抗日人民自卫队和各个抗日群众团体，"母亲叫儿打东洋，妻子送郎上战场"的动人事迹层出不穷。胡春花们用一把木勺、一件棉衣、一碗热饭，温暖了战士们的心，也铸就了坚不可摧的军民鱼水情。',
+        spirit: '一把木勺，述说军民鱼水情深。人民群众是八路军最坚强的后盾，军民同心是抗战胜利的根本保证。'
+    },
+    {
+        name: '八路军拉发式迫击炮',
+        emoji: '\uD83D\uDCA3',
+        type: '国家一级文物',
+        appearance: '口径82毫米，炮身长123厘米，钢制。1941年，时任129师炮兵主任赵章成将82毫米迫击炮去掉前支架，只保留炮管和底盘，采用炮口装弹、炮尾拉发的发射方式，改造成曲射、平射两用迫击炮。炮管呈45-60度仰角架设在圆形座钣上，炮尾装有拉发柄和拉火绳。',
+        history: '1940年百团大战中，日军在关家垴高地修筑坚固工事，八路军常规武器难以攻克。赵章成率领迫击炮连创造性地采用平射方式，将炮管降到接近水平角度，对日军碉堡实施抵近射击，取得重大战果。此后这种"拉发式平射迫击炮"在八路军中广泛推广，成为攻坚利器。赵章成本人先后参加神头岭、响堂铺、关家垴等战斗，被誉为"神炮手"。',
+        spirit: '以智克敌、敢为人先。赵章成改装的拉发式迫击炮，是八路军"没有条件创造条件"的创新精神的典范，代表了中国人民在抗战中的无穷智慧和不屈意志。'
+    },
+    {
+        name: '崔振芳的军号',
+        emoji: '\uD83C\uDFBA',
+        type: '珍贵革命文物',
+        appearance: '一把铜制军号，号嘴小而圆，号身细长，连接箍装饰精致，号碗喇叭口逐渐扩张。铜管表面有岁月侵蚀的铜绿斑点，号嘴处有明显的磨损痕迹，号身上缠绕着红色护手绳。',
+        history: '崔振芳，山西洪洞县人，18岁加入中国共产党，1941年参加黄崖洞保卫战时牺牲，年仅19岁。1941年11月，日军集结5000精锐部队进犯黄崖洞兵工厂。崔振芳所在的七连驻守天险"翁圪廊"。日军释放毒气时，他强忍咳嗽吹出防毒号令。战友牺牲后，他独自扛起两箱手榴弹，先后投出120余枚，炸死日军数十人。一发炮弹在身旁炸响，他跪着把军号抵在石头上，手指仍紧扣军号，牙齿与号嘴已经熔铸在一起。经过八昼夜激战，兵工厂保住了。在烽火连天的岁月里，1700多名太行号兵把年轻的生命谱成了永恒的号谱，平均年龄不足20岁，最小的只有13岁。',
+        spirit: '一把残缺的军号，吹响了中华民族不屈的抗争。19岁的青春永远定格在太行山上，号声穿越时空，至今回响。'
+    },
+    {
+        name: '何克的打字机',
+        emoji: '\uD83D\uDCDD',
+        type: '国际记者文物',
+        appearance: '一台老式外文打字机，黑色机身，按键已泛黄，部分按键上的字母已模糊不清。滚筒上似乎还留有当年未完成的稿件痕迹。',
+        history: '乔治·何克，英国记者。1938年来到上海，看到日军侵占后的悲惨景象，毅然放弃与姑母经印度回英国的打算，决定留在中国。他去了武汉、北平、延安，最终在武乡砖壁村八路军总部采访。他用这台打字机记录下八路军的抗战故事，向世界传递中国抗战的真相。1945年，何克在陕西病逝，年仅30岁。1974年，当地重修八路军总部砖壁村旧址时，从地下挖出了这台打字机。它见证了国际友人对中国抗战的关注与支持，也见证了新闻工作者对真相与正义的坚守。',
+        spirit: '以笔为枪，记录真相。国际友人的正义之声，让世界听到了中国人民抗战的呐喊。'
+    },
+    {
+        name: '《新华日报》铸字机',
+        emoji: '\uD83D\uDCDA',
+        type: '国家一级文物',
+        appearance: '一台铅字印刷铸字机，金属机身已生锈，但结构依然完整。这台机器曾日夜运转，为华北敌后根据地印制报纸，是新闻战士的"武器"。',
+        history: '1939年1月1日，《新华日报》华北版在山西沁县后沟村创刊，这是中共中央北方局的机关报，也是华北敌后第一份铅印报纸。报社初创，在日寇重重封锁下物资匮乏。没有纸，就收集破布烂鞋，用小毛驴推磨碾纸浆制成麻纸；没有油墨，就从山上砍来松枝烧出油墨。为保证印刷，社长何云和工作人员越过日军数道封锁线，将这台铸字机从重庆背到沁县。百团大战期间，何云带领记者日夜战斗在最前沿，即审即刻、即校即印。1942年5月，日军调集3万兵力企图摧毁报社，何云等40多位新闻战士壮烈牺牲。报社先后经历6次反"扫荡"、7次搬家，坚持出版896期，从未中断。',
+        spirit: '以笔为枪，以铅字为弹。新闻战士用生命守护党的宣传阵地，让抗日的声音传遍太行山。'
+    },
+    {
+        name: '八路军臂章',
+        emoji: '\uD83C\uDF96',
+        type: '革命文物',
+        appearance: '蓝底白字的"八路"臂章，长方形，布料已泛黄，边缘有磨损痕迹。这是八路军将士佩戴在左臂上的标志，象征着改编后的新身份和抗日救国的坚定信念。',
+        history: '1937年8月，中国工农红军改编为国民革命军第八路军，后改称第十八集团军，但"八路军"的称呼深入人心。臂章上的"八路"二字，代表着4.6万红军将士开赴抗日前线的豪情壮志。到抗战结束时，八路军已发展到102万余人，成为一支威武雄壮的胜利之师。这枚小小的臂章，见证了中国共产党领导的人民军队从弱到强、从胜利走向胜利的光辉历程。',
+        spirit: '从4.6万到102万，一枚臂章见证了人民军队的成长壮大，见证了中华民族从危亡走向复兴。'
+    }
+];
+
+// ========== 全局变量 ==========
+let scene, camera, renderer, controls;
+let raycaster;
+let interactiveObjects = [];
+let interactiveGroups = [];
+let hoveredObject = null;
+let selectedObject = null;
+let currentItem = null;
+let doorLeftGroup = null;
+let doorRightGroup = null;
+let doorOpen = false;
+let doorAnimating = false;
+
+const moveState = { forward: false, backward: false, left: false, right: false };
+const MOVE_SPEED = 0.06;
+const PLAYER_HEIGHT = 1.6;
+
+// 精品展厅尺寸：12m x 8m，碰撞边界留0.3m余量
+const ROOM_BOUNDS = {
+    minX: -5.5, maxX: 5.5,
+    minZ: -3.5, maxZ: 3.5
+};
+
+let isLocked = false;
+let isPlaying = false;
+let isPaused = false;
+let isPanelOpen = false;
+
+let autoNarrating = false;
+let autoNarrateItem = null;
+
+const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+let joystickLeft = { active: false, dx: 0, dy: 0, touchId: null };
+let joystickRight = { active: false, dx: 0, dy: 0, touchId: null };
+
+// ========== 加载进度模拟 ==========
+let loadProgress = 0;
+function updateLoading(progress) {
+    loadProgress = Math.min(progress, 100);
+    document.getElementById('loadingBar').style.width = loadProgress + '%';
+    document.getElementById('loaderPercent').textContent = Math.floor(loadProgress) + '%';
+    if (loadProgress >= 100) {
+        setTimeout(() => {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+            document.querySelector('.loading-bar-container').style.display = 'none';
+            document.getElementById('startOverlay').classList.remove('hidden');
+        }, 400);
+    }
+}
+
+// ========== Canvas程序化纹理生成 ==========
+
+function createCarpetTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512; canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    // 酒红色地毯底色
+    ctx.fillStyle = '#5c0a1a';
+    ctx.fillRect(0,0,512,512);
+    // 噪点纹理
+    for(let i=0;i<60000;i++){
+        const x=Math.random()*512,y=Math.random()*512;
+        const v=Math.random()*30-15;
+        const r=Math.min(255,Math.max(0,92+v));
+        const g=Math.min(255,Math.max(0,10+v));
+        const b=Math.min(255,Math.max(0,26+v));
+        ctx.fillStyle=`rgba(${r},${g},${b},0.4)`;
+        ctx.fillRect(x,y,1.5,1.5);
+    }
+    // 边缘磨损
+    const grad=ctx.createRadialGradient(256,256,180,256,256,260);
+    grad.addColorStop(0,'rgba(92,10,26,0)');
+    grad.addColorStop(1,'rgba(60,40,30,0.35)');
+    ctx.fillStyle=grad;
+    ctx.fillRect(0,0,512,512);
+    const tex=new THREE.CanvasTexture(canvas);
+    tex.wrapS=THREE.RepeatWrapping; tex.wrapT=THREE.RepeatWrapping;
+    tex.repeat.set(3,2);
+    return tex;
+}
+
+function createWoodTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256; canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#3a1a0a';
+    ctx.fillRect(0,0,256,512);
+    for(let i=0;i<40;i++){
+        const y=Math.random()*512;
+        const h=2+Math.random()*8;
+        const light=Math.random()>0.5;
+        ctx.fillStyle=light?'rgba(100,50,30,0.25)':'rgba(30,10,5,0.3)';
+        ctx.fillRect(0,y,256,h);
+    }
+    for(let i=0;i<200;i++){
+        const x=Math.random()*256,y=Math.random()*512;
+        ctx.fillStyle='rgba(70,30,15,0.15)';
+        ctx.fillRect(x,y,0.5,20+Math.random()*40);
+    }
+    const tex=new THREE.CanvasTexture(canvas);
+    tex.wrapS=THREE.RepeatWrapping; tex.wrapT=THREE.RepeatWrapping;
+    return tex;
+}
+
+function createStoneTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128; canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(0,0,128,128);
+    for(let i=0;i<3000;i++){
+        const x=Math.random()*128,y=Math.random()*128;
+        const v=Math.random()*40-20;
+        ctx.fillStyle=`rgba(${42+v},${42+v},${42+v},0.5)`;
+        ctx.fillRect(x,y,1.5,1.5);
+    }
+    return new THREE.CanvasTexture(canvas);
+}
+
+function createWallTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256; canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#e8e2d8';
+    ctx.fillRect(0,0,256,256);
+    for(let i=0;i<4000;i++){
+        const x=Math.random()*256,y=Math.random()*256;
+        const v=Math.random()*12-6;
+        ctx.fillStyle=`rgba(${232+v},${226+v},${216+v},0.3)`;
+        ctx.fillRect(x,y,1,1);
+    }
+    const tex=new THREE.CanvasTexture(canvas);
+    tex.wrapS=THREE.RepeatWrapping; tex.wrapT=THREE.RepeatWrapping;
+    tex.repeat.set(6,3);
+    return tex;
+}
+
+function createPaintingTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256; canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#6b4c1a';
+    ctx.fillRect(0,0,256,256);
+    for(let i=0;i<20;i++){
+        const x=Math.random()*200,y=Math.random()*200,w=20+Math.random()*60,h=20+Math.random()*60;
+        const hue=Math.random()*60;
+        ctx.fillStyle=`hsla(${hue},60%,${30+Math.random()*40}%,0.6)`;
+        ctx.fillRect(x,y,w,h);
+    }
+    return new THREE.CanvasTexture(canvas);
+}
+
+// ========== 材质库 ==========
+let materials = {};
+
+
+// ========== 门动画 ==========
+function animateDoorOpen() {
+    if(doorAnimating || doorOpen) return;
+    doorAnimating = true;
+    const duration = 1500;
+    const start = performance.now();
+    function animate(now) {
+        const t = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - t, 3); // ease-out
+        // 左门向外旋转90度（负y方向）
+        doorLeftGroup.rotation.y = -ease * Math.PI / 2;
+        // 右门向外旋转90度（正y方向）
+        doorRightGroup.rotation.y = ease * Math.PI / 2;
+        if(t < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            doorOpen = true;
+            doorAnimating = false;
+        }
+    }
+    requestAnimationFrame(animate);
+}
+
+function animateDoorClose() {
+    if(doorAnimating || !doorOpen) return;
+    doorAnimating = true;
+    const duration = 1200;
+    const start = performance.now();
+    function animate(now) {
+        const t = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - t, 3);
+        doorLeftGroup.rotation.y = -Math.PI / 2 * (1 - ease);
+        doorRightGroup.rotation.y = Math.PI / 2 * (1 - ease);
+        if(t < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            doorOpen = false;
+            doorAnimating = false;
+        }
+    }
+    requestAnimationFrame(animate);
+}
+
+function createMaterials() {
+    materials.carpet = new THREE.MeshPhysicalMaterial({
+        color: 0x5c0a1a,
+        roughness: 0.95,
+        clearcoat: 0.0,
+        map: createCarpetTexture()
+    });
+
+    materials.woodPillar = new THREE.MeshPhysicalMaterial({
+        color: 0x3a1a0a,
+        roughness: 0.6,
+        clearcoat: 0.3,
+        map: createWoodTexture()
+    });
+
+    materials.stoneBase = new THREE.MeshPhysicalMaterial({
+        color: 0x2a2a2a,
+        roughness: 0.8,
+        map: createStoneTexture()
+    });
+
+    materials.blackDisplay = new THREE.MeshPhysicalMaterial({
+        color: 0x0a0a0a,
+        roughness: 0.3,
+        clearcoat: 0.8,
+        clearcoatRoughness: 0.2
+    });
+
+    materials.glass = new THREE.MeshPhysicalMaterial({
+        color: 0xffffff,
+        transmission: 0.92,
+        roughness: 0.05,
+        thickness: 0.03,
+        ior: 1.5,
+        transparent: true,
+        opacity: 0.25
+    });
+
+    materials.wall = new THREE.MeshPhysicalMaterial({
+        color: 0xe8e2d8,
+        roughness: 0.9,
+        map: createWallTexture()
+    });
+
+    materials.metalCopper = new THREE.MeshPhysicalMaterial({
+        color: 0xb87333,
+        metalness: 1.0,
+        roughness: 0.3,
+        clearcoat: 0.5
+    });
+
+    materials.ceiling = new THREE.MeshPhysicalMaterial({
+        color: 0x1a1a1a,
+        roughness: 0.9
+    });
+
+    materials.baseboard = new THREE.MeshPhysicalMaterial({
+        color: 0x1a0a0a,
+        roughness: 0.7
+    });
+
+    materials.goldFrame = new THREE.MeshPhysicalMaterial({
+        color: 0xc9a227,
+        metalness: 0.8,
+        roughness: 0.25,
+        clearcoat: 0.4
+    });
+
+    materials.dustPlane = new THREE.MeshPhysicalMaterial({
+        color: 0x888888,
+        transparent: true,
+        opacity: 0.15,
+        roughness: 1.0
+    });
+
+    materials.lightGlow = new THREE.MeshBasicMaterial({
+        color: 0xfff0d4
+    });
+
+    // 新增材质
+    materials.marble = new THREE.MeshPhysicalMaterial({
+        color: 0x1a1a1a,
+        roughness: 0.25,
+        clearcoat: 0.6,
+        clearcoatRoughness: 0.2
+    });
+
+    materials.velvet = new THREE.MeshPhysicalMaterial({
+        color: 0x2a0a0a,
+        roughness: 0.95,
+        clearcoat: 0.0
+    });
+
+    materials.ropeRed = new THREE.MeshPhysicalMaterial({
+        color: 0x8b0000,
+        roughness: 0.9,
+        metalness: 0.0
+    });
+
+    materials.goldPost = new THREE.MeshPhysicalMaterial({
+        color: 0xd4a853,
+        metalness: 0.9,
+        roughness: 0.2,
+        clearcoat: 0.5
+    });
+}
+
+// ========== 初始化场景 ==========
+function init() {
+    updateLoading(10);
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1a0a0a);
+    // 精品展厅雾效更浓（空间小）
+    scene.fog = new THREE.FogExp2(0x1a0a0a, 0.04);
+
+    updateLoading(20);
+
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
+    // 从后墙入口前方开始
+    camera.position.set(0, PLAYER_HEIGHT, 2.5);
+
+    updateLoading(30);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    document.getElementById('scene-container').appendChild(renderer.domElement);
+
+    updateLoading(40);
+
+    controls = new THREE.PointerLockControls(camera, renderer.domElement);
+
+    controls.addEventListener('lock', () => {
+        isLocked = true;
+        isPaused = false;
+        document.getElementById('pauseOverlay').classList.remove('visible');
+        showHUD(true);
+    });
+    controls.addEventListener('unlock', () => {
+        isLocked = false;
+        stopAutoNarration();
+        if (!isPanelOpen && isPlaying) {
+            isPaused = true;
+            document.getElementById('pauseOverlay').classList.add('visible');
+        }
+        showHUD(false);
+    });
+
+    updateLoading(50);
+
+    raycaster = new THREE.Raycaster();
+    raycaster.far = 3;
+
+    createMaterials();
+    updateLoading(55);
+
+    createLights();
+    updateLoading(65);
+
+    createExhibitionHall();
+    updateLoading(85);
+
+    createDustParticles();
+    updateLoading(90);
+
+    window.addEventListener('resize', onWindowResize);
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    document.getElementById('resumeBtn').addEventListener('click', resumeGame);
+    document.getElementById('panelClose').addEventListener('click', closePanel);
+
+    if (isMobile) {
+        setupMobileControls();
+    }
+
+    updateLoading(100);
+    animate();
+}
+
+function showHUD(show) {
+    const crosshair = document.getElementById('crosshair');
+    const minimap = document.getElementById('minimapContainer');
+    const hudEsc = document.getElementById('hudEsc');
+    if (show) {
+        crosshair.classList.add('visible');
+        minimap.classList.add('visible');
+        if (!isMobile) hudEsc.classList.add('visible');
+    } else {
+        crosshair.classList.remove('visible');
+        minimap.classList.remove('visible');
+        hudEsc.classList.remove('visible');
+        document.getElementById('itemLabel').classList.remove('visible');
+        document.getElementById('interactHint').classList.remove('visible');
+    }
+}
+
+function startGame() {
+    document.getElementById('startOverlay').classList.add('hidden');
+    isPlaying = true;
+    if (isMobile) {
+        document.getElementById('joystickLeftZone').style.display = 'block';
+        document.getElementById('joystickRightZone').style.display = 'block';
+        showHUD(true);
+    } else {
+        controls.lock();
+    }
+}
+
+function resumeGame() {
+    document.getElementById('pauseOverlay').classList.remove('visible');
+    if (isMobile) {
+        showHUD(true);
+    } else {
+        controls.lock();
+    }
+}
+
+function onKeyDown(event) {
+    if (!isPlaying) return;
+    switch (event.code) {
+        case 'KeyW': case 'ArrowUp':    moveState.forward = true; break;
+        case 'KeyS': case 'ArrowDown':   moveState.backward = true; break;
+        case 'KeyA': case 'ArrowLeft':   moveState.left = true; break;
+        case 'KeyD': case 'ArrowRight':  moveState.right = true; break;
+        case 'KeyE':
+            if (isLocked && hoveredObject) {
+                if(hoveredObject.userData.isDoor) {
+                    if(doorOpen) {
+                        animateDoorClose();
+                    } else {
+                        animateDoorOpen();
+                    }
+                } else {
+                    openItemPanel(hoveredObject);
+                }
+            }
+            break;
+        case 'KeyC':
+            if(event.ctrlKey) {
+                // Ctrl+C：停止所有语音朗读
+                event.preventDefault();
+                window.speechSynthesis.cancel();
+                const btn = document.getElementById('btnSpeak');
+                if(btn) {
+                    btn.classList.remove('speaking');
+                    btn.innerHTML = '&#128266; 语音朗读';
+                }
+                stopAutoNarration();
+            }
+            break;
+    }
+}
+
+function onKeyUp(event) {
+    switch (event.code) {
+        case 'KeyW': case 'ArrowUp':    moveState.forward = false; break;
+        case 'KeyS': case 'ArrowDown':   moveState.backward = false; break;
+        case 'KeyA': case 'ArrowLeft':   moveState.left = false; break;
+        case 'KeyD': case 'ArrowRight':  moveState.right = false; break;
+    }
+}
+
+// ========== 灯光系统（优化为精品展厅小空间） ==========
+function createLights() {
+    // 环境光
+    const ambientLight = new THREE.AmbientLight(0xfff5e6, 0.2);
+    scene.add(ambientLight);
+
+    // 半球光
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x3c1a1a, 0.35);
+    scene.add(hemiLight);
+
+    // 天花板筒灯（减少数量，适应小空间）
+    const downlightPositions = [
+        {x:-2.5,z:-2},{x:2.5,z:-2},
+        {x:-2.5,z:2},{x:2.5,z:2},
+        {x:0,z:0}
+    ];
+    downlightPositions.forEach(pos=>{
+        const spot=new THREE.SpotLight(0xfff0d4,1.5,12,0.5,0.4,1);
+        spot.position.set(pos.x,3.8,pos.z);
+        spot.target.position.set(pos.x,0,pos.z);
+        spot.castShadow=true;
+        spot.shadow.mapSize.width=1024;
+        spot.shadow.mapSize.height=1024;
+        spot.shadow.bias=-0.0001;
+        scene.add(spot);
+        scene.add(spot.target);
+    });
+
+    // 展品上方独立射灯
+    const exhibitSpots=[
+        {x:-4.8,z:-1.5,target:{x:-4.8,y:0.8,z:-1.5}},
+        {x:-4.8,z:0,target:{x:-4.8,y:0.8,z:0}},
+        {x:-4.8,z:1.5,target:{x:-4.8,y:0.8,z:1.5}},
+        {x:4.8,z:-1,target:{x:4.8,y:0.8,z:-1}},
+        {x:4.8,z:1.5,target:{x:4.8,y:0.8,z:1.5}},
+        {x:0,z:-1.5,target:{x:0,y:0.8,z:-1.5}},
+        {x:0,z:1.5,target:{x:0,y:0.8,z:1.5}}
+    ];
+    exhibitSpots.forEach(sp=>{
+        const spot=new THREE.SpotLight(0xfff5e0,2.5,8,0.35,0.5,1);
+        spot.position.set(sp.x,3.8,sp.z);
+        spot.target.position.set(sp.target.x,sp.target.y,sp.target.z);
+        spot.castShadow=true;
+        spot.shadow.mapSize.width=1024;
+        spot.shadow.mapSize.height=1024;
+        spot.shadow.bias=-0.0001;
+        scene.add(spot);
+        scene.add(spot.target);
+    });
+
+    // 入口壁灯（暖色补光）
+    const wallLights=[
+        {x:-2,z:3.3},{x:2,z:3.3}
+    ];
+    wallLights.forEach(pos=>{
+        const pl=new THREE.PointLight(0xffdca3,0.6,4);
+        pl.position.set(pos.x,2.5,pos.z);
+        scene.add(pl);
+    });
+
+    // 环境补光（四角，较弱）
+    const cornerLights=[
+        {x:-5,z:-3},{x:5,z:-3},{x:-5,z:3},{x:5,z:3}
+    ];
+    cornerLights.forEach(pos=>{
+        const cl=new THREE.PointLight(0xfff5e6,0.2,6);
+        cl.position.set(pos.x,3,pos.z);
+        scene.add(cl);
+    });
+}
+
+// ========== 展厅创建（精品展厅 12m x 8m x 4m） ==========
+function createExhibitionHall() {
+    const roomL = 12, roomW = 8, roomH = 4;
+
+    // 地面（酒红色地毯）
+    const floorGeo = new THREE.PlaneGeometry(roomL, roomW);
+    const floor = new THREE.Mesh(floorGeo, materials.carpet);
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // 中央深色走道引导线
+    const guideGeo = new THREE.PlaneGeometry(1.5, roomW);
+    const guideMat = new THREE.MeshPhysicalMaterial({
+        color: 0x3a0a0a,
+        roughness: 0.95,
+        transparent: true,
+        opacity: 0.6
+    });
+    const guide = new THREE.Mesh(guideGeo, guideMat);
+    guide.rotation.x = -Math.PI / 2;
+    guide.position.y = 0.005;
+    scene.add(guide);
+
+    // 天花板
+    const ceilGeo = new THREE.PlaneGeometry(roomL, roomW);
+    const ceil = new THREE.Mesh(ceilGeo, materials.ceiling);
+    ceil.rotation.x = Math.PI / 2;
+    ceil.position.y = roomH;
+    scene.add(ceil);
+
+    // 天花板筒灯模型
+    const downlightPositions = [
+        {x:-2.5,z:-2},{x:2.5,z:-2},
+        {x:-2.5,z:2},{x:2.5,z:2},
+        {x:0,z:0}
+    ];
+    downlightPositions.forEach(pos=>{
+        const housing = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.1,0.12,0.08,16),
+            new THREE.MeshPhysicalMaterial({color:0xdddddd,roughness:0.3,metalness:0.5})
+        );
+        housing.rotation.x = Math.PI / 2;
+        housing.position.set(pos.x, roomH - 0.04, pos.z);
+        scene.add(housing);
+        const bulb = new THREE.Mesh(new THREE.CircleGeometry(0.06,16), materials.lightGlow);
+        bulb.rotation.x = -Math.PI / 2;
+        bulb.position.set(pos.x, roomH - 0.01, pos.z);
+        scene.add(bulb);
+    });
+
+    // 墙面材质
+    const wallMat = materials.wall;
+
+    // 前墙（z=-4，半景画背景墙）
+    const frontWall = new THREE.Mesh(new THREE.BoxGeometry(roomL, roomH, 0.2), wallMat);
+    frontWall.position.set(0, roomH/2, -roomW/2 - 0.1);
+    frontWall.receiveShadow = true;
+    scene.add(frontWall);
+
+    // 后墙（z=4，中央入口大门）
+    const backWallLeft = new THREE.Mesh(new THREE.BoxGeometry(4, roomH, 0.2), wallMat);
+    backWallLeft.position.set(-4, roomH/2, roomW/2 + 0.1);
+    backWallLeft.receiveShadow = true;
+    scene.add(backWallLeft);
+    const backWallRight = new THREE.Mesh(new THREE.BoxGeometry(4, roomH, 0.2), wallMat);
+    backWallRight.position.set(4, roomH/2, roomW/2 + 0.1);
+    backWallRight.receiveShadow = true;
+    scene.add(backWallRight);
+    const backWallTop = new THREE.Mesh(new THREE.BoxGeometry(2, roomH - 2.5, 0.2), wallMat);
+    backWallTop.position.set(0, roomH - (roomH - 2.5)/2, roomW/2 + 0.1);
+    scene.add(backWallTop);
+
+    // 左墙（x=-6）
+    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, roomH, roomW), wallMat);
+    leftWall.position.set(-roomL/2 - 0.1, roomH/2, 0);
+    leftWall.receiveShadow = true;
+    scene.add(leftWall);
+
+    // 右墙（x=6）
+    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, roomH, roomW), wallMat);
+    rightWall.position.set(roomL/2 + 0.1, roomH/2, 0);
+    rightWall.receiveShadow = true;
+    scene.add(rightWall);
+
+    // 踢脚线
+    const baseboardH = 0.12;
+    const bbMat = materials.baseboard;
+    const bbFront = new THREE.Mesh(new THREE.BoxGeometry(roomL, baseboardH, 0.05), bbMat);
+    bbFront.position.set(0, baseboardH/2, -roomW/2 + 0.02);
+    scene.add(bbFront);
+    const bbBackL = new THREE.Mesh(new THREE.BoxGeometry(4, baseboardH, 0.05), bbMat);
+    bbBackL.position.set(-4, baseboardH/2, roomW/2 - 0.02);
+    scene.add(bbBackL);
+    const bbBackR = new THREE.Mesh(new THREE.BoxGeometry(4, baseboardH, 0.05), bbMat);
+    bbBackR.position.set(4, baseboardH/2, roomW/2 - 0.02);
+    scene.add(bbBackR);
+    const bbLeft = new THREE.Mesh(new THREE.BoxGeometry(0.05, baseboardH, roomW), bbMat);
+    bbLeft.position.set(-roomL/2 + 0.02, baseboardH/2, 0);
+    scene.add(bbLeft);
+    const bbRight = new THREE.Mesh(new THREE.BoxGeometry(0.05, baseboardH, roomW), bbMat);
+    bbRight.position.set(roomL/2 - 0.02, baseboardH/2, 0);
+    scene.add(bbRight);
+
+    // ========== 门厅（展厅外小空间） ==========
+    const foyerD = 3.5; // 门厅深度
+    const foyerW = 3.0; // 门厅宽度
+    const foyerH = 3.5; // 门厅高度
+
+    // 门厅地面（深色石材）
+    const foyerFloor = new THREE.Mesh(
+        new THREE.BoxGeometry(foyerW, 0.05, foyerD),
+        new THREE.MeshPhysicalMaterial({color: 0x3a3a3a, roughness: 0.6})
+    );
+    foyerFloor.position.set(0, 0.025, roomW/2 + foyerD/2);
+    foyerFloor.receiveShadow = true;
+    scene.add(foyerFloor);
+
+    // 门厅天花板
+    const foyerCeiling = new THREE.Mesh(
+        new THREE.BoxGeometry(foyerW, 0.05, foyerD),
+        new THREE.MeshPhysicalMaterial({color: 0xf5f5f0, roughness: 0.9})
+    );
+    foyerCeiling.position.set(0, foyerH, roomW/2 + foyerD/2);
+    scene.add(foyerCeiling);
+
+    // 门厅两侧短墙
+    const foyerWallMat = new THREE.MeshPhysicalMaterial({color: 0x8b7355, roughness: 0.85});
+    const foyerWallL = new THREE.Mesh(new THREE.BoxGeometry(0.15, foyerH, foyerD), foyerWallMat);
+    foyerWallL.position.set(-foyerW/2 + 0.075, foyerH/2, roomW/2 + foyerD/2);
+    scene.add(foyerWallL);
+    const foyerWallR = new THREE.Mesh(new THREE.BoxGeometry(0.15, foyerH, foyerD), foyerWallMat);
+    foyerWallR.position.set(foyerW/2 - 0.075, foyerH/2, roomW/2 + foyerD/2);
+    scene.add(foyerWallR);
+
+    // 门厅前墙（只有门框，中间是大门）
+    const frontWallL = new THREE.Mesh(new THREE.BoxGeometry(0.6, foyerH, 0.15), foyerWallMat);
+    frontWallL.position.set(-foyerW/2 + 0.3, foyerH/2, roomW/2 + foyerD);
+    scene.add(frontWallL);
+    const frontWallR = new THREE.Mesh(new THREE.BoxGeometry(0.6, foyerH, 0.15), foyerWallMat);
+    frontWallR.position.set(foyerW/2 - 0.3, foyerH/2, roomW/2 + foyerD);
+    scene.add(frontWallR);
+    const frontWallT = new THREE.Mesh(new THREE.BoxGeometry(foyerW - 1.2, 0.8, 0.15), foyerWallMat);
+    frontWallT.position.set(0, foyerH - 0.4, roomW/2 + foyerD);
+    scene.add(frontWallT);
+
+    // 门厅迎宾灯
+    const foyerLight = new THREE.PointLight(0xfff5e6, 0.6, 6);
+    foyerLight.position.set(0, 2.8, roomW/2 + foyerD/2);
+    scene.add(foyerLight);
+
+    // ========== 可开合双开门 ==========
+    const doorFrameMat = new THREE.MeshPhysicalMaterial({color:0x5c4033,roughness:0.5});
+    const doorMat = new THREE.MeshPhysicalMaterial({color:0x3d2817,roughness:0.7});
+
+    // 门框（固定在展厅墙上）
+    const doorFrameL = new THREE.Mesh(new THREE.BoxGeometry(0.12,2.2,0.12), doorFrameMat);
+    doorFrameL.position.set(-0.9,1.1,roomW/2);
+    scene.add(doorFrameL);
+    const doorFrameR = new THREE.Mesh(new THREE.BoxGeometry(0.12,2.2,0.12), doorFrameMat);
+    doorFrameR.position.set(0.9,1.1,roomW/2);
+    scene.add(doorFrameR);
+    const doorFrameT = new THREE.Mesh(new THREE.BoxGeometry(2,0.12,0.12), doorFrameMat);
+    doorFrameT.position.set(0,2.2,roomW/2);
+    scene.add(doorFrameT);
+
+    // 左门扇（可旋转）- 旋转轴在左侧
+    doorLeftGroup = new THREE.Group();
+    doorLeftGroup.position.set(-0.85, 0, roomW/2); // 旋转轴位置
+    const doorL = new THREE.Mesh(new THREE.BoxGeometry(0.85,2,0.06), doorMat);
+    doorL.position.set(0.425, 1, 0); // 门扇中心相对于旋转轴
+    doorL.castShadow = true;
+    doorLeftGroup.add(doorL);
+    scene.add(doorLeftGroup);
+
+    // 右门扇（可旋转）- 旋转轴在右侧
+    doorRightGroup = new THREE.Group();
+    doorRightGroup.position.set(0.85, 0, roomW/2); // 旋转轴位置
+    const doorR = new THREE.Mesh(new THREE.BoxGeometry(0.85,2,0.06), doorMat);
+    doorR.position.set(-0.425, 1, 0); // 门扇中心相对于旋转轴
+    doorR.castShadow = true;
+    doorRightGroup.add(doorR);
+    scene.add(doorRightGroup);
+
+    // 门把手
+    const handleMat = new THREE.MeshPhysicalMaterial({color:0xd4a853,metalness:0.9,roughness:0.2});
+    const handleL = new THREE.Mesh(new THREE.SphereGeometry(0.04,8,8), handleMat);
+    handleL.position.set(0.75, 1, 0.04);
+    doorLeftGroup.add(handleL);
+    const handleR = new THREE.Mesh(new THREE.SphereGeometry(0.04,8,8), handleMat);
+    handleR.position.set(-0.75, 1, 0.04);
+    doorRightGroup.add(handleR);
+
+    // 将门添加为可交互对象
+    doorLeftGroup.userData = { itemName: '展厅大门', isDoor: true, side: 'left' };
+    doorRightGroup.userData = { itemName: '展厅大门', isDoor: true, side: 'right' };
+    interactiveObjects.push(doorLeftGroup);
+    interactiveObjects.push(doorRightGroup);
+
+    // 后墙两侧壁灯
+    [-2.5, 2.5].forEach(x=>{
+        const lampGroup = new THREE.Group();
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(0.05,0.3,0.15), new THREE.MeshPhysicalMaterial({color:0x2a2a2a,metalness:0.6,roughness:0.3}));
+        arm.position.set(x,2.8,roomW/2 - 0.08);
+        lampGroup.add(arm);
+        const shade = new THREE.Mesh(new THREE.ConeGeometry(0.1,0.12,8,1,true), new THREE.MeshPhysicalMaterial({color:0xdddddd,metalness:0.5,roughness:0.3}));
+        shade.position.set(x,2.65,roomW/2 - 0.15);
+        lampGroup.add(shade);
+        const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.03,8,8), materials.lightGlow);
+        bulb.position.set(x,2.62,roomW/2 - 0.15);
+        lampGroup.add(bulb);
+        scene.add(lampGroup);
+    });
+
+    // ========== 左墙：3个精品展柜（行军锅、草鞋、小木勺） ==========
+    createExhibitDisplay(-5.4, -2.2, '行军锅', ()=>createMarchingPot(), true);
+    createExhibitDisplay(-5.4, 0.5, '叶成焕的草鞋', ()=>createStrawSandals(), true);
+    createExhibitDisplay(-5.4, 2.8, '胡春花的小木勺', ()=>createWoodenSpoon(), true);
+
+    // ========== 右墙：铸字机 + 打字机 + 臂章 + 军号 + 展板（中部留出通行空间） ==========
+    createExhibitDisplay(5.2, -2.8, '何克的打字机', ()=>createTypewriter(), true);
+    createExhibitDisplay(5.2, -1.0, '《新华日报》铸字机', ()=>createPrintingPress(), true);
+    createExhibitDisplay(5.2, 1.0, '八路军臂章', ()=>createArmband(), true);
+    createExhibitDisplay(5.2, 2.8, '崔振芳的军号', ()=>createBugle(), true);
+    createDisplayBoard(5.2, 0, '展板一');
+
+    // ========== 独立展品（左后方角落，不阻挡中央通道） ==========
+    createMainDisplay(-3.8, -2.8, '八路军拉发式迫击炮', ()=>createMortar());
+
+    // ========== 前墙：八路军太行纪念馆照片墙 ==========
+    createPhotoGalleryWall(-roomW/2 + 0.15);
+
+    // ========== 展厅角落绿植 ==========
+    createPlant(-5, 3);
+    createPlant(5, 3);
+
+    // ========== 监控摄像头 ==========
+    createSecurityCamera(0, 3.6, -3.6);
+
+    // ========== 灭火器 ==========
+    createFireExtinguisher(-5.2, -3);
+
+    // ========== 入口导览手册架 ==========
+    createBrochureRack(1.5, 3.2);
+
+    // ========== 左右墙面装饰标语 ==========
+    createWallDecorations();
+}
+
+// ========== 左右墙面装饰标语及壁灯 ==========
+function createWallDecorations() {
+    // ---- 左侧墙面：红色革命标语 ----
+    const leftSlogans = [
+        { text: '不忘初心 牢记使命', y: 2.6, fontSize: 48 },
+        { text: '发扬革命传统 争取更大光荣', y: 1.7, fontSize: 36 }
+    ];
+    leftSlogans.forEach(s => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, 1024, 0);
+        grad.addColorStop(0, '#8b0000');
+        grad.addColorStop(0.5, '#cc0000');
+        grad.addColorStop(1, '#8b0000');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 1024, 256);
+        ctx.strokeStyle = '#d4a853';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(8, 8, 1008, 240);
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold ' + s.fontSize + 'px \"Microsoft YaHei\", \"SimHei\", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 4;
+        ctx.fillText(s.text, 512, 128);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        const banner = new THREE.Mesh(
+            new THREE.PlaneGeometry(2.4, 0.5),
+            new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, transparent: true })
+        );
+        banner.position.set(-5.95, s.y, 0.2);
+        banner.rotation.y = Math.PI / 2;
+        scene.add(banner);
+    });
+    // ---- 右侧墙面：绿色军队标语 ----
+    const rightSlogans = [
+        { text: '听党指挥 能打胜仗 作风优良', y: 2.6, fontSize: 42 },
+        { text: '弘扬太行精神 传承红色基因', y: 1.7, fontSize: 36 }
+    ];
+    rightSlogans.forEach(s => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, 1024, 0);
+        grad.addColorStop(0, '#1a3a1a');
+        grad.addColorStop(0.5, '#2d5a2d');
+        grad.addColorStop(1, '#1a3a1a');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 1024, 256);
+        ctx.strokeStyle = '#d4a853';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(8, 8, 1008, 240);
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold ' + s.fontSize + 'px \"Microsoft YaHei\", \"SimHei\", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 4;
+        ctx.fillText(s.text, 512, 128);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        const banner = new THREE.Mesh(
+            new THREE.PlaneGeometry(2.4, 0.5),
+            new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, transparent: true })
+        );
+        banner.position.set(5.95, s.y, 0.2);
+        banner.rotation.y = -Math.PI / 2;
+        scene.add(banner);
+    });
+    // ---- 左右墙面壁灯装饰补光 ----
+    const wallSconcePositions = [
+        { x: -5.95, z: -2.8 }, { x: -5.95, z: 0.5 }, { x: -5.95, z: 3.2 },
+        { x: 5.95, z: -3.2 }, { x: 5.95, z: 0 }, { x: 5.95, z: 3.2 }
+    ];
+    wallSconcePositions.forEach(p => {
+        const sconce = new THREE.Group();
+        const arm = new THREE.Mesh(
+            new THREE.BoxGeometry(0.06, 0.25, 0.12),
+            new THREE.MeshPhysicalMaterial({ color: 0x2a2a2a, metalness: 0.6, roughness: 0.3 })
+        );
+        arm.position.set(0, 2.8, 0);
+        sconce.add(arm);
+        const shade = new THREE.Mesh(
+            new THREE.ConeGeometry(0.08, 0.1, 8, 1, true),
+            new THREE.MeshPhysicalMaterial({ color: 0xdddddd, metalness: 0.5, roughness: 0.3 })
+        );
+        shade.position.set(0, 2.65, -0.08);
+        shade.rotation.x = 0.3;
+        sconce.add(shade);
+        const bulb = new THREE.Mesh(
+            new THREE.SphereGeometry(0.025, 8, 8),
+            new THREE.MeshBasicMaterial({ color: 0xffeedd })
+        );
+        bulb.position.set(0, 2.62, -0.1);
+        sconce.add(bulb);
+        sconce.position.set(p.x, 0, p.z);
+        if (p.x > 0) sconce.rotation.y = Math.PI;
+        scene.add(sconce);
+        const spotLight = new THREE.SpotLight(0xffeedd, 0.6, 1.5, Math.PI / 4, 0.5, 1);
+        spotLight.position.set(p.x, 2.6, p.z + (p.x > 0 ? -0.3 : 0.3));
+        spotLight.target.position.set(p.x, 1.2, p.z + (p.x > 0 ? -1.0 : 1.0));
+        scene.add(spotLight);
+        scene.add(spotLight.target);
+    });
+}
+
+// ========== 历史照片墙（12张AI生成展板）==========
+function createPhotoGalleryWall(wallZ) {
+    const galleryGroup = new THREE.Group();
+    const frameMat = new THREE.MeshPhysicalMaterial({
+        color: 0x1a0a05, roughness: 0.6, metalness: 0.1
+    });
+    const goldMat = new THREE.MeshPhysicalMaterial({
+        color: 0xb8860b, metalness: 0.8, roughness: 0.25
+    });
+
+    const textureLoader = new THREE.TextureLoader();
+
+    // 12张展板配置：[图片路径, 宽度, 高度, x位置, y位置]
+    const photos = [
+        {url: 'images/panels/panel_taihang.png', w: 1.45, h: 0.9, x: -2.55, y: 2.55},
+        {url: 'images/panels/panel_meeting.png', w: 1.05, h: 0.7, x: -0.55, y: 2.95},
+        {url: 'images/panels/panel_baituan.png', w: 1.25, h: 0.8, x: 1.05, y: 2.35},
+        {url: 'images/panels/panel_map.png', w: 0.9, h: 0.6, x: 2.65, y: 2.75},
+        {url: 'images/panels/panel_huangya.png', w: 1.15, h: 0.72, x: -2.05, y: 1.4},
+        {url: 'images/panels/panel_party.png', w: 0.95, h: 0.6, x: 0.15, y: 1.5},
+        {url: 'images/panels/panel_changle.png', w: 0.9, h: 0.6, x: 1.65, y: 1.4},
+        {url: 'images/panels/panel_spirit.png', w: 1.05, h: 0.65, x: 2.85, y: 1.5},
+        {url: 'images/panels/panel_pingxing.png', w: 1.0, h: 0.65, x: -2.9, y: 0.55},
+        {url: 'images/panels/panel_zuoquan.jpg', w: 0.85, h: 0.55, x: -1.15, y: 0.6},
+        {url: 'images/panels/panel_guerrilla.jpg', w: 0.9, h: 0.6, x: 0.45, y: 0.55},
+        {url: 'images/panels/panel_support.jpg', w: 1.0, h: 0.65, x: 1.95, y: 0.6},
+    ];
+
+    photos.forEach((photo) => {
+        const tex = textureLoader.load(photo.url);
+        tex.encoding = THREE.sRGBEncoding;
+
+        // 照片主体（有厚度的盒子）
+        const photoMat = new THREE.MeshPhysicalMaterial({
+            map: tex, roughness: 0.35, metalness: 0.0
+        });
+        const boxGeo = new THREE.BoxGeometry(photo.w, photo.h, 0.04);
+        const mats = [frameMat, frameMat, frameMat, frameMat, photoMat, frameMat];
+        const photoMesh = new THREE.Mesh(boxGeo, mats);
+        photoMesh.position.set(photo.x, photo.y, 0);
+        photoMesh.castShadow = true;
+        galleryGroup.add(photoMesh);
+
+        // 金色边框
+        const b = 0.015;
+        const eh = new THREE.BoxGeometry(photo.w + b*2, b, 0.045);
+        const ev = new THREE.BoxGeometry(b, photo.h + b*2, 0.045);
+        galleryGroup.add(new THREE.Mesh(eh, goldMat)).position.set(photo.x, photo.y + photo.h/2 + b/2, 0);
+        galleryGroup.add(new THREE.Mesh(eh, goldMat)).position.set(photo.x, photo.y - photo.h/2 - b/2, 0);
+        galleryGroup.add(new THREE.Mesh(ev, goldMat)).position.set(photo.x - photo.w/2 - b/2, photo.y, 0);
+        galleryGroup.add(new THREE.Mesh(ev, goldMat)).position.set(photo.x + photo.w/2 + b/2, photo.y, 0);
+
+        // 顶部射灯
+        const spot = new THREE.SpotLight(0xfff5e6, 0.8, 4, Math.PI/8, 0.5, 1);
+        spot.position.set(photo.x, 3.8, 1);
+        spot.target = photoMesh;
+        spot.castShadow = false;
+        galleryGroup.add(spot);
+    });
+
+    galleryGroup.position.set(0, 0, wallZ);
+    scene.add(galleryGroup);
+}
+
+    // 照片配置：[宽度, 高度, x位置, y位置]
+    const photos = [
+        {w: 1.5, h: 0.95, x: -2.6, y: 2.5},
+        {w: 1.1, h: 0.75, x: -0.6, y: 2.9},
+        {w: 1.3, h: 0.85, x: 1.1, y: 2.3},
+        {w: 0.95, h: 0.65, x: 2.7, y: 2.7},
+        {w: 1.2, h: 0.75, x: -2.1, y: 1.35},
+        {w: 1.0, h: 0.65, x: 0.2, y: 1.45},
+        {w: 0.95, h: 0.65, x: 1.7, y: 1.35},
+        {w: 1.1, h: 0.7, x: 2.9, y: 1.45},
+    ];
+
+    photos.forEach((photo, idx) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512; canvas.height = 320;
+        const ctx = canvas.getContext('2d');
+        if(sceneGenerators[idx]) sceneGenerators[idx](ctx, 512, 320);
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.encoding = THREE.sRGBEncoding;
+
+        // 照片主体（有厚度的盒子）
+        const photoMat = new THREE.MeshPhysicalMaterial({
+            map: tex, roughness: 0.35, metalness: 0.0
+        });
+        const boxGeo = new THREE.BoxGeometry(photo.w, photo.h, 0.04);
+        const mats = [frameMat, frameMat, frameMat, frameMat, photoMat, frameMat];
+        const photoMesh = new THREE.Mesh(boxGeo, mats);
+        photoMesh.position.set(photo.x, photo.y, 0);
+        photoMesh.castShadow = true;
+        galleryGroup.add(photoMesh);
+
+        // 金色边框
+        const b = 0.015;
+        const eh = new THREE.BoxGeometry(photo.w + b*2, b, 0.045);
+        const ev = new THREE.BoxGeometry(b, photo.h + b*2, 0.045);
+        galleryGroup.add(new THREE.Mesh(eh, goldMat)).position.set(photo.x, photo.y + photo.h/2 + b/2, 0);
+        galleryGroup.add(new THREE.Mesh(eh, goldMat)).position.set(photo.x, photo.y - photo.h/2 - b/2, 0);
+        galleryGroup.add(new THREE.Mesh(ev, goldMat)).position.set(photo.x - photo.w/2 - b/2, photo.y, 0);
+        galleryGroup.add(new THREE.Mesh(ev, goldMat)).position.set(photo.x + photo.w/2 + b/2, photo.y, 0);
+
+        // 顶部射灯
+        const spot = new THREE.SpotLight(0xfff5e6, 0.8, 4, Math.PI/8, 0.5, 1);
+        spot.position.set(photo.x, 3.8, 1);
+        spot.target = photoMesh;
+        spot.castShadow = false;
+        galleryGroup.add(spot);
+    });
+
+    galleryGroup.position.set(0, 0, wallZ);
+    scene.add(galleryGroup);
+}
+
+// ========== 完整展品陈列系统（展台+玻璃罩+说明牌+射灯+绳索围栏） ==========
+function createExhibitDisplay(wallX, zPos, itemName, createItemFn, isAgainstWall) {
+    const group = new THREE.Group();
+    group.userData = { itemName: itemName };
+
+    // 展台底座（缩小：0.4 x 0.3 x 0.15m）
+    const baseWidth = isAgainstWall ? 0.4 : 0.35;
+    const baseDepth = isAgainstWall ? 0.3 : 0.35;
+    const baseHeight = 0.70;
+
+    const marbleBase = new THREE.Mesh(
+        new THREE.BoxGeometry(baseWidth, baseHeight, baseDepth),
+        materials.marble
+    );
+    marbleBase.position.set(0, baseHeight/2, 0);
+    marbleBase.castShadow = true;
+    marbleBase.receiveShadow = true;
+    group.add(marbleBase);
+
+    // 底座金色细线装饰
+    const goldTrim = new THREE.Mesh(
+        new THREE.BoxGeometry(baseWidth + 0.005, 0.005, baseDepth + 0.005),
+        materials.goldFrame
+    );
+    goldTrim.position.set(0, baseHeight - 0.01, 0);
+    group.add(goldTrim);
+
+    // 深色绒布垫
+    const velvetPad = new THREE.Mesh(
+        new THREE.BoxGeometry(baseWidth - 0.02, 0.015, baseDepth - 0.02),
+        materials.velvet
+    );
+    velvetPad.position.set(0, baseHeight + 0.008, 0);
+    group.add(velvetPad);
+
+    // 展品（放在展台顶部，适合平视）
+    const item = createItemFn();
+    item.position.set(0, baseHeight + 0.02, 0);
+    // 展品整体放大1.5-2倍
+    item.scale.set(1.8, 1.8, 1.8);
+    group.add(item);
+
+    // 玻璃罩（适配85cm展台）
+    const glassHeight = 0.55;
+    const glassRadius = isAgainstWall ? 0.22 : 0.2;
+    const glassGeo = new THREE.CylinderGeometry(glassRadius, glassRadius, glassHeight, 24, 1, true);
+    const glass = new THREE.Mesh(glassGeo, materials.glass);
+    glass.position.set(0, baseHeight + glassHeight/2 + 0.02, 0);
+    group.add(glass);
+
+    // 玻璃顶部小把手
+    const handle = new THREE.Mesh(
+        new THREE.SphereGeometry(0.015, 8, 8),
+        new THREE.MeshPhysicalMaterial({color:0xdddddd,metalness:0.6,roughness:0.2})
+    );
+    handle.position.set(0, baseHeight + glassHeight + 0.02, 0);
+    group.add(handle);
+
+    // 展品说明牌
+    const plate = createDescriptionPlate(itemName);
+    plate.position.set(0, 0, baseDepth/2 + 0.18);
+    group.add(plate);
+
+    // 位置调整
+    group.position.set(wallX + (isAgainstWall ? 0.35 : 0), 0, zPos);
+    scene.add(group);
+    registerInteractive(group, itemName);
+
+    // 绳索围栏（独立展台使用）
+    if (!isAgainstWall) {
+        createRopeBarrier(wallX + 0.35, zPos, baseWidth + 0.3);
+    }
+}
+
+// ========== 主展台（中央圆形/方形） ==========
+function createMainDisplay(x, z, itemName, createItemFn) {
+    const group = new THREE.Group();
+    group.userData = { itemName: itemName };
+
+    // 方形大理石底座（缩小：0.45 x 0.15m）
+    const baseSize = 0.45;
+    const baseHeight = 0.70;
+
+    const marbleBase = new THREE.Mesh(
+        new THREE.BoxGeometry(baseSize, baseHeight, baseSize),
+        materials.marble
+    );
+    marbleBase.position.set(0, baseHeight/2, 0);
+    marbleBase.castShadow = true;
+    group.add(marbleBase);
+
+    // 金色装饰线
+    const goldTrim = new THREE.Mesh(
+        new THREE.BoxGeometry(baseSize + 0.005, 0.005, baseSize + 0.005),
+        materials.goldFrame
+    );
+    goldTrim.position.set(0, baseHeight - 0.01, 0);
+    group.add(goldTrim);
+
+    // 绒布垫
+    const velvetPad = new THREE.Mesh(
+        new THREE.BoxGeometry(baseSize - 0.02, 0.015, baseSize - 0.02),
+        materials.velvet
+    );
+    velvetPad.position.set(0, baseHeight + 0.008, 0);
+    group.add(velvetPad);
+
+    // 展品（放在展台顶部，适合平视）
+    const item = createItemFn();
+    item.position.set(0, baseHeight + 0.15, 0);
+    item.scale.set(1.8, 1.8, 1.8);
+    group.add(item);
+
+    // 玻璃罩
+    const glassHeight = 0.55;
+    const glassRadius = 0.25;
+    const glassGeo = new THREE.CylinderGeometry(glassRadius, glassRadius, glassHeight, 24, 1, true);
+    const glass = new THREE.Mesh(glassGeo, materials.glass);
+    glass.position.set(0, baseHeight + glassHeight/2 + 0.02, 0);
+    group.add(glass);
+
+    // 玻璃把手
+    const handle = new THREE.Mesh(
+        new THREE.SphereGeometry(0.015, 8, 8),
+        new THREE.MeshPhysicalMaterial({color:0xdddddd,metalness:0.6,roughness:0.2})
+    );
+    handle.position.set(0, baseHeight + glassHeight + 0.02, 0);
+    group.add(handle);
+
+    // 说明牌
+    const plate = createDescriptionPlate(itemName);
+    plate.position.set(0, 0, baseSize/2 + 0.2);
+    group.add(plate);
+
+    group.position.set(x, 0, z);
+    scene.add(group);
+    registerInteractive(group, itemName);
+
+    // 绳索围栏
+    createRopeBarrier(x, z, baseSize + 0.3);
+}
+
+// ========== 大型展板（右墙文字介绍） ==========
+function createDisplayBoard(wallX, zPos, label) {
+    const group = new THREE.Group();
+
+    // 黑色金属支架
+    const standMat = new THREE.MeshPhysicalMaterial({color:0x1a1a1a,metalness:0.7,roughness:0.3});
+    const legGeo = new THREE.BoxGeometry(0.04, 1.2, 0.04);
+    const leg1 = new THREE.Mesh(legGeo, standMat);
+    leg1.position.set(-0.35, 0.6, 0);
+    group.add(leg1);
+    const leg2 = new THREE.Mesh(legGeo, standMat);
+    leg2.position.set(0.35, 0.6, 0);
+    group.add(leg2);
+
+    // 倾斜的白色面板
+    const panelMat = new THREE.MeshPhysicalMaterial({color:0xf5f5f0,roughness:0.6});
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.02), panelMat);
+    panel.position.set(0, 1.3, 0.05);
+    panel.rotation.x = -0.15;
+    panel.castShadow = true;
+    group.add(panel);
+
+    // 面板边框
+    const border = new THREE.Mesh(
+        new THREE.BoxGeometry(0.92, 0.72, 0.015),
+        materials.goldFrame
+    );
+    border.position.set(0, 1.3, 0.04);
+    border.rotation.x = -0.15;
+    group.add(border);
+
+    group.position.set(wallX - 0.15, 0, zPos);
+    // 面向展厅内侧
+    if (wallX > 0) group.rotation.y = Math.PI;
+    scene.add(group);
+}
+
+// ========== 展品说明牌（黑色金属支架+倾斜白色面板） ==========
+function createDescriptionPlate(itemName) {
+    const group = new THREE.Group();
+
+    // 支架
+    const standMat = new THREE.MeshPhysicalMaterial({color:0x1a1a1a,metalness:0.6,roughness:0.3});
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.015,0.5,8), standMat);
+    pole.position.y = 0.25;
+    group.add(pole);
+
+    // 底座
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.02,12), standMat);
+    base.position.y = 0.01;
+    group.add(base);
+
+    // 用Canvas生成带文字的面板纹理
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    // 背景
+    ctx.fillStyle = '#fafafa';
+    ctx.fillRect(0, 0, 512, 256);
+
+    // 标题（展品名称）
+    ctx.fillStyle = '#1a1a1a';
+    ctx.font = 'bold 42px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(itemName, 256, 80);
+
+    // 分隔线
+    ctx.strokeStyle = '#c41e3a';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(150, 105);
+    ctx.lineTo(362, 105);
+    ctx.stroke();
+
+    // 副标题
+    ctx.fillStyle = '#666666';
+    ctx.font = '26px "Microsoft YaHei", sans-serif';
+    ctx.fillText('八路军太行纪念馆 · 珍贵文物', 256, 155);
+
+    // 提示文字
+    ctx.fillStyle = '#999999';
+    ctx.font = '20px "Microsoft YaHei", sans-serif';
+    ctx.fillText('按 E 键查看详情', 256, 205);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.encoding = THREE.sRGBEncoding;
+
+    // 带文字的面板
+    const panelMat = new THREE.MeshPhysicalMaterial({
+        map: tex, color: 0xffffff, roughness: 0.4, metalness: 0.0
+    });
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.2, 0.01), panelMat);
+    panel.position.set(0, 0.55, 0.02);
+    panel.rotation.x = -0.2;
+    group.add(panel);
+
+    // 面板边框
+    const frame = new THREE.Mesh(
+        new THREE.BoxGeometry(0.36, 0.21, 0.008),
+        materials.goldFrame
+    );
+    frame.position.set(0, 0.55, 0.015);
+    frame.rotation.x = -0.2;
+    group.add(frame);
+
+    return group;
+}
+
+// ========== 绳索围栏（红色天鹅绒绳索+金色立柱） ==========
+function createRopeBarrier(cx, cz, size) {
+    const postHeight = 0.5;
+    const postRadius = 0.025;
+    const half = size / 2 + 0.15;
+
+    const postPositions = [
+        {x: cx - half, z: cz - half},
+        {x: cx + half, z: cz - half},
+        {x: cx + half, z: cz + half},
+        {x: cx - half, z: cz + half}
+    ];
+
+    // 金色立柱
+    postPositions.forEach(pos=>{
+        const postGroup = new THREE.Group();
+        const post = new THREE.Mesh(
+            new THREE.CylinderGeometry(postRadius, postRadius, postHeight, 8),
+            materials.goldPost
+        );
+        post.position.y = postHeight / 2;
+        postGroup.add(post);
+
+        // 顶部球
+        const ball = new THREE.Mesh(
+            new THREE.SphereGeometry(0.04, 8, 8),
+            materials.goldPost
+        );
+        ball.position.y = postHeight + 0.04;
+        postGroup.add(ball);
+
+        // 底座
+        const base = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.04, 0.05, 0.02, 8),
+            materials.goldPost
+        );
+        base.position.y = 0.01;
+        postGroup.add(base);
+
+        postGroup.position.set(pos.x, 0, pos.z);
+        scene.add(postGroup);
+    });
+
+    // 红色绳索（4条）
+    for (let i = 0; i < 4; i++) {
+        const p1 = postPositions[i];
+        const p2 = postPositions[(i + 1) % 4];
+        const dx = p2.x - p1.x;
+        const dz = p2.z - p1.z;
+        const len = Math.sqrt(dx*dx + dz*dz);
+        const ropeGeo = new THREE.CylinderGeometry(0.008, 0.008, len, 6, 1, true);
+        const rope = new THREE.Mesh(ropeGeo, materials.ropeRed);
+        rope.position.set((p1.x + p2.x)/2, postHeight - 0.02, (p1.z + p2.z)/2);
+        // 下垂弧线效果（简化：略微降低中点）
+        rope.rotation.y = Math.atan2(dx, dz);
+        rope.rotation.z = Math.PI / 2;
+        scene.add(rope);
+    }
+}
+
+// ========== 绿植（简化几何体） ==========
+function createPlant(x, z) {
+    const group = new THREE.Group();
+
+    // 花盆
+    const pot = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.15, 0.12, 0.25, 12),
+        new THREE.MeshPhysicalMaterial({color:0x8b4513,roughness:0.8})
+    );
+    pot.position.y = 0.125;
+    pot.castShadow = true;
+    group.add(pot);
+
+    // 土壤
+    const soil = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.13, 0.13, 0.02, 12),
+        new THREE.MeshPhysicalMaterial({color:0x3d2817,roughness:1.0})
+    );
+    soil.position.y = 0.24;
+    group.add(soil);
+
+    // 植物茎干
+    const stem = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.015, 0.02, 0.4, 6),
+        new THREE.MeshPhysicalMaterial({color:0x4a7c2a,roughness:0.8})
+    );
+    stem.position.y = 0.45;
+    group.add(stem);
+
+    // 叶片（多个球体组合）
+    const leafMat = new THREE.MeshPhysicalMaterial({color:0x3a6b1f,roughness:0.7});
+    const leafPositions = [
+        {x:0.08,y:0.55,z:0},{x:-0.07,y:0.6,z:0.05},
+        {x:0,y:0.65,z:-0.06},{x:0.05,y:0.5,z:0.06}
+    ];
+    leafPositions.forEach(pos=>{
+        const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), leafMat);
+        leaf.position.set(pos.x, pos.y, pos.z);
+        leaf.scale.set(1.5, 0.5, 1);
+        group.add(leaf);
+    });
+
+    group.position.set(x, 0, z);
+    scene.add(group);
+}
+
+// ========== 监控摄像头模型 ==========
+function createSecurityCamera(x, y, z) {
+    const group = new THREE.Group();
+
+    // 底座
+    const base = new THREE.Mesh(
+        new THREE.BoxGeometry(0.08, 0.04, 0.08),
+        new THREE.MeshPhysicalMaterial({color:0xdddddd,metalness:0.6,roughness:0.3})
+    );
+    base.position.y = -0.02;
+    group.add(base);
+
+    // 机身
+    const body = new THREE.Mesh(
+        new THREE.BoxGeometry(0.06, 0.05, 0.08),
+        new THREE.MeshPhysicalMaterial({color:0xeeeeee,metalness:0.3,roughness:0.4})
+    );
+    group.add(body);
+
+    // 镜头
+    const lens = new THREE.Mesh(
+        new THREE.SphereGeometry(0.02, 8, 8),
+        new THREE.MeshPhysicalMaterial({color:0x111111,roughness:0.1,clearcoat:0.8})
+    );
+    lens.position.set(0, 0, 0.045);
+    group.add(lens);
+
+    // 红色指示灯
+    const led = new THREE.Mesh(
+        new THREE.SphereGeometry(0.005, 4, 4),
+        new THREE.MeshBasicMaterial({color:0xff0000})
+    );
+    led.position.set(0.02, 0.02, 0.04);
+    group.add(led);
+
+    group.position.set(x, y, z);
+    group.rotation.x = Math.PI / 6;
+    scene.add(group);
+}
+
+// ========== 灭火器模型 ==========
+function createFireExtinguisher(x, z) {
+    const group = new THREE.Group();
+
+    // 红色圆柱罐
+    const tank = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.06, 0.06, 0.35, 12),
+        new THREE.MeshPhysicalMaterial({color:0xcc0000,roughness:0.4,metalness:0.2})
+    );
+    tank.position.y = 0.175;
+    tank.castShadow = true;
+    group.add(tank);
+
+    // 顶部盖子
+    const cap = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.06, 0.04, 12),
+        new THREE.MeshPhysicalMaterial({color:0x333333,roughness:0.5,metalness:0.5})
+    );
+    cap.position.y = 0.37;
+    group.add(cap);
+
+    // 喷嘴
+    const nozzle = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.008, 0.012, 0.08, 6),
+        new THREE.MeshPhysicalMaterial({color:0x333333,roughness:0.5,metalness:0.5})
+    );
+    nozzle.position.set(0.03, 0.4, 0);
+    nozzle.rotation.z = -Math.PI / 4;
+    group.add(nozzle);
+
+    // 支架
+    const bracket = new THREE.Mesh(
+        new THREE.BoxGeometry(0.02, 0.4, 0.02),
+        new THREE.MeshPhysicalMaterial({color:0x888888,metalness:0.6,roughness:0.3})
+    );
+    bracket.position.set(-0.08, 0.2, 0);
+    group.add(bracket);
+
+    group.position.set(x, 0, z);
+    scene.add(group);
+}
+
+// ========== 参观导览手册架 ==========
+function createBrochureRack(x, z) {
+    const group = new THREE.Group();
+
+    // 支架
+    const stand = new THREE.Mesh(
+        new THREE.BoxGeometry(0.4, 0.9, 0.25),
+        new THREE.MeshPhysicalMaterial({color:0x5c4033,roughness:0.6})
+    );
+    stand.position.y = 0.45;
+    stand.castShadow = true;
+    group.add(stand);
+
+    // 顶层倾斜面
+    const top = new THREE.Mesh(
+        new THREE.BoxGeometry(0.38, 0.02, 0.2),
+        new THREE.MeshPhysicalMaterial({color:0x4a3525,roughness:0.6})
+    );
+    top.position.set(0, 0.88, 0.03);
+    top.rotation.x = -0.15;
+    group.add(top);
+
+    // 手册（彩色小方块）
+    const brochureColors = [0xc41e3a, 0xd4a853, 0x2a5c3a];
+    for (let i = 0; i < 3; i++) {
+        const brochure = new THREE.Mesh(
+            new THREE.BoxGeometry(0.06, 0.12, 0.01),
+            new THREE.MeshPhysicalMaterial({color:brochureColors[i],roughness:0.7})
+        );
+        brochure.position.set(-0.1 + i * 0.1, 0.92, 0.06);
+        brochure.rotation.x = -0.15;
+        group.add(brochure);
+    }
+
+    group.position.set(x, 0, z);
+    scene.add(group);
+}
+
+// ========== 展品模型 ==========
+
+// 行军锅（重做，更逼真）
+
+// ========== 照片纹理展品创建器（逼真展示板）==========
+function createPhotoExhibit(photoUrl, aspectRatio, itemName) {
+    const group = new THREE.Group();
+    group.userData = { itemName: itemName };
+
+    // 计算展示板尺寸（保持照片比例，最大宽度0.5m）
+    const maxW = 0.5;
+    let w = maxW;
+    let h = w / aspectRatio;
+    if (h > 0.4) {
+        h = 0.4;
+        w = h * aspectRatio;
+    }
+    const thickness = 0.025;
+    const border = 0.008;
+
+    // 加载照片纹理
+    const textureLoader = new THREE.TextureLoader();
+    const photoTexture = textureLoader.load(photoUrl);
+    photoTexture.encoding = THREE.sRGBEncoding;
+
+    // 正面：照片
+    const frontMat = new THREE.MeshPhysicalMaterial({
+        map: photoTexture,
+        roughness: 0.3,
+        metalness: 0.0,
+        clearcoat: 0.1
+    });
+
+    // 背面和侧面：深色仿木/仿框材质
+    const frameMat = new THREE.MeshPhysicalMaterial({
+        color: 0x1a0a05,
+        roughness: 0.7,
+        metalness: 0.1
+    });
+
+    // 金色边框材质
+    const goldEdgeMat = new THREE.MeshPhysicalMaterial({
+        color: 0xb8860b,
+        metalness: 0.8,
+        roughness: 0.25
+    });
+
+    // 主体盒子（正面照片，其他面深色）
+    const boxGeo = new THREE.BoxGeometry(w, h, thickness);
+    const materials = [
+        frameMat, // right
+        frameMat, // left
+        frameMat, // top
+        frameMat, // bottom
+        frontMat, // front (photo)
+        frameMat  // back
+    ];
+    const photoBoard = new THREE.Mesh(boxGeo, materials);
+    photoBoard.castShadow = true;
+    group.add(photoBoard);
+
+    // 金色边框（四个边条）
+    const edgeH = new THREE.BoxGeometry(w + border*2, border, thickness + 0.002);
+    const edgeV = new THREE.BoxGeometry(border, h + border*2, thickness + 0.002);
+
+    const topEdge = new THREE.Mesh(edgeH, goldEdgeMat);
+    topEdge.position.set(0, h/2 + border/2, 0);
+    group.add(topEdge);
+
+    const bottomEdge = new THREE.Mesh(edgeH, goldEdgeMat);
+    bottomEdge.position.set(0, -h/2 - border/2, 0);
+    group.add(bottomEdge);
+
+    const leftEdge = new THREE.Mesh(edgeV, goldEdgeMat);
+    leftEdge.position.set(-w/2 - border/2, 0, 0);
+    group.add(leftEdge);
+
+    const rightEdge = new THREE.Mesh(edgeV, goldEdgeMat);
+    rightEdge.position.set(w/2 + border/2, 0, 0);
+    group.add(rightEdge);
+
+    // 小型支撑架（让展示板略微倾斜）
+    const standGeo = new THREE.BoxGeometry(0.06, 0.04, 0.04);
+    const stand = new THREE.Mesh(standGeo, frameMat);
+    stand.position.set(0, -h/2 - 0.04, -0.03);
+    group.add(stand);
+
+    // 整体略微向后倾斜（像博物馆展示牌）
+    group.rotation.x = -0.08;
+
+    return group;
+}
+
+function createMarchingPot() {
+    const group = new THREE.Group();
+
+    const texLoader = new THREE.TextureLoader();
+    const potTex = texLoader.load('images/memorial/marching_pot.jpg');
+    potTex.encoding = THREE.sRGBEncoding;
+
+    // 铁锅材质（带照片纹理）
+    const potMat = new THREE.MeshPhysicalMaterial({
+        map: potTex,
+        color: 0x3a3a3a,
+        metalness: 0.75,
+        roughness: 0.55
+    });
+    const patchMat = new THREE.MeshStandardMaterial({
+        color: 0x5c4033, roughness: 0.9
+    });
+
+    // 锅身（半球+圆柱组合）
+    const bottomGeo = new THREE.SphereGeometry(0.2, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+    const bottom = new THREE.Mesh(bottomGeo, potMat);
+    bottom.position.y = 0.1;
+    group.add(bottom);
+
+    const wallGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.12, 24, 1, true);
+    const wall = new THREE.Mesh(wallGeo, potMat);
+    wall.position.y = 0.22;
+    group.add(wall);
+
+    // 锅沿
+    const rimGeo = new THREE.TorusGeometry(0.2, 0.012, 8, 24);
+    const rim = new THREE.Mesh(rimGeo, potMat);
+    rim.rotation.x = Math.PI / 2;
+    rim.position.y = 0.28;
+    group.add(rim);
+
+    // 两个提耳
+    [-1, 1].forEach(side => {
+        const earGeo = new THREE.TorusGeometry(0.035, 0.007, 8, 12, Math.PI);
+        const ear = new THREE.Mesh(earGeo, potMat);
+        ear.position.set(side * 0.22, 0.26, 0);
+        ear.rotation.y = Math.PI / 2;
+        group.add(ear);
+    });
+
+    // 补丁（铁片修补痕迹）
+    const patchColors = [0x5c4033, 0x6b4423, 0x4a3728];
+    for (let i = 0; i < 12; i++) {
+        const angle = (i / 12) * Math.PI * 2 + Math.random() * 0.3;
+        const height = 0.12 + Math.random() * 0.1;
+        const patch = new THREE.Mesh(
+            new THREE.BoxGeometry(0.025, 0.015, 0.004),
+            new THREE.MeshStandardMaterial({
+                color: patchColors[Math.floor(Math.random() * patchColors.length)],
+                roughness: 0.9
+            })
+        );
+        patch.position.set(
+            Math.cos(angle) * 0.202,
+            height,
+            Math.sin(angle) * 0.202
+        );
+        patch.lookAt(0, height, 0);
+        group.add(patch);
+    }
+
+    group.userData = { itemName: '行军锅' };
+    return group;
+}
+
+// 草鞋（3D模型+Canvas纹理）
+function createStrawSandals() {
+    const group = new THREE.Group();
+
+    // 生成草鞋纹理
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#c9a86c';
+    ctx.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 40; i++) {
+        ctx.strokeStyle = `rgba(${160+Math.random()*40},${130+Math.random()*30},${70+Math.random()*30},0.4)`;
+        ctx.lineWidth = 1 + Math.random() * 2;
+        ctx.beginPath();
+        ctx.moveTo(Math.random()*256, 0);
+        ctx.lineTo(Math.random()*256, 256);
+        ctx.stroke();
+    }
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.encoding = THREE.sRGBEncoding;
+
+    const strawMat = new THREE.MeshPhysicalMaterial({
+        map: tex, color: 0xd4a574, roughness: 0.9
+    });
+    const soleMat = new THREE.MeshPhysicalMaterial({
+        color: 0xc4a574, roughness: 0.9
+    });
+
+    // 鞋底（扁平椭圆）
+    const soleGeo = new THREE.BoxGeometry(0.32, 0.025, 0.14);
+    const sole = new THREE.Mesh(soleGeo, soleMat);
+    group.add(sole);
+
+    // 鞋面（弧形草编）
+    const upperGeo = new THREE.CylinderGeometry(0.06, 0.08, 0.2, 12, 1, false, 0, Math.PI);
+    const upper = new THREE.Mesh(upperGeo, strawMat);
+    upper.position.set(-0.02, 0.06, 0);
+    upper.rotation.z = Math.PI / 2;
+    group.add(upper);
+
+    // 鞋带（3条）
+    for (let i = 0; i < 3; i++) {
+        const strapGeo = new THREE.BoxGeometry(0.015, 0.015, 0.12);
+        const strap = new THREE.Mesh(strapGeo, strawMat);
+        strap.position.set(-0.08 + i * 0.08, 0.035, 0);
+        group.add(strap);
+    }
+
+    group.userData = { itemName: '叶成焕的草鞋' };
+    return group;
+}
+
+// 小木勺（3D模型+木纹材质）
+function createWoodenSpoon() {
+    const group = new THREE.Group();
+
+    // 木纹材质
+    const woodMat = new THREE.MeshPhysicalMaterial({
+        color: 0x8b6914,
+        roughness: 0.75,
+        metalness: 0.05
+    });
+    const darkWoodMat = new THREE.MeshPhysicalMaterial({
+        color: 0x7a5a18,
+        roughness: 0.8,
+        metalness: 0.05
+    });
+
+    // 勺柄（细长圆柱）
+    const handleGeo = new THREE.CylinderGeometry(0.012, 0.015, 0.22, 8);
+    const handle = new THREE.Mesh(handleGeo, woodMat);
+    handle.rotation.z = Math.PI / 2;
+    handle.position.set(-0.1, 0.01, 0);
+    handle.castShadow = true;
+    group.add(handle);
+
+    // 勺头（扁球体）
+    const bowlGeo = new THREE.SphereGeometry(0.055, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+    const bowl = new THREE.Mesh(bowlGeo, darkWoodMat);
+    bowl.scale.set(1, 0.6, 0.8);
+    bowl.rotation.x = Math.PI;
+    bowl.position.set(0.04, 0.015, 0);
+    bowl.castShadow = true;
+    group.add(bowl);
+
+    // 勺头边缘
+    const rimGeo = new THREE.TorusGeometry(0.055, 0.005, 8, 16);
+    const rim = new THREE.Mesh(rimGeo, woodMat);
+    rim.rotation.x = Math.PI / 2;
+    rim.position.set(0.04, 0.02, 0);
+    group.add(rim);
+
+    group.userData = { itemName: '胡春花的小木勺' };
+    return group;
+}
+
+// 八路军82毫米拉发式迫击炮（3D模型+照片纹理）
+function createMortar() {
+    const group = new THREE.Group();
+
+    // 加载迫击炮照片纹理
+    const texLoader = new THREE.TextureLoader();
+    const mortarTex = texLoader.load('images/memorial/mortar.jpg');
+    mortarTex.encoding = THREE.sRGBEncoding;
+
+    // 炮管材质（照片纹理+金属质感）
+    const barrelMat = new THREE.MeshPhysicalMaterial({
+        map: mortarTex,
+        color: 0x888888,
+        metalness: 0.85,
+        roughness: 0.35,
+        clearcoat: 0.2
+    });
+    const steelMat = new THREE.MeshPhysicalMaterial({
+        color: 0x3a3a3a, metalness: 0.9, roughness: 0.4
+    });
+    const rustMat = new THREE.MeshPhysicalMaterial({
+        color: 0x6b3a1f, metalness: 0.3, roughness: 0.9
+    });
+
+    // 炮管（圆柱体，带照片纹理）
+    const barrelGeo = new THREE.CylinderGeometry(0.06, 0.05, 0.7, 24);
+    const barrel = new THREE.Mesh(barrelGeo, barrelMat);
+    barrel.position.y = 0.35;
+    barrel.castShadow = true;
+    group.add(barrel);
+
+    // 炮口加强环
+    const ringGeo = new THREE.TorusGeometry(0.065, 0.008, 8, 24);
+    const ring = new THREE.Mesh(ringGeo, steelMat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = 0.7;
+    group.add(ring);
+
+    // 炮尾
+    const tailGeo = new THREE.CylinderGeometry(0.04, 0.05, 0.1, 16);
+    const tail = new THREE.Mesh(tailGeo, steelMat);
+    tail.position.y = 0.02;
+    group.add(tail);
+
+    // 底座钣（凹面圆盘）
+    const baseplateGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.02, 32);
+    const baseplate = new THREE.Mesh(baseplateGeo, steelMat);
+    baseplate.position.y = -0.01;
+    baseplate.receiveShadow = true;
+    group.add(baseplate);
+
+    // 支架（两根斜支撑）
+    const strutGeo = new THREE.CylinderGeometry(0.012, 0.015, 0.3, 8);
+    [-1, 1].forEach(side => {
+        const strut = new THREE.Mesh(strutGeo, steelMat);
+        strut.position.set(side * 0.15, 0.15, -0.1);
+        strut.rotation.z = side * 0.3;
+        strut.rotation.x = 0.2;
+        group.add(strut);
+    });
+
+    // 锈蚀细节
+    for (let i = 0; i < 5; i++) {
+        const rustGeo = new THREE.SphereGeometry(0.008 + Math.random() * 0.005, 6, 6);
+        const rust = new THREE.Mesh(rustGeo, rustMat);
+        rust.position.set(
+            (Math.random() - 0.5) * 0.3,
+            Math.random() * 0.5,
+            0.06
+        );
+        group.add(rust);
+    }
+
+    // 整体仰角（像展示姿态）
+    group.rotation.x = -0.15;
+
+    group.userData = { itemName: '八路军拉发式迫击炮' };
+    return group;
+}
+
+// 军号（3D模型+照片纹理）
+function createBugle() {
+    const group = new THREE.Group();
+
+    const texLoader = new THREE.TextureLoader();
+    const bugleTex = texLoader.load('images/memorial/bugle.jpg');
+    bugleTex.encoding = THREE.sRGBEncoding;
+
+    // 黄铜材质（带照片纹理）
+    const brassMat = new THREE.MeshPhysicalMaterial({
+        map: bugleTex,
+        color: 0xb8860b,
+        metalness: 0.95,
+        roughness: 0.35,
+        clearcoat: 0.3
+    });
+    const darkBrassMat = new THREE.MeshPhysicalMaterial({
+        color: 0x8b7355, metalness: 0.9, roughness: 0.5
+    });
+
+    // 号嘴
+    const mouthpiece = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.015, 0.025, 0.06, 12),
+        brassMat
+    );
+    mouthpiece.rotation.z = Math.PI / 2;
+    mouthpiece.position.set(-0.2, 0.02, 0);
+    group.add(mouthpiece);
+
+    // 号管主体（弯曲的圆柱体，用多个小段模拟弯曲）
+    const segments = 8;
+    for (let i = 0; i < segments; i++) {
+        const t = i / segments;
+        const radius = 0.018 - t * 0.003;
+        const segGeo = new THREE.CylinderGeometry(radius, radius, 0.08, 12);
+        const seg = new THREE.Mesh(segGeo, brassMat);
+        const angle = t * Math.PI * 0.4;
+        seg.position.set(-0.14 + t * 0.35, 0.02 + Math.sin(angle) * 0.03, 0);
+        seg.rotation.z = -angle * 0.5;
+        seg.castShadow = true;
+        group.add(seg);
+    }
+
+    // 喇叭口（锥形）
+    const bellGeo = new THREE.CylinderGeometry(0.045, 0.02, 0.08, 24, 1, true);
+    const bell = new THREE.Mesh(bellGeo, brassMat);
+    bell.position.set(0.28, 0.04, 0);
+    bell.rotation.z = -0.2;
+    group.add(bell);
+
+    // 喇叭口边缘
+    const bellRimGeo = new THREE.TorusGeometry(0.045, 0.004, 8, 24);
+    const bellRim = new THREE.Mesh(bellRimGeo, darkBrassMat);
+    bellRim.rotation.x = Math.PI / 2;
+    bellRim.position.set(0.32, 0.06, 0);
+    group.add(bellRim);
+
+    // 挂绳（红色细绳）
+    const ropeMat = new THREE.MeshPhysicalMaterial({color: 0x8b1a1a, roughness: 0.8});
+    for (let i = 0; i < 5; i++) {
+        const ropeGeo = new THREE.CylinderGeometry(0.003, 0.003, 0.06, 4);
+        const rope = new THREE.Mesh(ropeGeo, ropeMat);
+        rope.position.set(-0.1 + i * 0.02, -0.03, 0);
+        rope.rotation.z = Math.PI / 2;
+        group.add(rope);
+    }
+
+    group.userData = { itemName: '崔振芳的军号' };
+    return group;
+}
+
+// 打字机
+function createTypewriter() {
+    const group = new THREE.Group();
+    const bodyMat = new THREE.MeshPhysicalMaterial({color:0x2f2f2f,roughness:0.5,metalness:0.3});
+    const keyMat = new THREE.MeshPhysicalMaterial({color:0xf5f0e8,roughness:0.7});
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.12,0.3),bodyMat);
+    body.castShadow = true;
+    group.add(body);
+    for(let row=0;row<3;row++){
+        for(let col=0;col<6;col++){
+            const key = new THREE.Mesh(new THREE.BoxGeometry(0.035,0.02,0.035),keyMat);
+            key.position.set(-0.12+col*0.05,0.07,-0.08+row*0.05);
+            group.add(key);
+        }
+    }
+    const rollerGeo = new THREE.CylinderGeometry(0.04,0.04,0.32,12);
+    const roller = new THREE.Mesh(rollerGeo,bodyMat);
+    roller.rotation.x = Math.PI / 2;
+    roller.position.set(0,0.12,-0.12);
+    group.add(roller);
+    group.userData = { itemName: '何克的打字机' };
+    return group;
+}
+
+// 八路军臂章
+function createArmband() {
+    const group = new THREE.Group();
+    // 木制展示托架
+    const standMat = new THREE.MeshPhysicalMaterial({color:0x5c3a1e,roughness:0.8});
+    const stand = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.01, 0.08), standMat);
+    stand.position.y = 0.005;
+    group.add(stand);
+    // 臂章本身（Canvas纹理）
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#1a3a6b';
+    ctx.fillRect(0, 0, 256, 128);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(6, 6, 244, 116);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 64px "SimHei", "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('八路', 128, 64);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    const badge = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.1, 0.06),
+        new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide })
+    );
+    badge.position.y = 0.03;
+    group.add(badge);
+    const coverMat = new THREE.MeshPhysicalMaterial({
+        color: 0xffffff, transparent: true, opacity: 0.2,
+        roughness: 0.05, metalness: 0, envMapIntensity: 0.5
+    });
+    const cover = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.025, 0.09), coverMat);
+    cover.position.y = 0.04;
+    group.add(cover);
+    group.userData = { itemName: '八路军臂章' };
+    return group;
+}
+
+// 铸字机
+function createPrintingPress() {
+    const group = new THREE.Group();
+
+    const texLoader = new THREE.TextureLoader();
+    const typeTex = texLoader.load('images/memorial/typewriter.jpg');
+    typeTex.encoding = THREE.sRGBEncoding;
+
+    // 铸字机机身材质（带照片纹理）
+    const bodyMat = new THREE.MeshPhysicalMaterial({
+        map: typeTex,
+        color: 0x3a3a3a,
+        metalness: 0.7,
+        roughness: 0.45
+    });
+    const metalMat = new THREE.MeshPhysicalMaterial({
+        color: 0x4a4a4a, metalness: 0.6, roughness: 0.5
+    });
+
+    // 机身底座
+    const baseGeo = new THREE.BoxGeometry(0.45, 0.12, 0.35);
+    const base = new THREE.Mesh(baseGeo, bodyMat);
+    base.position.y = 0.06;
+    base.castShadow = true;
+    group.add(base);
+
+    // 机身主体
+    const bodyGeo = new THREE.BoxGeometry(0.38, 0.25, 0.3);
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.y = 0.24;
+    body.castShadow = true;
+    group.add(body);
+
+    // 字盘（顶部平面）
+    const plateGeo = new THREE.BoxGeometry(0.32, 0.02, 0.25);
+    const plate = new THREE.Mesh(plateGeo, metalMat);
+    plate.position.y = 0.38;
+    group.add(plate);
+
+    // 铅字（小方块阵列）
+    const typeMat = new THREE.MeshPhysicalMaterial({
+        color: 0x1a1a1a, metalness: 0.8, roughness: 0.3
+    });
+    for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 4; col++) {
+            const type = new THREE.Mesh(
+                new THREE.BoxGeometry(0.035, 0.025, 0.035),
+                typeMat
+            );
+            type.position.set(-0.1 + col * 0.065, 0.42, -0.08 + row * 0.065);
+            group.add(type);
+        }
+    }
+
+    // 摇柄
+    const handleStem = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.015, 0.015, 0.12, 8),
+        metalMat
+    );
+    handleStem.rotation.z = Math.PI / 2;
+    handleStem.position.set(0.22, 0.24, 0);
+    group.add(handleStem);
+
+    const handleKnob = new THREE.Mesh(
+        new THREE.SphereGeometry(0.035, 8, 8),
+        metalMat
+    );
+    handleKnob.position.set(0.28, 0.24, 0);
+    group.add(handleKnob);
+
+    group.userData = { itemName: '《新华日报》铸字机' };
+    return group;
+}
+
+// ========== 尘埃粒子系统 ==========
+function createDustParticles() {
+    const particleCount = 80;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    for(let i = 0; i < particleCount; i++){
+        positions[i*3] = (Math.random() - 0.5) * 12;
+        positions[i*3+1] = Math.random() * 3;
+        positions[i*3+2] = (Math.random() - 0.5) * 8;
+    }
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const material = new THREE.PointsMaterial({
+        color: 0xcccccc,
+        size: 0.015,
+        transparent: true,
+        opacity: 0.12,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    });
+    const particles = new THREE.Points(geometry, material);
+    particles.name = 'dustParticles';
+    scene.add(particles);
+}
+
+function updateDustParticles() {
+    const particles = scene.getObjectByName('dustParticles');
+    if(!particles) return;
+    const positions = particles.geometry.attributes.position.array;
+    for(let i = 0; i < positions.length / 3; i++){
+        positions[i*3] += (Math.random() - 0.5) * 0.002;
+        positions[i*3+1] += (Math.random() - 0.5) * 0.002;
+        positions[i*3+2] += (Math.random() - 0.5) * 0.002;
+        if(positions[i*3+1] < 0) positions[i*3+1] = 4;
+        if(positions[i*3+1] > 4) positions[i*3+1] = 0;
+    }
+    particles.geometry.attributes.position.needsUpdate = true;
+}
+
+// ========== 注册交互 ==========
+function registerInteractive(group, itemName) {
+    interactiveGroups.push(group);
+    group.traverse(child=>{
+        if(child.isMesh){
+            child.userData.itemName = itemName;
+            interactiveObjects.push(child);
+        }
+    });
+}
+
+// ========== 碰撞检测（精品展厅障碍物） ==========
+function checkCollision(newX, newZ) {
+    if(newX < ROOM_BOUNDS.minX || newX > ROOM_BOUNDS.maxX) return true;
+    if(newZ < ROOM_BOUNDS.minZ || newZ > ROOM_BOUNDS.maxZ) return true;
+
+    // 左墙3个展柜
+    const displayBoxes = [
+        {cx:-5.05,cz:-2.2,hw:0.25,hd:0.25},
+        {cx:-5.05,cz:0.5,hw:0.25,hd:0.25},
+        {cx:-5.05,cz:2.8,hw:0.25,hd:0.25},
+        // 右墙打字机
+        {cx:4.85,cz:-2.8,hw:0.25,hd:0.25},
+        // 右墙铸字机
+        {cx:4.85,cz:-1.0,hw:0.25,hd:0.25},
+        // 右墙臂章
+        {cx:4.85,cz:1.0,hw:0.25,hd:0.25},
+        // 右墙军号
+        {cx:4.85,cz:2.8,hw:0.25,hd:0.25},
+        // 右墙展板
+        {cx:4.85,cz:0,hw:0.3,hd:0.3},
+        // 中央迫击炮
+        {cx:-3.8,cz:-2.8,hw:0.3,hd:0.3},
+        // 入口手册架
+        {cx:1.5,cz:3.2,hw:0.25,hd:0.2},
+        // 角落绿植
+        {cx:-5,cz:3,hw:0.2,hd:0.2},
+        {cx:5,cz:3,hw:0.2,hd:0.2}
+    ];
+
+    const playerRadius = 0.25;
+    for(const box of displayBoxes){
+        if(newX + playerRadius > box.cx - box.hw && newX - playerRadius < box.cx + box.hw &&
+           newZ + playerRadius > box.cz - box.hd && newZ - playerRadius < box.cz + box.hd){
+            return true;
+        }
+    }
+    return false;
+}
+
+// ========== 移动处理 ==========
+function handleMovement() {
+    if(!isLocked && !isMobile) return;
+    if(isPaused || isPanelOpen) return;
+
+    const direction = new THREE.Vector3();
+    camera.getWorldDirection(direction);
+    direction.y = 0;
+    direction.normalize();
+
+    const right = new THREE.Vector3();
+    right.crossVectors(direction, new THREE.Vector3(0,1,0)).normalize();
+
+    let moveX = 0, moveZ = 0;
+
+    if(moveState.forward){ moveX += direction.x; moveZ += direction.z; }
+    if(moveState.backward){ moveX -= direction.x; moveZ -= direction.z; }
+    if(moveState.left){ moveX -= right.x; moveZ -= right.z; }
+    if(moveState.right){ moveX += right.x; moveZ += right.z; }
+
+    if(isMobile && joystickLeft.active){
+        moveX += direction.x * (-joystickLeft.dy) + right.x * joystickLeft.dx;
+        moveZ += direction.z * (-joystickLeft.dy) + right.z * joystickLeft.dx;
+    }
+
+    const len = Math.sqrt(moveX*moveX + moveZ*moveZ);
+    if(len > 0){
+        moveX = (moveX / len) * MOVE_SPEED;
+        moveZ = (moveZ / len) * MOVE_SPEED;
+    }
+
+    const newX = camera.position.x + moveX;
+    const newZ = camera.position.z + moveZ;
+
+    if(!checkCollision(newX, camera.position.z)){
+        camera.position.x = newX;
+    }
+    if(!checkCollision(camera.position.x, newZ)){
+        camera.position.z = newZ;
+    }
+    camera.position.y = PLAYER_HEIGHT;
+}
+
+// ========== Raycaster检测 ==========
+function checkItemFocus() {
+    if(!isLocked && !isMobile) return;
+    if(isPanelOpen) return;
+
+    raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
+    const intersects = raycaster.intersectObjects(interactiveObjects, false);
+
+    const itemLabel = document.getElementById('itemLabel');
+    const interactHint = document.getElementById('interactHint');
+    const crosshair = document.getElementById('crosshair');
+    const mobileBtn = document.getElementById('mobileInteractBtn');
+
+    if(intersects.length > 0){
+        const obj = intersects[0].object;
+        const itemName = obj.userData.itemName;
+
+        if(hoveredObject !== obj){
+            if(hoveredObject) resetObjectEmissive(hoveredObject);
+            hoveredObject = obj;
+            if(obj.material && obj.material.emissive){
+                obj.material.emissive.setHex(0x444444);
+            }
+        }
+
+        const itemData = itemsData.find(d => d.name === itemName);
+        if(itemData){
+            itemLabel.textContent = itemData.emoji + ' ' + itemData.name;
+        }else{
+            itemLabel.textContent = itemName;
+        }
+        itemLabel.classList.add('visible');
+        crosshair.classList.add('active');
+
+        if(isMobile){
+            mobileBtn.classList.add('visible');
+            interactHint.classList.remove('visible');
+        }else{
+            interactHint.classList.add('visible');
+            // 门显示特殊提示
+            if(obj.userData.isDoor) {
+                interactHint.textContent = doorOpen ? '按 E 关闭大门' : '按 E 打开大门';
+            } else {
+                interactHint.textContent = '按 E 查看展品';
+            }
+            mobileBtn.classList.remove('visible');
+        }
+    }else{
+        if(hoveredObject){
+            resetObjectEmissive(hoveredObject);
+            hoveredObject = null;
+        }
+        itemLabel.classList.remove('visible');
+        interactHint.classList.remove('visible');
+        crosshair.classList.remove('active');
+        mobileBtn.classList.remove('visible');
+    }
+}
+
+// ========== 自动讲解 ==========
+function checkAutoNarration() {
+    // 靠近展品时自动触发朗读
+    if(isPanelOpen || isPaused) return;
+
+    const playerPos = camera.position;
+    let closestItem = null;
+    let closestDist = Infinity;
+    let isDoor = false;
+
+    interactiveGroups.forEach(group=>{
+        if(group.userData && group.userData.isDoor) {
+            isDoor = true;
+            return;
+        }
+        const itemPos = new THREE.Vector3();
+        group.getWorldPosition(itemPos);
+        const dist = playerPos.distanceTo(itemPos);
+        if(dist < closestDist){
+            closestDist = dist;
+            closestItem = group.userData && group.userData.itemName;
+        }
+    });
+
+    const narrationBar = document.getElementById('narrationBar');
+    const narrationText = document.getElementById('narrationText');
+
+    if(closestDist < 1.8 && closestItem){
+        if(autoNarrateItem !== closestItem){
+            stopAutoNarration();
+            autoNarrateItem = closestItem;
+            autoNarrating = true;
+
+            const itemData = itemsData.find(d => d.name === closestItem);
+            if(itemData){
+                narrationText.textContent = itemData.emoji + ' ' + itemData.name + '：' + itemData.appearance;
+                narrationBar.classList.add('visible');
+
+                const synth = window.speechSynthesis;
+                synth.cancel();
+                const text = itemData.name + '。' + itemData.appearance + '。' + itemData.history;
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-CN';
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
+                synth.speak(utterance);
+            }
+        }
+    }else if(closestDist > 3.0){
+        stopAutoNarration();
+    }
+}
+
+// ========== 点击展品触发朗读 ==========
+function triggerItemNarration(itemName) {
+    stopAutoNarration();
+    autoNarrateItem = itemName;
+    autoNarrating = true;
+
+    const itemData = itemsData.find(d => d.name === itemName);
+    if(!itemData) return;
+
+    const narrationBar = document.getElementById('narrationBar');
+    const narrationText = document.getElementById('narrationText');
+    narrationText.textContent = itemData.emoji + ' ' + itemData.name + '：' + itemData.appearance;
+    narrationBar.classList.add('visible');
+
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    const text = itemData.name + '。' + itemData.appearance + '。' + itemData.history;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    synth.speak(utterance);
+}
+
+function stopAutoNarration() {
+    if(autoNarrating){
+        window.speechSynthesis.cancel();
+        autoNarrating = false;
+        autoNarrateItem = null;
+        document.getElementById('narrationBar').classList.remove('visible');
+    }
+}
+
+function resetObjectEmissive(obj) {
+    if(obj.material && obj.material.emissive){
+        obj.material.emissive.setHex(0x000000);
+    }
+}
+
+function openItemPanel(obj) {
+    const itemName = obj.userData.itemName;
+    currentItem = itemsData.find(item => item.name === itemName);
+    if(!currentItem) return;
+
+    // 点击时触发朗读
+    triggerItemNarration(itemName);
+
+    stopAutoNarration();
+
+    if(selectedObject) resetObjectEmissive(selectedObject);
+    selectedObject = obj;
+    if(obj.material && obj.material.emissive){
+        obj.material.emissive.setHex(0x333333);
+    }
+
+    showPanel(currentItem);
+    isPanelOpen = true;
+
+    if(!isMobile && controls.isLocked){
+        controls.unlock();
+    }
+}
+
+function showPanel(item) {
+    document.getElementById('panelTitle').textContent = item.emoji + ' ' + item.name;
+    document.getElementById('panelTag').textContent = item.type;
+    document.getElementById('panelAppearance').textContent = item.appearance;
+    document.getElementById('panelHistory').textContent = item.history;
+    document.getElementById('panelSpirit').textContent = item.spirit;
+
+    document.getElementById('panelAiMessages').innerHTML = '';
+    document.getElementById('panelAiInput').value = '';
+
+    const btn = document.getElementById('btnSpeak');
+    btn.classList.remove('speaking');
+    btn.innerHTML = '&#128266; 语音朗读';
+
+    document.getElementById('infoPanel').classList.add('open');
+}
+
+function closePanel() {
+    document.getElementById('infoPanel').classList.remove('open');
+    if(selectedObject){
+        resetObjectEmissive(selectedObject);
+        selectedObject = null;
+    }
+    isPanelOpen = false;
+    currentItem = null;
+
+    window.speechSynthesis.cancel();
+    const btn = document.getElementById('btnSpeak');
+    btn.classList.remove('speaking');
+    btn.innerHTML = '&#128266; 语音朗读';
+
+    if(!isMobile && isPlaying){
+        controls.lock();
+    }
+}
+
+function speakDescription() {
+    if(!currentItem) return;
+
+    const synth = window.speechSynthesis;
+    const btn = document.getElementById('btnSpeak');
+
+    if(synth.speaking){
+        synth.cancel();
+        btn.classList.remove('speaking');
+        btn.innerHTML = '&#128266; 语音朗读';
+        return;
+    }
+
+    const text = currentItem.name + '。' + currentItem.appearance + '。' + currentItem.history + '。' + currentItem.spirit;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+
+    utterance.onstart = ()=>{
+        btn.classList.add('speaking');
+        btn.innerHTML = '&#128264; 停止朗读';
+    };
+    utterance.onend = ()=>{
+        btn.classList.remove('speaking');
+        btn.innerHTML = '&#128266; 语音朗读';
+    };
+    utterance.onerror = ()=>{
+        btn.classList.remove('speaking');
+        btn.innerHTML = '&#128266; 语音朗读';
+    };
+
+    synth.speak(utterance);
+}
+
+// ========== AI问答 ==========
+async function sendPanelAi() {
+    const input = document.getElementById('panelAiInput');
+    const msgContainer = document.getElementById('panelAiMessages');
+    const question = input.value.trim();
+    if(!question || !currentItem) return;
+
+    const userMsg = document.createElement('div');
+    userMsg.className = 'ai-msg user';
+    userMsg.textContent = question;
+    msgContainer.appendChild(userMsg);
+    input.value = '';
+
+    const botMsg = document.createElement('div');
+    botMsg.className = 'ai-msg bot';
+    botMsg.textContent = '';
+    msgContainer.appendChild(botMsg);
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+
+    try{
+        // 智谱 GLM API 调用
+        const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions',{
+            method:'POST',
+            headers:{
+                'Content-Type':'application/json',
+                'Authorization':'Bearer 63cbd9ebabb34379a74bae9197909457.NcxJH6E8YRbOdJ1H'
+            },
+            body:JSON.stringify({
+                model:'glm-4-flash',
+                messages:[
+                    {
+                        role:'system',
+                        content:'你是八路军太行纪念馆的专业讲解员。当前用户正在参观的展品是"'+currentItem.name+'"（'+currentItem.type+'）。'+
+                                 '展品信息：'+currentItem.appearance+' '+currentItem.history+' '+currentItem.spirit+
+                                 '。请用专业、简洁、生动的中文回答用户问题，体现红色文化和太行精神，控制在150字以内。如果问题与当前展品无关，可以联系太行抗战历史作答。'
+                    },
+                    {role:'user',content:question}
+                ],
+                max_tokens:300,
+                temperature:0.7
+            })
+        });
+
+        if(response.ok){
+            const data = await response.json();
+            const answer = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content ? data.choices[0].message.content : getLocalAnswer(question, currentItem);
+            await typeWriter(botMsg, answer);
+        }else{
+            console.warn('GLM API error:', response.status);
+            await typeWriter(botMsg, getLocalAnswer(question, currentItem));
+        }
+    }catch(e){
+        console.warn('GLM API failed:', e);
+        await typeWriter(botMsg, getLocalAnswer(question, currentItem));
+    }
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+}
+
+function getLocalAnswer(question, item) {
+    const answers = {
+        '行军锅':['这口行军锅跟随红军走完长征，又随八路军东渡黄河，见证了革命战争的艰辛历程。','17个补丁记录着战士们省吃俭用、艰苦奋斗的岁月，是革命精神的生动写照。','1938年长乐村战斗中，一位战士牺牲前紧紧抱着这口锅不放，体现了战士对革命事业的忠诚。'],
+        '叶成焕的草鞋':['叶成焕是24岁的八路军团长，1938年在长乐村战斗中头部中弹牺牲。','他临终前最后一句话是"队伍，队伍呢？"，展现了一位年轻将领对部队深深的牵挂。','这双草鞋见证了一位铁血战将的赤诚与担当，是太行精神的生动体现。'],
+        '胡春花的小木勺':['胡春花是武乡著名的拥军模范，她带领妇女们日夜操劳，为八路军伤员制作生活用品。','这把小木勺凝聚着军民鱼水情深，体现了人民群众对子弟兵的深厚感情。','在艰苦的抗战岁月中，正是这样的军民团结，铸就了坚不可摧的抗战力量。'],
+        '八路军拉发式迫击炮':['这是赵章成改装的82毫米拉发式迫击炮，1941年他在八路军129师将迫击炮改造成曲射、平射两用。','赵章成在关家垴战斗中创造性地采用平射方式，对日军碉堡实施抵近射击，被誉为"神炮手"。','这种改装体现了八路军"没有条件创造条件"的创新精神，是抗战中以智克敌的典范。'],
+        '崔振芳的军号':['崔振芳是19岁的八路军号兵，1941年在黄崖洞保卫战中壮烈牺牲。','这把残缺的军号见证了他吹起冲锋号令、与敌血战的最后时刻。','1700多名太行号兵平均年龄不足20岁，用青春谱写了永恒的号谱。'],
+        '何克的打字机':['乔治·何克是英国记者，在八路军总部砖壁村采访时使用这台打字机。','他放弃回国的机会，留在中国记录抗战真相，向世界传递中国人民抗战的声音。','这台打字机见证了一位国际友人对真相与正义的坚守。'],
+        '《新华日报》铸字机':['1939年《新华日报》华北版创刊，这台铸字机被从重庆背到沁县。','在日寇重重封锁下，报社先后经历6次反"扫荡"、7次搬家，坚持出版896期。','新闻战士用生命守护党的宣传阵地，让抗日的声音传遍太行山。']
+    };
+    const itemAnswers = answers[item.name] || ['这是一个很有意义的问题！'+item.name+'承载着深厚的革命历史和精神内涵。'];
+    return itemAnswers[Math.floor(Math.random()*itemAnswers.length)];
+}
+
+function typeWriter(element, text) {
+    return new Promise(resolve=>{
+        let i = 0;
+        const speed = 30;
+        function type(){
+            if(i < text.length){
+                element.textContent += text.charAt(i);
+                i++;
+                setTimeout(type, speed);
+            }else{
+                resolve();
+            }
+        }
+        type();
+    });
+}
+
+// ========== 小地图（适配12x8展厅） ==========
+function drawMinimap() {
+    const canvas = document.getElementById('minimapCanvas');
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    const scaleX = w / 12;
+    const scaleZ = h / 8;
+    const offsetX = w / 2;
+    const offsetZ = h / 2;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillRect(offsetX - 6*scaleX, offsetZ - 4*scaleZ, 12*scaleX, 8*scaleZ);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(offsetX - 6*scaleX, offsetZ - 4*scaleZ, 12*scaleX, 8*scaleZ);
+
+    // 入口标记
+    ctx.fillStyle = 'rgba(212,168,83,0.5)';
+    ctx.fillRect(offsetX - 0.5*scaleX - 3, offsetZ + 4*scaleZ - 3, 6, 4);
+
+    interactiveGroups.forEach(group=>{
+        const pos = new THREE.Vector3();
+        group.getWorldPosition(pos);
+        const mx = offsetX + pos.x * scaleX;
+        const mz = offsetZ + pos.z * scaleZ;
+
+        ctx.fillStyle = 'rgba(196,30,58,0.6)';
+        ctx.beginPath();
+        ctx.arc(mx, mz, 2.5, 0, Math.PI*2);
+        ctx.fill();
+    });
+
+    const px = offsetX + camera.position.x * scaleX;
+    const pz = offsetZ + camera.position.z * scaleZ;
+
+    const dir = new THREE.Vector3();
+    camera.getWorldDirection(dir);
+    const angle = Math.atan2(dir.x, dir.z);
+
+    ctx.save();
+    ctx.translate(px, pz);
+    ctx.rotate(-angle);
+
+    ctx.fillStyle = '#d4a853';
+    ctx.beginPath();
+    ctx.moveTo(0, -6);
+    ctx.lineTo(-4, 4);
+    ctx.lineTo(4, 4);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+
+    ctx.fillStyle = '#d4a853';
+    ctx.beginPath();
+    ctx.arc(px, pz, 3, 0, Math.PI*2);
+    ctx.fill();
+}
+
+// ========== 手机虚拟摇杆 ==========
+function setupMobileControls() {
+    const leftZone = document.getElementById('joystickLeftZone');
+    const rightZone = document.getElementById('joystickRightZone');
+    const leftBase = document.getElementById('joystickLeftBase');
+    const leftThumb = document.getElementById('joystickLeftThumb');
+    const rightBase = document.getElementById('joystickRightBase');
+    const rightThumb = document.getElementById('joystickRightThumb');
+    const interactBtn = document.getElementById('mobileInteractBtn');
+
+    const JOYSTICK_RADIUS = 50;
+    const THUMB_MAX = 35;
+
+    leftZone.addEventListener('touchstart', (e)=>{
+        e.preventDefault();
+        const touch = e.changedTouches[0];
+        joystickLeft.active = true;
+        joystickLeft.touchId = touch.identifier;
+
+        const rect = leftZone.getBoundingClientRect();
+        const cx = rect.left + rect.width/2;
+        const cy = rect.top + rect.height/2;
+
+        leftBase.style.display = 'block';
+        leftBase.style.left = (cx - JOYSTICK_RADIUS) + 'px';
+        leftBase.style.top = (cy - JOYSTICK_RADIUS) + 'px';
+        leftThumb.style.display = 'block';
+        leftThumb.style.left = (cx - 25) + 'px';
+        leftThumb.style.top = (cy - 25) + 'px';
+    }, {passive:false});
+
+    leftZone.addEventListener('touchmove', (e)=>{
+        e.preventDefault();
+        for(const touch of e.changedTouches){
+            if(touch.identifier === joystickLeft.touchId){
+                const rect = leftBase.getBoundingClientRect();
+                const bcx = rect.left + JOYSTICK_RADIUS;
+                const bcy = rect.top + JOYSTICK_RADIUS;
+
+                let dx = touch.clientX - bcx;
+                let dy = touch.clientY - bcy;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+
+                if(dist > THUMB_MAX){
+                    dx = (dx/dist) * THUMB_MAX;
+                    dy = (dy/dist) * THUMB_MAX;
+                }
+
+                joystickLeft.dx = dx / THUMB_MAX;
+                joystickLeft.dy = dy / THUMB_MAX;
+
+                leftThumb.style.left = (bcx + dx - 25) + 'px';
+                leftThumb.style.top = (bcy + dy - 25) + 'px';
+            }
+        }
+    }, {passive:false});
+
+    leftZone.addEventListener('touchend', (e)=>{
+        for(const touch of e.changedTouches){
+            if(touch.identifier === joystickLeft.touchId){
+                joystickLeft.active = false;
+                joystickLeft.dx = 0;
+                joystickLeft.dy = 0;
+                joystickLeft.touchId = null;
+                leftBase.style.display = 'none';
+                leftThumb.style.display = 'none';
+            }
+        }
+    });
+
+    let rightStartX = 0, rightStartY = 0;
+    let cameraEulerX = 0, cameraEulerY = 0;
+
+    rightZone.addEventListener('touchstart', (e)=>{
+        e.preventDefault();
+        const touch = e.changedTouches[0];
+        joystickRight.active = true;
+        joystickRight.touchId = touch.identifier;
+        rightStartX = touch.clientX;
+        rightStartY = touch.clientY;
+
+        cameraEulerX = camera.rotation.x;
+        cameraEulerY = camera.rotation.y;
+
+        const rect = rightZone.getBoundingClientRect();
+        const cx = rect.left + rect.width/2;
+        const cy = rect.top + rect.height/2;
+
+        rightBase.style.display = 'block';
+        rightBase.style.left = (cx - JOYSTICK_RADIUS) + 'px';
+        rightBase.style.top = (cy - JOYSTICK_RADIUS) + 'px';
+        rightThumb.style.display = 'block';
+        rightThumb.style.left = (cx - 25) + 'px';
+        rightThumb.style.top = (cy - 25) + 'px';
+    }, {passive:false});
+
+    rightZone.addEventListener('touchmove', (e)=>{
+        e.preventDefault();
+        for(const touch of e.changedTouches){
+            if(touch.identifier === joystickRight.touchId){
+                const dx = touch.clientX - rightStartX;
+                const dy = touch.clientY - rightStartY;
+
+                camera.rotation.y = cameraEulerY - dx * 0.004;
+                let newPitch = cameraEulerX - dy * 0.004;
+                const minPitch = -Math.PI / 3;
+                const maxPitch = Math.PI * 80 / 180;
+                newPitch = Math.max(minPitch, Math.min(maxPitch, newPitch));
+                camera.rotation.x = newPitch;
+
+                const rect = rightBase.getBoundingClientRect();
+                const bcx = rect.left + JOYSTICK_RADIUS;
+                const bcy = rect.top + JOYSTICK_RADIUS;
+
+                let jdx = dx * 0.3;
+                let jdy = dy * 0.3;
+                const jdist = Math.sqrt(jdx*jdx + jdy*jdy);
+                if(jdist > THUMB_MAX){
+                    jdx = (jdx/jdist) * THUMB_MAX;
+                    jdy = (jdy/jdist) * THUMB_MAX;
+                }
+
+                rightThumb.style.left = (bcx + jdx - 25) + 'px';
+                rightThumb.style.top = (bcy + jdy - 25) + 'px';
+            }
+        }
+    }, {passive:false});
+
+    rightZone.addEventListener('touchend', (e)=>{
+        for(const touch of e.changedTouches){
+            if(touch.identifier === joystickRight.touchId){
+                joystickRight.active = false;
+                joystickRight.touchId = null;
+                rightBase.style.display = 'none';
+                rightThumb.style.display = 'none';
+            }
+        }
+    });
+
+    interactBtn.addEventListener('click', ()=>{
+        if(hoveredObject){
+            openItemPanel(hoveredObject);
+        }
+    });
+}
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// ========== 渲染循环 ==========
+function animate() {
+    requestAnimationFrame(animate);
+
+    handleMovement();
+    checkItemFocus();
+    checkAutoNarration();
+    updateDustParticles();
+
+    if(isPlaying){
+        drawMinimap();
+    }
+
+    renderer.render(scene, camera);
+}
+
+// ========== 启动 ==========
+window.addEventListener('DOMContentLoaded', function(){
+    try {
+        if (typeof THREE === 'undefined') {
+            throw new Error('Three.js 加载失败，请刷新页面重试');
+        }
+        init();
+    } catch (err) {
+        console.error('展厅初始化失败:', err);
+        document.getElementById('loaderPercent').textContent = '加载失败';
+        document.querySelector('.loader-text').textContent = err.message;
+        document.querySelector('.loader-ring').style.borderColor = '#c41e3a';
+        document.querySelector('.loader-ring').style.animation = 'none';
+    }
+});
+</script>
+</body>
+</html>

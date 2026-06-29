@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D场景导览演示 - 武乡红色文旅</title>
+    <style>
+        /* ========== 全局重置与变量 ========== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0a0a0a;
+            --red-primary: #c41e3a;
+            --red-dark: #9a1830;
+            --gold-accent: #d4a853;
+            --gold-light: #e8c87a;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255,255,255,0.7);
+            --text-muted: rgba(255,255,255,0.45);
+            --border-subtle: rgba(255,255,255,0.08);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+        }
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            touch-action: none;
+        }
+        a { color: inherit; text-decoration: none; }
+
+        /* ========== 加载进度条 ========== */
+        .loading-bar-container {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: 4px; background: rgba(255,255,255,0.05);
+            z-index: 100000;
+        }
+        .loading-bar {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, var(--red-primary), var(--gold-accent));
+            transition: width 0.3s ease;
+        }
+        .loading-overlay {
+            position: fixed; inset: 0;
+            background: var(--bg-primary);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 99999;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        .loading-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .loader-ring {
+            width: 50px; height: 50px;
+            border: 3px solid rgba(196,30,58,0.15);
+            border-top-color: var(--red-primary);
+            border-right-color: var(--gold-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        .loader-text { font-size: 14px; color: var(--text-muted); letter-spacing: 3px; }
+        .loader-percent { font-size: 28px; font-weight: 700; color: var(--gold-accent); margin-bottom: 8px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ========== 开始界面 ========== */
+        .start-overlay {
+            position: fixed; inset: 0;
+            background: linear-gradient(135deg, rgba(10,10,10,0.97), rgba(20,5,5,0.97));
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 9000;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        .start-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .start-title {
+            font-size: 36px; font-weight: 800;
+            background: linear-gradient(135deg, var(--red-primary), var(--gold-accent));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+        }
+        .start-subtitle {
+            font-size: 16px; color: var(--text-muted);
+            margin-bottom: 40px;
+            letter-spacing: 4px;
+        }
+        .start-controls {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: var(--radius-md);
+            padding: 24px 36px;
+            margin-bottom: 36px;
+            text-align: center;
+        }
+        .start-controls .control-row {
+            font-size: 14px; color: var(--text-secondary);
+            margin-bottom: 8px;
+            line-height: 1.8;
+        }
+        .start-controls .control-row:last-child { margin-bottom: 0; }
+        .start-controls .key {
+            display: inline-block;
+            padding: 2px 10px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gold-light);
+            margin: 0 2px;
+        }
+        .start-btn {
+            padding: 16px 60px;
+            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            border: none; border-radius: var(--radius-md);
+            color: #fff; font-size: 18px; font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 3px;
+            transition: transform 0.2s, box-shadow 0.3s;
+            box-shadow: 0 4px 24px rgba(196,30,58,0.3);
+        }
+        .start-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 32px rgba(196,30,58,0.5); }
+        .start-btn:active { transform: scale(0.97); }
+        .start-mobile-controls { display: none; }
+        .start-desktop-controls { display: block; }
+
+        /* ========== 3D画布容器 ========== */
+        #scene-container {
+            width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0;
+        }
+        #scene-container canvas { display: block; }
+
+        /* ========== 准星 ========== */
+        .crosshair {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 800;
+            pointer-events: none;
+            display: none;
+        }
+        .crosshair.visible { display: block; }
+        .crosshair::before, .crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(255,255,255,0.7);
+            border-radius: 1px;
+        }
+        .crosshair::before {
+            width: 2px; height: 20px;
+            top: -10px; left: -1px;
+        }
+        .crosshair::after {
+            width: 20px; height: 2px;
+            top: -1px; left: -10px;
+        }
+        .crosshair.active::before, .crosshair.active::after {
+            background: var(--gold-accent);
+        }
+
+        /* ========== 物品名称标签（准星下方） ========== */
+        .item-label {
+            position: fixed;
+            top: calc(50% + 24px);
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 16px;
+            background: rgba(10,10,10,0.85);
+            border: 1px solid var(--gold-accent);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            color: var(--gold-light);
+            pointer-events: none;
+            z-index: 800;
+            opacity: 0;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+            backdrop-filter: blur(8px);
+        }
+        .item-label.visible { opacity: 1; }
+
+        /* ========== 交互提示 ========== */
+        .interact-hint {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 24px;
+            background: rgba(10,10,10,0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            pointer-events: none;
+            z-index: 800;
+            opacity: 0;
+            transition: opacity 0.25s;
+            backdrop-filter: blur(8px);
+        }
+        .interact-hint.visible { opacity: 1; }
+        .interact-hint .key-hint {
+            display: inline-block;
+            padding: 1px 8px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 3px;
+            font-weight: 600;
+            color: var(--gold-light);
+            margin: 0 3px;
+        }
+
+        /* ========== 自动讲解条 ========== */
+        .narration-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 600px;
+            width: 90%;
+            padding: 12px 20px;
+            background: rgba(10,10,10,0.85);
+            border: 1px solid rgba(196,30,58,0.3);
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            pointer-events: none;
+            z-index: 800;
+            opacity: 0;
+            transition: opacity 0.3s;
+            backdrop-filter: blur(12px);
+        }
+        .narration-bar.visible { opacity: 1; }
+        .narration-bar .nar-label {
+            font-size: 11px;
+            color: var(--red-primary);
+            font-weight: 600;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+
+        /* ========== 小地图 ========== */
+        .minimap-container {
+            position: fixed;
+            top: 16px; left: 16px;
+            z-index: 800;
+            pointer-events: none;
+            display: none;
+        }
+        .minimap-container.visible { display: block; }
+        .minimap-border {
+            width: 160px; height: 100px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            background: rgba(10,10,10,0.7);
+            backdrop-filter: blur(8px);
+        }
+        #minimapCanvas { display: block; }
+
+        /* ========== HUD 右上角提示 ========== */
+        .hud-esc {
+            position: fixed;
+            top: 16px; right: 16px;
+            padding: 6px 14px;
+            background: rgba(10,10,10,0.6);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            color: var(--text-muted);
+            z-index: 800;
+            pointer-events: none;
+            display: none;
+            backdrop-filter: blur(8px);
+        }
+        .hud-esc.visible { display: block; }
+
+        /* ========== 暂停菜单 ========== */
+        .pause-overlay {
+            position: fixed; inset: 0;
+            background: rgba(10,10,10,0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 8500;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .pause-overlay.visible { opacity: 1; visibility: visible; }
+        .pause-title {
+            font-size: 28px; font-weight: 700;
+            margin-bottom: 32px;
+            color: var(--text-primary);
+        }
+        .pause-btn {
+            display: block;
+            width: 240px;
+            padding: 14px 0;
+            margin-bottom: 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 15px;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .pause-btn:hover { background: rgba(196,30,58,0.2); border-color: var(--red-primary); }
+        .pause-btn.primary {
+            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            border: none;
+            font-weight: 600;
+        }
+        .pause-btn.primary:hover { opacity: 0.9; }
+        .pause-controls-info {
+            margin-top: 24px;
+            padding: 16px 24px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 2;
+            text-align: center;
+        }
+
+        /* ========== 讲解面板 ========== */
+        .info-panel {
+            position: fixed; top: 0; right: 0;
+            width: 400px; height: 100vh;
+            background: rgba(10,10,10,0.95);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-left: 1px solid rgba(212,168,83,0.2);
+            z-index: 2000;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .info-panel.open { transform: translateX(0); }
+
+        .panel-header {
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex; align-items: center; justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .panel-header h3 {
+            font-size: 20px; font-weight: 700;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .panel-close {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .panel-close:hover { background: rgba(196,30,58,0.3); }
+
+        .panel-body {
+            padding: 20px 24px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .panel-section { margin-bottom: 20px; }
+        .panel-section-title {
+            font-size: 11px; font-weight: 600;
+            color: var(--red-primary);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .panel-section-title::before {
+            content: ''; width: 12px; height: 2px;
+            background: var(--red-primary);
+        }
+        .panel-section p {
+            font-size: 14px; line-height: 1.8;
+            color: var(--text-secondary);
+        }
+
+        .panel-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            background: rgba(196,30,58,0.15);
+            border: 1px solid rgba(196,30,58,0.3);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--red-primary);
+            margin-bottom: 16px;
+        }
+
+        /* 语音朗读按钮 */
+        .btn-speak {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            border-radius: var(--radius-sm);
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.3s, transform 0.2s;
+            width: 100%;
+            justify-content: center;
+        }
+        .btn-speak:hover { opacity: 0.9; }
+        .btn-speak:active { transform: scale(0.98); }
+        .btn-speak.speaking { animation: pulse-speak 1.5s infinite; }
+        @keyframes pulse-speak {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(196,30,58,0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(196,30,58,0); }
+        }
+
+        /* AI问答区域 */
+        .panel-ai {
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 16px 24px 20px;
+            flex-shrink: 0;
+        }
+        .panel-ai-title {
+            font-size: 12px; color: var(--text-muted);
+            margin-bottom: 10px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .ai-chat-messages {
+            max-height: 150px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+        .ai-chat-messages::-webkit-scrollbar { width: 4px; }
+        .ai-chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+        .ai-msg {
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+            max-width: 95%;
+        }
+        .ai-msg.bot {
+            background: rgba(255,255,255,0.04);
+            color: var(--text-secondary);
+        }
+        .ai-msg.user {
+            background: rgba(196,30,58,0.15);
+            color: var(--text-primary);
+            margin-left: auto;
+            text-align: right;
+        }
+        .ai-input-row { display: flex; gap: 8px; }
+        .ai-input-row input {
+            flex: 1;
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .ai-input-row input:focus { border-color: var(--gold-accent); }
+        .ai-input-row button {
+            padding: 8px 16px;
+            background: var(--red-primary);
+            border-radius: var(--radius-sm);
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            border: none;
+            white-space: nowrap;
+            transition: background 0.3s;
+        }
+        .ai-input-row button:hover { background: var(--red-dark); }
+
+        /* ========== 虚拟摇杆（手机端） ========== */
+        .joystick-zone {
+            position: fixed;
+            bottom: 0;
+            width: 50%;
+            height: 40%;
+            z-index: 750;
+            display: none;
+        }
+        .joystick-zone.left { left: 0; }
+        .joystick-zone.right { right: 0; }
+        .joystick-base {
+            position: absolute;
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            border: 2px solid rgba(255,255,255,0.12);
+            display: none;
+            pointer-events: none;
+        }
+        .joystick-thumb {
+            position: absolute;
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            display: none;
+            pointer-events: none;
+        }
+
+        /* 手机端交互按钮 */
+        .mobile-interact-btn {
+            position: fixed;
+            bottom: 50%;
+            right: 20px;
+            transform: translateY(50%);
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            background: rgba(196,30,58,0.6);
+            border: 2px solid var(--red-primary);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 800;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+        }
+        .mobile-interact-btn.visible { display: flex; }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 768px) {
+            .info-panel { width: 100%; }
+            .start-title { font-size: 24px; }
+            .start-subtitle { font-size: 13px; margin-bottom: 24px; }
+            .start-controls { padding: 16px 24px; margin-bottom: 24px; }
+            .start-controls .control-row { font-size: 12px; }
+            .start-btn { padding: 14px 40px; font-size: 16px; }
+            .minimap-border { width: 120px; height: 75px; }
+        }
+
+        /* 检测触摸设备 */
+        @media (pointer: coarse) {
+            .start-mobile-controls { display: block; }
+            .start-desktop-controls { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ========== 加载界面 ========== -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loader-ring"></div>
+    <div class="loader-percent" id="loaderPercent">0%</div>
+    <div class="loader-text">正在加载3D场景...</div>
+</div>
+<div class="loading-bar-container">
+    <div class="loading-bar" id="loadingBar"></div>
+</div>
+
+<!-- ========== 开始界面 ========== -->
+<div class="start-overlay hidden" id="startOverlay">
+    <div class="start-title">武乡红色文旅 · 3D场景导览</div>
+    <div class="start-subtitle">教室模拟场景演示</div>
+    <div class="start-controls">
+        <div class="start-desktop-controls">
+            <div class="control-row"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> 移动 &nbsp;|&nbsp; 鼠标 环顾</div>
+            <div class="control-row"><span class="key">E</span> 查看物品详情 &nbsp;|&nbsp; <span class="key">ESC</span> 暂停</div>
+            <div class="control-row" style="margin-top:8px;color:var(--text-muted);font-size:12px;">靠近物品自动触发语音讲解</div>
+        </div>
+        <div class="start-mobile-controls">
+            <div class="control-row">左侧摇杆 移动 &nbsp;|&nbsp; 右侧摇杆 视角</div>
+            <div class="control-row">点击按钮 查看物品详情</div>
+            <div class="control-row" style="margin-top:8px;color:var(--text-muted);font-size:12px;">靠近物品自动触发语音讲解</div>
+        </div>
+    </div>
+    <button class="start-btn" id="startBtn">进入场景</button>
+</div>
+
+<!-- ========== 暂停菜单 ========== -->
+<div class="pause-overlay" id="pauseOverlay">
+    <div class="pause-title">导览暂停</div>
+    <button class="pause-btn primary" id="resumeBtn">继续导览</button>
+    <a href="index.html" class="pause-btn">返回主站</a>
+    <div class="pause-controls-info">
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">W</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">A</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">S</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">D</span>
+        移动 &nbsp;|&nbsp; 鼠标 环顾 &nbsp;|&nbsp;
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">E</span>
+        交互
+    </div>
+</div>
+
+<!-- ========== 3D场景容器 ========== -->
+<div id="scene-container"></div>
+
+<!-- ========== 准星 ========== -->
+<div class="crosshair" id="crosshair"></div>
+
+<!-- ========== 物品名称标签 ========== -->
+<div class="item-label" id="itemLabel"></div>
+
+<!-- ========== 交互提示 ========== -->
+<div class="interact-hint" id="interactHint">
+    按 <span class="key-hint">E</span> 键查看详情
+</div>
+
+<!-- ========== 自动讲解条 ========== -->
+<div class="narration-bar" id="narrationBar">
+    <div class="nar-label">自动讲解</div>
+    <div id="narrationText"></div>
+</div>
+
+<!-- ========== 小地图 ========== -->
+<div class="minimap-container" id="minimapContainer">
+    <div class="minimap-border">
+        <canvas id="minimapCanvas" width="156" height="96"></canvas>
+    </div>
+</div>
+
+<!-- ========== HUD 右上角 ========== -->
+<div class="hud-esc" id="hudEsc">ESC 暂停</div>
+
+<!-- ========== 手机端虚拟摇杆 ========== -->
+<div class="joystick-zone left" id="joystickLeftZone">
+    <div class="joystick-base" id="joystickLeftBase"></div>
+    <div class="joystick-thumb" id="joystickLeftThumb"></div>
+</div>
+<div class="joystick-zone right" id="joystickRightZone">
+    <div class="joystick-base" id="joystickRightBase"></div>
+    <div class="joystick-thumb" id="joystickRightThumb"></div>
+</div>
+
+<!-- ========== 手机端交互按钮 ========== -->
+<div class="mobile-interact-btn" id="mobileInteractBtn">查看</div>
+
+<!-- ========== 讲解面板 ========== -->
+<div class="info-panel" id="infoPanel">
+    <div class="panel-header">
+        <h3 id="panelTitle"></h3>
+        <div class="panel-close" id="panelClose">&times;</div>
+    </div>
+    <div class="panel-body">
+        <div class="panel-tag" id="panelTag"></div>
+        <div class="panel-section">
+            <div class="panel-section-title">外观描述</div>
+            <p id="panelAppearance"></p>
+        </div>
+        <div class="panel-section">
+            <div class="panel-section-title">功能用途</div>
+            <p id="panelFunction"></p>
+        </div>
+        <div class="panel-section">
+            <div class="panel-section-title">趣味知识</div>
+            <p id="panelFun"></p>
+        </div>
+        <button class="btn-speak" id="btnSpeak" onclick="speakDescription()">
+            &#128266; 语音朗读
+        </button>
+    </div>
+    <div class="panel-ai">
+        <div class="panel-ai-title">&#129302; AI智能问答</div>
+        <div class="ai-chat-messages" id="panelAiMessages"></div>
+        <div class="ai-input-row">
+            <input type="text" id="panelAiInput" placeholder="关于此物品的问题..." onkeydown="if(event.key==='Enter')sendPanelAi()">
+            <button onclick="sendPanelAi()">发送</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== Three.js CDN ========== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+
+<script>
+// ========== 物品数据 ==========
+const itemsData = [
+    { name: '电脑', emoji: '\uD83D\uDCBB', type: '电子设备', appearance: '银灰色笔记本电脑，15.6英寸屏幕，银色金属外壳，键盘上有磨损痕迹', func: '学习、编程、上网查资料、看视频', fun: '世界上第一台通用电子计算机ENIAC于1946年诞生，重达27吨，占地170平方米，每秒只能执行5000次加法运算。' },
+    { name: '水杯', emoji: '\uD83E\uDD64', type: '生活用品', appearance: '白色保温杯，杯身印有红色图案，不锈钢材质，带密封杯盖', func: '喝水、保持水温，冬天可以喝热水', fun: '保温杯的原理来自苏格兰物理学家詹姆斯·杜瓦于1892年发明的杜瓦瓶，最初用于储存液化气体。' },
+    { name: '椅子', emoji: '\uD83E\uDE91', type: '家具', appearance: '蓝色塑料椅，可调节高度，带靠背和坐垫', func: '坐着学习、听课、休息', fun: '人体工学椅的概念由比尔·休利特和戴夫·帕卡德在1970年代推广，他们后来创立了惠普公司。' },
+    { name: '课桌', emoji: '\uD83D\uDCDA', type: '家具', appearance: '棕色木质课桌，桌面有使用痕迹，带一个抽屉，可以放书本文具', func: '写字、放书本、做作业、考试', fun: '中国古代学生使用的是"案几"，是一种矮小的桌子，学生需要跪坐在地上学习，直到唐代才开始使用高脚桌椅。' },
+    { name: '空调', emoji: '\u2744\uFE0F', type: '电器', appearance: '白色壁挂式空调，安装在墙壁高处，带遥控器', func: '夏天制冷、冬天制热、调节室内温度和湿度', fun: '现代空调由威利斯·开利于1902年发明，最初是为了解决印刷厂的湿度问题，他因此被称为"空调之父"。' },
+    { name: '黑板', emoji: '\uD83D\uDCCB', type: '教学设备', appearance: '深绿色黑板，固定在前墙上，表面有粉笔书写的痕迹', func: '老师板书、讲解知识点、学生上台做题', fun: '黑板在19世纪初由苏格兰教师詹姆斯·皮兰发明，在此之前老师使用的是 individual slate（石板）给学生展示内容。' },
+    { name: '窗户', emoji: '\uD83E\uDEA9', type: '建筑构件', appearance: '铝合金推拉窗，双层中空玻璃，透光性好', func: '采光、通风、观看室外景色', fun: '古罗马人是最早使用玻璃窗的文明之一，他们用吹制技术制作出平板玻璃。在中国，纸窗一直使用到近代。' },
+    { name: '讲台', emoji: '\uD83C\uDFA4', type: '教学设备', appearance: '木质讲台，棕色，台面较宽，可以放教案和课本，侧面有麦克风', func: '老师授课时使用，放教案、课本、粉笔等教学用品', fun: '中国古代的讲台称为"讲席"，最早出现在汉代太学中。佛教传入后，寺庙中的"法座"也是一种讲台。' },
+];
+
+// ========== 全局变量 ==========
+let scene, camera, renderer, controls;
+let raycaster;
+let interactiveObjects = [];   // 可交互的3D物体
+let interactiveGroups = [];    // 每个物品的Group，用于获取世界坐标
+let hoveredObject = null;
+let selectedObject = null;
+let currentItem = null;
+
+// 移动状态
+const moveState = { forward: false, backward: false, left: false, right: false };
+const MOVE_SPEED = 0.08;
+const PLAYER_HEIGHT = 1.6;
+
+// 教室边界（AABB碰撞检测）
+const ROOM_BOUNDS = {
+    minX: -7.5, maxX: 7.5,   // 留出一点墙壁厚度
+    minZ: -4.5, maxZ: 4.5
+};
+
+// 游戏状态
+let isLocked = false;       // 鼠标是否锁定
+let isPlaying = false;      // 是否在游戏中
+let isPaused = false;       // 是否暂停
+let isPanelOpen = false;    // 讲解面板是否打开
+
+// 自动讲解
+let autoNarrating = false;
+let autoNarrateItem = null;
+let autoNarrateTimeout = null;
+
+// 手机端
+const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+let joystickLeft = { active: false, dx: 0, dy: 0, touchId: null };
+let joystickRight = { active: false, dx: 0, dy: 0, touchId: null };
+
+// ========== 加载进度模拟 ==========
+let loadProgress = 0;
+function updateLoading(progress) {
+    loadProgress = Math.min(progress, 100);
+    document.getElementById('loadingBar').style.width = loadProgress + '%';
+    document.getElementById('loaderPercent').textContent = Math.floor(loadProgress) + '%';
+    if (loadProgress >= 100) {
+        setTimeout(() => {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+            document.querySelector('.loading-bar-container').style.display = 'none';
+            // 显示开始界面
+            document.getElementById('startOverlay').classList.remove('hidden');
+        }, 400);
+    }
+}
+
+// ========== 初始化场景 ==========
+function init() {
+    updateLoading(10);
+
+    // 创建场景
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87CEEB);
+    scene.fog = new THREE.Fog(0x87CEEB, 25, 50);
+
+    updateLoading(20);
+
+    // 创建相机（第一人称视角）
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, PLAYER_HEIGHT, 4); // 站在门口，面朝教室内部
+
+    updateLoading(30);
+
+    // 创建渲染器
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
+    document.getElementById('scene-container').appendChild(renderer.domElement);
+
+    updateLoading(40);
+
+    // PointerLockControls（第一人称控制）
+    controls = new THREE.PointerLockControls(camera, renderer.domElement);
+
+    // 监听锁定/解锁事件
+    controls.addEventListener('lock', () => {
+        isLocked = true;
+        isPaused = false;
+        document.getElementById('pauseOverlay').classList.remove('visible');
+        showHUD(true);
+    });
+    controls.addEventListener('unlock', () => {
+        isLocked = false;
+        // 如果不是面板打开导致的解锁，显示暂停菜单
+        if (!isPanelOpen && isPlaying) {
+            isPaused = true;
+            document.getElementById('pauseOverlay').classList.add('visible');
+        }
+        showHUD(false);
+    });
+
+    updateLoading(50);
+
+    // 射线投射器
+    raycaster = new THREE.Raycaster();
+    raycaster.far = 3; // 最大交互距离3米
+
+    // 创建光照
+    createLights();
+    updateLoading(60);
+
+    // 创建教室
+    createClassroom();
+    updateLoading(85);
+
+    // 事件监听
+    window.addEventListener('resize', onWindowResize);
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+
+    // 开始界面按钮
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    document.getElementById('resumeBtn').addEventListener('click', resumeGame);
+
+    // 面板关闭
+    document.getElementById('panelClose').addEventListener('click', closePanel);
+
+    // 手机端虚拟摇杆
+    if (isMobile) {
+        setupMobileControls();
+    }
+
+    updateLoading(100);
+
+    // 开始渲染循环
+    animate();
+}
+
+// ========== 显示/隐藏 HUD ==========
+function showHUD(show) {
+    const crosshair = document.getElementById('crosshair');
+    const minimap = document.getElementById('minimapContainer');
+    const hudEsc = document.getElementById('hudEsc');
+    if (show) {
+        crosshair.classList.add('visible');
+        minimap.classList.add('visible');
+        if (!isMobile) hudEsc.classList.add('visible');
+    } else {
+        crosshair.classList.remove('visible');
+        minimap.classList.remove('visible');
+        hudEsc.classList.remove('visible');
+        document.getElementById('itemLabel').classList.remove('visible');
+        document.getElementById('interactHint').classList.remove('visible');
+    }
+}
+
+// ========== 开始游戏 ==========
+function startGame() {
+    document.getElementById('startOverlay').classList.add('hidden');
+    isPlaying = true;
+
+    if (isMobile) {
+        // 手机端：显示虚拟摇杆
+        document.getElementById('joystickLeftZone').style.display = 'block';
+        document.getElementById('joystickRightZone').style.display = 'block';
+        showHUD(true);
+    } else {
+        // 电脑端：请求锁定鼠标
+        controls.lock();
+    }
+}
+
+// ========== 继续游戏 ==========
+function resumeGame() {
+    document.getElementById('pauseOverlay').classList.remove('visible');
+    if (isMobile) {
+        showHUD(true);
+    } else {
+        controls.lock();
+    }
+}
+
+// ========== 键盘按下 ==========
+function onKeyDown(event) {
+    if (!isPlaying) return;
+    switch (event.code) {
+        case 'KeyW': case 'ArrowUp':    moveState.forward = true; break;
+        case 'KeyS': case 'ArrowDown':   moveState.backward = true; break;
+        case 'KeyA': case 'ArrowLeft':   moveState.left = true; break;
+        case 'KeyD': case 'ArrowRight':  moveState.right = true; break;
+        case 'KeyE':
+            if (isLocked && hoveredObject) {
+                openItemPanel(hoveredObject);
+            }
+            break;
+    }
+}
+
+// ========== 键盘抬起 ==========
+function onKeyUp(event) {
+    switch (event.code) {
+        case 'KeyW': case 'ArrowUp':    moveState.forward = false; break;
+        case 'KeyS': case 'ArrowDown':   moveState.backward = false; break;
+        case 'KeyA': case 'ArrowLeft':   moveState.left = false; break;
+        case 'KeyD': case 'ArrowRight':  moveState.right = false; break;
+    }
+}
+
+// ========== 创建光照 ==========
+function createLights() {
+    // 环境光
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+
+    // 平行光（模拟太阳光，从窗户照入）
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(5, 10, 5);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.camera.near = 0.5;
+    dirLight.shadow.camera.far = 30;
+    dirLight.shadow.camera.left = -10;
+    dirLight.shadow.camera.right = 10;
+    dirLight.shadow.camera.top = 10;
+    dirLight.shadow.camera.bottom = -10;
+    scene.add(dirLight);
+
+    // 教室中央点光源（模拟日光灯）
+    const pointLight1 = new THREE.PointLight(0xfff5e6, 0.4, 20);
+    pointLight1.position.set(-3, 3.3, 0);
+    scene.add(pointLight1);
+    const pointLight2 = new THREE.PointLight(0xfff5e6, 0.4, 20);
+    pointLight2.position.set(3, 3.3, 0);
+    scene.add(pointLight2);
+}
+
+// ========== 创建教室 ==========
+function createClassroom() {
+    // 教室尺寸：长16(x:-8~8) 宽10(z:-5~5) 高3.5(y:0~3.5)
+    const roomL = 16, roomW = 10, roomH = 3.5;
+
+    // --- 地板 ---
+    const floorGeo = new THREE.PlaneGeometry(roomL, roomW);
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0xd4a574, roughness: 0.8, metalness: 0.05 });
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // --- 天花板 ---
+    const ceilGeo = new THREE.PlaneGeometry(roomL, roomW);
+    const ceilMat = new THREE.MeshStandardMaterial({ color: 0xf0f0f0, roughness: 0.9 });
+    const ceil = new THREE.Mesh(ceilGeo, ceilMat);
+    ceil.rotation.x = Math.PI / 2;
+    ceil.position.y = roomH;
+    scene.add(ceil);
+
+    // --- 墙壁材质 ---
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f0, roughness: 0.9, metalness: 0 });
+
+    // 前墙（z=-5，黑板和窗户所在）
+    const frontWallGeo = new THREE.BoxGeometry(roomL, roomH, 0.15);
+    const frontWall = new THREE.Mesh(frontWallGeo, wallMat);
+    frontWall.position.set(0, roomH / 2, -5);
+    frontWall.receiveShadow = true;
+    scene.add(frontWall);
+
+    // 后墙（z=5，带门）
+    // 左段
+    const backWallLeftGeo = new THREE.BoxGeometry(5, roomH, 0.15);
+    const backWallLeft = new THREE.Mesh(backWallLeftGeo, wallMat);
+    backWallLeft.position.set(-5.5, roomH / 2, 5);
+    backWallLeft.receiveShadow = true;
+    scene.add(backWallLeft);
+    // 右段
+    const backWallRightGeo = new THREE.BoxGeometry(7, roomH, 0.15);
+    const backWallRight = new THREE.Mesh(backWallRightGeo, wallMat);
+    backWallRight.position.set(4.5, roomH / 2, 5);
+    backWallRight.receiveShadow = true;
+    scene.add(backWallRight);
+    // 门上方
+    const backWallTopGeo = new THREE.BoxGeometry(2, roomH - 2.2, 0.15);
+    const backWallTop = new THREE.Mesh(backWallTopGeo, wallMat);
+    backWallTop.position.set(2, roomH - (roomH - 2.2) / 2, 5);
+    scene.add(backWallTop);
+
+    // 左墙（x=-8，带空调）
+    const sideWallGeo = new THREE.BoxGeometry(0.15, roomH, roomW);
+    const leftWall = new THREE.Mesh(sideWallGeo, wallMat);
+    leftWall.position.set(-8, roomH / 2, 0);
+    leftWall.receiveShadow = true;
+    scene.add(leftWall);
+
+    // 右墙（x=8，空白）
+    const rightWall = new THREE.Mesh(sideWallGeo, wallMat);
+    rightWall.position.set(8, roomH / 2, 0);
+    rightWall.receiveShadow = true;
+    scene.add(rightWall);
+
+    // --- 黑板（z=-4.5, y=1.5, 宽4高1.5） ---
+    const blackboardGroup = new THREE.Group();
+    blackboardGroup.userData = { itemName: '黑板' };
+
+    const bbGeo = new THREE.BoxGeometry(4, 1.5, 0.08);
+    const bbMat = new THREE.MeshStandardMaterial({ color: 0x2d5a27, roughness: 0.6 });
+    const bb = new THREE.Mesh(bbGeo, bbMat);
+    bb.position.set(0, 1.5 + 0.75, -4.9);
+    bb.castShadow = true;
+    bb.receiveShadow = true;
+    blackboardGroup.add(bb);
+
+    // 黑板边框
+    const frameMat = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.7 });
+    const ft = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.08, 0.12), frameMat);
+    ft.position.set(0, 1.5 + 1.54, -4.9);
+    blackboardGroup.add(ft);
+    const fb = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.08, 0.12), frameMat);
+    fb.position.set(0, 1.5 + 0.71, -4.9);
+    blackboardGroup.add(fb);
+    const fl = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.66, 0.12), frameMat);
+    fl.position.set(-2.1, 1.5 + 0.75, -4.9);
+    blackboardGroup.add(fl);
+    const fr = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.66, 0.12), frameMat);
+    fr.position.set(2.1, 1.5 + 0.75, -4.9);
+    blackboardGroup.add(fr);
+
+    // 粉笔字痕迹
+    const chalkMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 });
+    const chalk1 = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.05, 0.01), chalkMat);
+    chalk1.position.set(-0.3, 1.5 + 1.1, -4.84);
+    blackboardGroup.add(chalk1);
+    const chalk2 = new THREE.Mesh(new THREE.BoxGeometry(3, 0.05, 0.01), chalkMat);
+    chalk2.position.set(0, 1.5 + 0.6, -4.84);
+    blackboardGroup.add(chalk2);
+
+    scene.add(blackboardGroup);
+    registerInteractive(blackboardGroup, '黑板');
+
+    // --- 讲台（z=-3, y=0.4） ---
+    const podiumGroup = new THREE.Group();
+    podiumGroup.userData = { itemName: '讲台' };
+
+    const podiumMat = new THREE.MeshStandardMaterial({ color: 0x8B6914, roughness: 0.7 });
+    const podiumTop = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.1, 1), podiumMat);
+    podiumTop.position.set(0, 0.85, -3);
+    podiumTop.castShadow = true;
+    podiumTop.receiveShadow = true;
+    podiumGroup.add(podiumTop);
+    const podiumBody = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.8, 0.9), podiumMat);
+    podiumBody.position.set(0, 0.4, -3);
+    podiumBody.castShadow = true;
+    podiumGroup.add(podiumBody);
+
+    scene.add(podiumGroup);
+    registerInteractive(podiumGroup, '讲台');
+
+    // --- 水杯（讲台上） ---
+    const cupGroup = new THREE.Group();
+    cupGroup.userData = { itemName: '水杯' };
+
+    const cupMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3, metalness: 0.1 });
+    const cupGeo = new THREE.CylinderGeometry(0.06, 0.05, 0.18, 16);
+    const cup = new THREE.Mesh(cupGeo, cupMat);
+    cup.position.set(0.8, 0.99, -3);
+    cup.castShadow = true;
+    cupGroup.add(cup);
+    const cupRimGeo = new THREE.TorusGeometry(0.06, 0.008, 8, 16);
+    const cupRim = new THREE.Mesh(cupRimGeo, cupMat);
+    cupRim.position.set(0.8, 1.08, -3);
+    cupRim.rotation.x = Math.PI / 2;
+    cupGroup.add(cupRim);
+
+    scene.add(cupGroup);
+    registerInteractive(cupGroup, '水杯');
+
+    // --- 课桌、椅子、电脑（6套，2行3列） ---
+    const deskMat = new THREE.MeshStandardMaterial({ color: 0x8B6914, roughness: 0.7 });
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x666666, roughness: 0.5, metalness: 0.3 });
+    const chairSeatMat = new THREE.MeshStandardMaterial({ color: 0x2563EB, roughness: 0.6 });
+    const laptopMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.3, metalness: 0.5 });
+    const screenMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.2, metalness: 0.3 });
+
+    const deskPositions = [
+        { x: -3, z: -1 }, { x: 0, z: -1 }, { x: 3, z: -1 },
+        { x: -3, z: 1.5 }, { x: 0, z: 1.5 }, { x: 3, z: 1.5 }
+    ];
+
+    deskPositions.forEach(pos => {
+        // --- 课桌 ---
+        const deskGroup = new THREE.Group();
+        deskGroup.userData = { itemName: '课桌' };
+
+        const deskTop = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.08, 0.8), deskMat);
+        deskTop.position.set(pos.x, 0.75, pos.z);
+        deskTop.castShadow = true;
+        deskTop.receiveShadow = true;
+        deskGroup.add(deskTop);
+
+        const legGeo = new THREE.BoxGeometry(0.06, 0.75, 0.06);
+        [[-0.7, -0.3], [0.7, -0.3], [-0.7, 0.3], [0.7, 0.3]].forEach(([lx, lz]) => {
+            const leg = new THREE.Mesh(legGeo, legMat);
+            leg.position.set(pos.x + lx, 0.375, pos.z + lz);
+            leg.castShadow = true;
+            deskGroup.add(leg);
+        });
+
+        scene.add(deskGroup);
+        registerInteractive(deskGroup, '课桌');
+
+        // --- 椅子（z比桌子大0.8） ---
+        const chairGroup = new THREE.Group();
+        chairGroup.userData = { itemName: '椅子' };
+
+        const chairZ = pos.z + 0.8;
+        const seat = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.06, 0.5), chairSeatMat);
+        seat.position.set(pos.x, 0.45, chairZ);
+        seat.castShadow = true;
+        chairGroup.add(seat);
+
+        const back = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.06), chairSeatMat);
+        back.position.set(pos.x, 0.73, chairZ + 0.25);
+        back.castShadow = true;
+        chairGroup.add(back);
+
+        const chairLegGeo = new THREE.BoxGeometry(0.04, 0.45, 0.04);
+        [[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2]].forEach(([cx, cz]) => {
+            const cleg = new THREE.Mesh(chairLegGeo, legMat);
+            cleg.position.set(pos.x + cx, 0.225, chairZ + cz);
+            chairGroup.add(cleg);
+        });
+
+        scene.add(chairGroup);
+        registerInteractive(chairGroup, '椅子');
+
+        // --- 电脑（桌上） ---
+        const laptopGroup = new THREE.Group();
+        laptopGroup.userData = { itemName: '电脑' };
+
+        const laptopBase = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.03, 0.35), laptopMat);
+        laptopBase.position.set(pos.x, 0.805, pos.z);
+        laptopBase.castShadow = true;
+        laptopGroup.add(laptopBase);
+
+        const laptopScreen = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.32, 0.02), screenMat);
+        laptopScreen.position.set(pos.x, 0.99, pos.z - 0.16);
+        laptopScreen.rotation.x = -0.15;
+        laptopScreen.castShadow = true;
+        laptopGroup.add(laptopScreen);
+
+        const screenFrame = new THREE.Mesh(
+            new THREE.BoxGeometry(0.5, 0.34, 0.01),
+            new THREE.MeshStandardMaterial({ color: 0x666666, roughness: 0.3, metalness: 0.5 })
+        );
+        screenFrame.position.set(pos.x, 0.99, pos.z - 0.165);
+        screenFrame.rotation.x = -0.15;
+        laptopGroup.add(screenFrame);
+
+        scene.add(laptopGroup);
+        registerInteractive(laptopGroup, '电脑');
+    });
+
+    // --- 空调（左墙 x=-7.8, y=2.5） ---
+    const acGroup = new THREE.Group();
+    acGroup.userData = { itemName: '空调' };
+
+    const acMat = new THREE.MeshStandardMaterial({ color: 0xf0f0f0, roughness: 0.4, metalness: 0.1 });
+    const acBody = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.6, 1.8), acMat);
+    acBody.position.set(-7.8, 2.5, 0);
+    acBody.castShadow = true;
+    acGroup.add(acBody);
+
+    const acVentMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.6 });
+    const acVent = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.08, 1.6), acVentMat);
+    acVent.position.set(-7.65, 2.25, 0);
+    acGroup.add(acVent);
+
+    scene.add(acGroup);
+    registerInteractive(acGroup, '空调');
+
+    // --- 窗户（前墙3个） ---
+    const windowMat = new THREE.MeshStandardMaterial({
+        color: 0x87CEEB, transparent: true, opacity: 0.4,
+        roughness: 0.1, metalness: 0.2, side: THREE.DoubleSide
+    });
+    const windowFrameMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.4, metalness: 0.3 });
+
+    for (let i = 0; i < 3; i++) {
+        const winGroup = new THREE.Group();
+        winGroup.userData = { itemName: '窗户' };
+
+        const wx = (i - 1) * 4; // -4, 0, 4
+        const wz = -4.92;
+
+        // 玻璃
+        const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.8), windowMat);
+        glass.position.set(wx, 2.2, wz);
+        winGroup.add(glass);
+
+        // 边框
+        const ft2 = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.08, 0.1), windowFrameMat);
+        ft2.position.set(wx, 3.12, wz);
+        winGroup.add(ft2);
+        const fb2 = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.08, 0.1), windowFrameMat);
+        fb2.position.set(wx, 1.28, wz);
+        winGroup.add(fb2);
+        const fl2 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.92, 0.1), windowFrameMat);
+        fl2.position.set(wx - 0.86, 2.2, wz);
+        winGroup.add(fl2);
+        const fr2 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.92, 0.1), windowFrameMat);
+        fr2.position.set(wx + 0.86, 2.2, wz);
+        winGroup.add(fr2);
+        // 十字分隔
+        const fmh = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.04, 0.1), windowFrameMat);
+        fmh.position.set(wx, 2.2, wz);
+        winGroup.add(fmh);
+        const fmv = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.8, 0.1), windowFrameMat);
+        fmv.position.set(wx, 2.2, wz);
+        winGroup.add(fmv);
+
+        scene.add(winGroup);
+        registerInteractive(winGroup, '窗户');
+    }
+}
+
+// ========== 注册可交互物品 ==========
+function registerInteractive(group, itemName) {
+    interactiveGroups.push(group);
+    group.traverse(child => {
+        if (child.isMesh) {
+            child.userData.itemName = itemName;
+            interactiveObjects.push(child);
+        }
+    });
+}
+
+// ========== 碰撞检测（AABB） ==========
+function checkCollision(newX, newZ) {
+    // 教室边界检测
+    if (newX < ROOM_BOUNDS.minX || newX > ROOM_BOUNDS.maxX) return true;
+    if (newZ < ROOM_BOUNDS.minZ || newZ > ROOM_BOUNDS.maxZ) return true;
+
+    // 桌子碰撞检测（简化为AABB）
+    const deskBoxes = [
+        { cx: -3, cz: -1, hw: 0.9, hd: 0.5 },
+        { cx: 0, cz: -1, hw: 0.9, hd: 0.5 },
+        { cx: 3, cz: -1, hw: 0.9, hd: 0.5 },
+        { cx: -3, cz: 1.5, hw: 0.9, hd: 0.5 },
+        { cx: 0, cz: 1.5, hw: 0.9, hd: 0.5 },
+        { cx: 3, cz: 1.5, hw: 0.9, hd: 0.5 },
+    ];
+    // 讲台碰撞
+    const podiumBox = { cx: 0, cz: -3, hw: 1.35, hd: 0.6 };
+
+    const allObstacles = [...deskBoxes, podiumBox];
+    const playerRadius = 0.3;
+
+    for (const box of allObstacles) {
+        if (newX + playerRadius > box.cx - box.hw &&
+            newX - playerRadius < box.cx + box.hw &&
+            newZ + playerRadius > box.cz - box.hd &&
+            newZ - playerRadius < box.cz + box.hd) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// ========== 处理移动 ==========
+function handleMovement() {
+    if (!isLocked && !isMobile) return;
+    if (isPaused || isPanelOpen) return;
+
+    // 获取相机方向
+    const direction = new THREE.Vector3();
+    camera.getWorldDirection(direction);
+    direction.y = 0;
+    direction.normalize();
+
+    // 右方向
+    const right = new THREE.Vector3();
+    right.crossVectors(direction, new THREE.Vector3(0, 1, 0)).normalize();
+
+    // 计算移动向量
+    let moveX = 0, moveZ = 0;
+
+    // 键盘输入
+    if (moveState.forward)  { moveX += direction.x; moveZ += direction.z; }
+    if (moveState.backward) { moveX -= direction.x; moveZ -= direction.z; }
+    if (moveState.left)     { moveX -= right.x; moveZ -= right.z; }
+    if (moveState.right)    { moveX += right.x; moveZ += right.z; }
+
+    // 手机端摇杆输入
+    if (isMobile && joystickLeft.active) {
+        moveX += direction.x * (-joystickLeft.dy) + right.x * joystickLeft.dx;
+        moveZ += direction.z * (-joystickLeft.dy) + right.z * joystickLeft.dx;
+    }
+
+    // 归一化
+    const len = Math.sqrt(moveX * moveX + moveZ * moveZ);
+    if (len > 0) {
+        moveX = (moveX / len) * MOVE_SPEED;
+        moveZ = (moveZ / len) * MOVE_SPEED;
+    }
+
+    // 尝试移动（分轴碰撞检测，允许沿墙滑动）
+    const newX = camera.position.x + moveX;
+    const newZ = camera.position.z + moveZ;
+
+    if (!checkCollision(newX, camera.position.z)) {
+        camera.position.x = newX;
+    }
+    if (!checkCollision(camera.position.x, newZ)) {
+        camera.position.z = newZ;
+    }
+
+    // 保持固定高度
+    camera.position.y = PLAYER_HEIGHT;
+}
+
+// ========== Raycaster物品检测 ==========
+function checkItemFocus() {
+    if (!isLocked && !isMobile) return;
+    if (isPanelOpen) return;
+
+    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+    const intersects = raycaster.intersectObjects(interactiveObjects, false);
+
+    const itemLabel = document.getElementById('itemLabel');
+    const interactHint = document.getElementById('interactHint');
+    const crosshair = document.getElementById('crosshair');
+    const mobileBtn = document.getElementById('mobileInteractBtn');
+
+    if (intersects.length > 0) {
+        const obj = intersects[0].object;
+        const itemName = obj.userData.itemName;
+
+        if (hoveredObject !== obj) {
+            // 恢复之前悬停物体
+            if (hoveredObject) resetObjectEmissive(hoveredObject);
+            hoveredObject = obj;
+            // 高亮
+            if (obj.material && obj.material.emissive) {
+                obj.material.emissive.setHex(0x444444);
+            }
+        }
+
+        // 显示物品名称
+        const itemData = itemsData.find(d => d.name === itemName);
+        if (itemData) {
+            itemLabel.textContent = itemData.emoji + ' ' + itemData.name;
+        } else {
+            itemLabel.textContent = itemName;
+        }
+        itemLabel.classList.add('visible');
+        crosshair.classList.add('active');
+
+        // 显示交互提示
+        if (isMobile) {
+            mobileBtn.classList.add('visible');
+            interactHint.classList.remove('visible');
+        } else {
+            interactHint.classList.add('visible');
+            mobileBtn.classList.remove('visible');
+        }
+    } else {
+        if (hoveredObject) {
+            resetObjectEmissive(hoveredObject);
+            hoveredObject = null;
+        }
+        itemLabel.classList.remove('visible');
+        interactHint.classList.remove('visible');
+        crosshair.classList.remove('active');
+        mobileBtn.classList.remove('visible');
+    }
+}
+
+// ========== 自动讲解检测 ==========
+function checkAutoNarration() {
+    if (isPanelOpen || isPaused) return;
+
+    const playerPos = camera.position;
+    let closestItem = null;
+    let closestDist = Infinity;
+
+    // 遍历所有交互物品组，找最近的
+    interactiveGroups.forEach(group => {
+        const itemPos = new THREE.Vector3();
+        group.getWorldPosition(itemPos);
+        const dist = playerPos.distanceTo(itemPos);
+        if (dist < closestDist) {
+            closestDist = dist;
+            closestItem = group.userData.itemName;
+        }
+    });
+
+    const narrationBar = document.getElementById('narrationBar');
+    const narrationText = document.getElementById('narrationText');
+
+    if (closestDist < 2 && closestItem) {
+        // 靠近物品，触发自动讲解
+        if (autoNarrateItem !== closestItem) {
+            // 切换到新物品
+            stopAutoNarration();
+            autoNarrateItem = closestItem;
+            autoNarrating = true;
+
+            const itemData = itemsData.find(d => d.name === closestItem);
+            if (itemData) {
+                narrationText.textContent = itemData.emoji + ' ' + itemData.name + '：' + itemData.appearance;
+                narrationBar.classList.add('visible');
+
+                // 语音朗读
+                const synth = window.speechSynthesis;
+                synth.cancel();
+                const text = itemData.name + '。' + itemData.appearance + '。' + itemData.func;
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-CN';
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
+                synth.speak(utterance);
+            }
+        }
+    } else if (closestDist > 3) {
+        // 走远了，停止讲解
+        stopAutoNarration();
+    }
+}
+
+// ========== 停止自动讲解 ==========
+function stopAutoNarration() {
+    if (autoNarrating) {
+        window.speechSynthesis.cancel();
+        autoNarrating = false;
+        autoNarrateItem = null;
+        document.getElementById('narrationBar').classList.remove('visible');
+    }
+}
+
+// ========== 重置物体发光 ==========
+function resetObjectEmissive(obj) {
+    if (obj.material && obj.material.emissive) {
+        obj.material.emissive.setHex(0x000000);
+    }
+}
+
+// ========== 打开物品讲解面板 ==========
+function openItemPanel(obj) {
+    const itemName = obj.userData.itemName;
+    currentItem = itemsData.find(item => item.name === itemName);
+    if (!currentItem) return;
+
+    // 停止自动讲解
+    stopAutoNarration();
+
+    // 高亮选中物品
+    if (selectedObject) resetObjectEmissive(selectedObject);
+    selectedObject = obj;
+    if (obj.material && obj.material.emissive) {
+        obj.material.emissive.setHex(0x333333);
+    }
+
+    // 显示面板
+    showPanel(currentItem);
+    isPanelOpen = true;
+
+    // 电脑端解锁鼠标
+    if (!isMobile && controls.isLocked) {
+        controls.unlock();
+    }
+}
+
+// ========== 显示讲解面板 ==========
+function showPanel(item) {
+    document.getElementById('panelTitle').textContent = item.emoji + ' ' + item.name;
+    document.getElementById('panelTag').textContent = item.type;
+    document.getElementById('panelAppearance').textContent = item.appearance;
+    document.getElementById('panelFunction').textContent = item.func;
+    document.getElementById('panelFun').textContent = item.fun;
+
+    // 清空AI对话
+    document.getElementById('panelAiMessages').innerHTML = '';
+    document.getElementById('panelAiInput').value = '';
+
+    // 重置语音按钮
+    const btn = document.getElementById('btnSpeak');
+    btn.classList.remove('speaking');
+    btn.innerHTML = '&#128266; 语音朗读';
+
+    // 打开面板
+    document.getElementById('infoPanel').classList.add('open');
+}
+
+// ========== 关闭面板 ==========
+function closePanel() {
+    document.getElementById('infoPanel').classList.remove('open');
+    if (selectedObject) {
+        resetObjectEmissive(selectedObject);
+        selectedObject = null;
+    }
+    isPanelOpen = false;
+    currentItem = null;
+
+    // 停止语音
+    window.speechSynthesis.cancel();
+    const btn = document.getElementById('btnSpeak');
+    btn.classList.remove('speaking');
+    btn.innerHTML = '&#128266; 语音朗读';
+
+    // 电脑端重新锁定鼠标
+    if (!isMobile && isPlaying) {
+        controls.lock();
+    }
+}
+
+// ========== 语音朗读 ==========
+function speakDescription() {
+    if (!currentItem) return;
+
+    const synth = window.speechSynthesis;
+    const btn = document.getElementById('btnSpeak');
+
+    if (synth.speaking) {
+        synth.cancel();
+        btn.classList.remove('speaking');
+        btn.innerHTML = '&#128266; 语音朗读';
+        return;
+    }
+
+    const text = currentItem.name + '。' + currentItem.appearance + '。' + currentItem.func + '。' + currentItem.fun;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+
+    utterance.onstart = () => {
+        btn.classList.add('speaking');
+        btn.innerHTML = '&#128264; 停止朗读';
+    };
+    utterance.onend = () => {
+        btn.classList.remove('speaking');
+        btn.innerHTML = '&#128266; 语音朗读';
+    };
+    utterance.onerror = () => {
+        btn.classList.remove('speaking');
+        btn.innerHTML = '&#128266; 语音朗读';
+    };
+
+    synth.speak(utterance);
+}
+
+// ========== 面板AI问答 ==========
+async function sendPanelAi() {
+    const input = document.getElementById('panelAiInput');
+    const msgContainer = document.getElementById('panelAiMessages');
+    const question = input.value.trim();
+    if (!question || !currentItem) return;
+
+    const userMsg = document.createElement('div');
+    userMsg.className = 'ai-msg user';
+    userMsg.textContent = question;
+    msgContainer.appendChild(userMsg);
+    input.value = '';
+
+    const botMsg = document.createElement('div');
+    botMsg.className = 'ai-msg bot';
+    botMsg.textContent = '';
+    msgContainer.appendChild(botMsg);
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+
+    try {
+        const response = await fetch('https://api.freegpt4.ddns.net/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [
+                    {
+                        role: 'system',
+                        content: '你是一个关于教室物品的科普助手。当前正在查看的物品是"' + currentItem.name + '"（' + currentItem.type + '）。请用简洁生动的中文回答用户的问题。回答控制在100字以内。'
+                    },
+                    { role: 'user', content: question }
+                ],
+                max_tokens: 200,
+                temperature: 0.7
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            const answer = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content ? data.choices[0].message.content : getLocalAnswer(question, currentItem);
+            await typeWriter(botMsg, answer);
+        } else {
+            await typeWriter(botMsg, getLocalAnswer(question, currentItem));
+        }
+    } catch (e) {
+        await typeWriter(botMsg, getLocalAnswer(question, currentItem));
+    }
+
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+}
+
+// ========== 本地知识库后备 ==========
+function getLocalAnswer(question, item) {
+    const answers = {
+        '电脑': ['电脑是现代学习的重要工具，可以帮助我们编程、查资料、上网课。', '笔记本电脑比台式电脑更便携，适合在教室和家里之间携带使用。', '使用电脑时要注意保护眼睛，每隔一段时间要休息一下。'],
+        '水杯': ['水杯是日常生活中必不可少的用品，记得多喝水哦！', '保持充足的水分摄入有助于提高学习效率和注意力。', '选择合适的水杯很重要，建议使用食品级材质的水杯。'],
+        '椅子': ['椅子是教室中最常见的家具，为我们提供舒适的坐姿。', '良好的坐姿对脊椎健康非常重要，坐的时候要保持腰背挺直。', '人体工学椅可以有效减轻久坐带来的疲劳感。'],
+        '课桌': ['课桌是学生学习的主要场所，承载着课本和文具。', '保持课桌整洁有助于提高学习效率和专注力。', '课桌的高度应该适合自己的身高，过高或过低都不好。'],
+        '空调': ['空调可以调节室内温度，让学习环境更加舒适。', '使用空调时温度不要调得太低，26度左右比较节能健康。', '空调发明于1902年，最初是为了控制印刷厂的湿度。'],
+        '黑板': ['黑板是课堂教学中最传统的展示工具，教师用它来板书。', '绿色黑板比传统黑色黑板更护眼，现在学校大多使用绿色黑板。', '黑板是用特殊材料制成的，粉笔在上面书写后可以轻松擦除。'],
+        '窗户': ['窗户为教室提供自然光线和新鲜空气，对学习环境很重要。', '自然光比人工照明更有利于保护视力和提高学习效率。', '现代窗户采用双层玻璃，可以隔音和保温。'],
+        '讲台': ['讲台是教师授课的工作台，也是课堂管理的中心。', '在中国古代，老师讲课的地方叫做"讲席"。', '站在讲台上可以让教师更好地观察和管理整个教室。']
+    };
+    const itemAnswers = answers[item.name] || ['这是一个很好的问题！让我想想...'];
+    return itemAnswers[Math.floor(Math.random() * itemAnswers.length)];
+}
+
+// ========== 打字机效果 ==========
+function typeWriter(element, text) {
+    return new Promise(resolve => {
+        let i = 0;
+        const speed = 30;
+        function type() {
+            if (i < text.length) {
+                element.textContent += text.charAt(i);
+                i++;
+                setTimeout(type, speed);
+            } else {
+                resolve();
+            }
+        }
+        type();
+    });
+}
+
+// ========== 小地图绘制 ==========
+function drawMinimap() {
+    const canvas = document.getElementById('minimapCanvas');
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // 教室映射参数（教室16x10 -> 画布156x96）
+    const scaleX = w / 16;
+    const scaleZ = h / 10;
+    const offsetX = w / 2;
+    const offsetZ = h / 2;
+
+    // 画教室背景
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillRect(offsetX - 8 * scaleX, offsetZ - 5 * scaleZ, 16 * scaleX, 10 * scaleZ);
+
+    // 画教室边框
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(offsetX - 8 * scaleX, offsetZ - 5 * scaleZ, 16 * scaleX, 10 * scaleZ);
+
+    // 画门的位置
+    ctx.fillStyle = 'rgba(212,168,83,0.5)';
+    ctx.fillRect(offsetX + 2 * scaleX - 3, offsetZ + 5 * scaleZ - 3, 6, 4);
+
+    // 画物品位置
+    interactiveGroups.forEach(group => {
+        const pos = new THREE.Vector3();
+        group.getWorldPosition(pos);
+        const mx = offsetX + pos.x * scaleX;
+        const mz = offsetZ + pos.z * scaleZ;
+
+        ctx.fillStyle = 'rgba(196,30,58,0.6)';
+        ctx.beginPath();
+        ctx.arc(mx, mz, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    // 画玩家位置和方向
+    const px = offsetX + camera.position.x * scaleX;
+    const pz = offsetZ + camera.position.z * scaleZ;
+
+    // 玩家方向
+    const dir = new THREE.Vector3();
+    camera.getWorldDirection(dir);
+    const angle = Math.atan2(dir.x, dir.z);
+
+    ctx.save();
+    ctx.translate(px, pz);
+    ctx.rotate(-angle);
+
+    // 方向三角形
+    ctx.fillStyle = '#d4a853';
+    ctx.beginPath();
+    ctx.moveTo(0, -6);
+    ctx.lineTo(-4, 4);
+    ctx.lineTo(4, 4);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+
+    // 玩家圆点
+    ctx.fillStyle = '#d4a853';
+    ctx.beginPath();
+    ctx.arc(px, pz, 3, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+// ========== 手机端虚拟摇杆 ==========
+function setupMobileControls() {
+    const leftZone = document.getElementById('joystickLeftZone');
+    const rightZone = document.getElementById('joystickRightZone');
+    const leftBase = document.getElementById('joystickLeftBase');
+    const leftThumb = document.getElementById('joystickLeftThumb');
+    const rightBase = document.getElementById('joystickRightBase');
+    const rightThumb = document.getElementById('joystickRightThumb');
+    const interactBtn = document.getElementById('mobileInteractBtn');
+
+    const JOYSTICK_RADIUS = 50;
+    const THUMB_MAX = 35;
+
+    // 左摇杆（移动）
+    leftZone.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.changedTouches[0];
+        joystickLeft.active = true;
+        joystickLeft.touchId = touch.identifier;
+
+        const rect = leftZone.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+
+        leftBase.style.display = 'block';
+        leftBase.style.left = (cx - JOYSTICK_RADIUS) + 'px';
+        leftBase.style.top = (cy - JOYSTICK_RADIUS) + 'px';
+        leftThumb.style.display = 'block';
+        leftThumb.style.left = (cx - 25) + 'px';
+        leftThumb.style.top = (cy - 25) + 'px';
+    }, { passive: false });
+
+    leftZone.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        for (const touch of e.changedTouches) {
+            if (touch.identifier === joystickLeft.touchId) {
+                const rect = leftBase.getBoundingClientRect();
+                const bcx = rect.left + JOYSTICK_RADIUS;
+                const bcy = rect.top + JOYSTICK_RADIUS;
+
+                let dx = touch.clientX - bcx;
+                let dy = touch.clientY - bcy;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist > THUMB_MAX) {
+                    dx = (dx / dist) * THUMB_MAX;
+                    dy = (dy / dist) * THUMB_MAX;
+                }
+
+                joystickLeft.dx = dx / THUMB_MAX;
+                joystickLeft.dy = dy / THUMB_MAX;
+
+                leftThumb.style.left = (bcx + dx - 25) + 'px';
+                leftThumb.style.top = (bcy + dy - 25) + 'px';
+            }
+        }
+    }, { passive: false });
+
+    leftZone.addEventListener('touchend', (e) => {
+        for (const touch of e.changedTouches) {
+            if (touch.identifier === joystickLeft.touchId) {
+                joystickLeft.active = false;
+                joystickLeft.dx = 0;
+                joystickLeft.dy = 0;
+                joystickLeft.touchId = null;
+                leftBase.style.display = 'none';
+                leftThumb.style.display = 'none';
+            }
+        }
+    });
+
+    // 右摇杆（视角）
+    let rightStartX = 0, rightStartY = 0;
+    let cameraEulerX = 0, cameraEulerY = 0;
+
+    rightZone.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.changedTouches[0];
+        joystickRight.active = true;
+        joystickRight.touchId = touch.identifier;
+        rightStartX = touch.clientX;
+        rightStartY = touch.clientY;
+
+        // 获取当前相机旋转
+        cameraEulerX = camera.rotation.x;
+        cameraEulerY = camera.rotation.y;
+
+        const rect = rightZone.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+
+        rightBase.style.display = 'block';
+        rightBase.style.left = (cx - JOYSTICK_RADIUS) + 'px';
+        rightBase.style.top = (cy - JOYSTICK_RADIUS) + 'px';
+        rightThumb.style.display = 'block';
+        rightThumb.style.left = (cx - 25) + 'px';
+        rightThumb.style.top = (cy - 25) + 'px';
+    }, { passive: false });
+
+    rightZone.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        for (const touch of e.changedTouches) {
+            if (touch.identifier === joystickRight.touchId) {
+                const dx = touch.clientX - rightStartX;
+                const dy = touch.clientY - rightStartY;
+
+                // 水平旋转
+                camera.rotation.y = cameraEulerY - dx * 0.004;
+                // 垂直旋转（限制角度）
+                let newPitch = cameraEulerX - dy * 0.004;
+                const minPitch = -Math.PI / 3;   // -60度
+                const maxPitch = Math.PI * 80 / 180; // +80度
+                newPitch = Math.max(minPitch, Math.min(maxPitch, newPitch));
+                camera.rotation.x = newPitch;
+
+                // 更新摇杆视觉
+                const rect = rightBase.getBoundingClientRect();
+                const bcx = rect.left + JOYSTICK_RADIUS;
+                const bcy = rect.top + JOYSTICK_RADIUS;
+
+                let jdx = dx * 0.3;
+                let jdy = dy * 0.3;
+                const jdist = Math.sqrt(jdx * jdx + jdy * jdy);
+                if (jdist > THUMB_MAX) {
+                    jdx = (jdx / jdist) * THUMB_MAX;
+                    jdy = (jdy / jdist) * THUMB_MAX;
+                }
+
+                rightThumb.style.left = (bcx + jdx - 25) + 'px';
+                rightThumb.style.top = (bcy + jdy - 25) + 'px';
+            }
+        }
+    }, { passive: false });
+
+    rightZone.addEventListener('touchend', (e) => {
+        for (const touch of e.changedTouches) {
+            if (touch.identifier === joystickRight.touchId) {
+                joystickRight.active = false;
+                joystickRight.touchId = null;
+                rightBase.style.display = 'none';
+                rightThumb.style.display = 'none';
+            }
+        }
+    });
+
+    // 手机端交互按钮
+    interactBtn.addEventListener('click', () => {
+        if (hoveredObject) {
+            openItemPanel(hoveredObject);
+        }
+    });
+}
+
+// ========== 窗口大小变化 ==========
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// ========== 渲染循环 ==========
+function animate() {
+    requestAnimationFrame(animate);
+
+    // 处理移动
+    handleMovement();
+
+    // 检测准星对准的物品
+    checkItemFocus();
+
+    // 检测自动讲解
+    checkAutoNarration();
+
+    // 绘制小地图
+    if (isPlaying) {
+        drawMinimap();
+    }
+
+    // 渲染
+    renderer.render(scene, camera);
+}
+
+// ========== 启动 ==========
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

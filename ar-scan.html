@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AR实景导览 - 无相学途</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- TensorFlow.js 和 COCO-SSD 模型 -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    <style>
+        /* 自定义样式 */
+        :root {
+            --primary-red: #c41e3a;
+            --primary-gold: #d4a853;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #000;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* 摄像头视频容器 */
+        #video-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #video-element {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 扫描框样式 */
+        .scan-frame {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 280px;
+            height: 280px;
+            border: 2px solid rgba(196, 30, 58, 0.5);
+            border-radius: 12px;
+            z-index: 10;
+        }
+
+        /* 扫描框四个角 */
+        .scan-frame::before,
+        .scan-frame::after {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-color: var(--primary-red);
+            border-style: solid;
+        }
+
+        .scan-frame::before {
+            top: -2px;
+            left: -2px;
+            border-width: 3px 0 0 3px;
+            border-top-left-radius: 12px;
+        }
+
+        .scan-frame::after {
+            top: -2px;
+            right: -2px;
+            border-width: 3px 3px 0 0;
+            border-top-right-radius: 12px;
+        }
+
+        .scan-frame .corner-bottom-left,
+        .scan-frame .corner-bottom-right {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-color: var(--primary-red);
+            border-style: solid;
+        }
+
+        .scan-frame .corner-bottom-left {
+            bottom: -2px;
+            left: -2px;
+            border-width: 0 0 3px 3px;
+            border-bottom-left-radius: 12px;
+        }
+
+        .scan-frame .corner-bottom-right {
+            bottom: -2px;
+            right: -2px;
+            border-width: 0 3px 3px 0;
+            border-bottom-right-radius: 12px;
+        }
+
+        /* 脉冲动画 */
+        .scan-pulse {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 280px;
+            height: 280px;
+            border: 2px solid var(--primary-red);
+            border-radius: 12px;
+            opacity: 0;
+            animation: pulse 2s ease-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        /* 准星 */
+        .crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            z-index: 11;
+        }
+
+        .crosshair::before,
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            background: var(--primary-gold);
+        }
+
+        .crosshair::before {
+            width: 20px;
+            height: 2px;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+        }
+
+        .crosshair::after {
+            width: 2px;
+            height: 20px;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%);
+        }
+
+        /* 扫描线动画 */
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary-gold), transparent);
+            animation: scanMove 2s linear infinite;
+        }
+
+        @keyframes scanMove {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        /* 顶部导航栏 */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .nav-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* 讲解卡片 - 缩小尺寸，不挡视野 */
+        .info-card {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(15px);
+            border-radius: 16px;
+            padding: 16px 20px;
+            transform: translateY(calc(100% + 20px));
+            transition: transform 0.3s ease;
+            z-index: 50;
+            max-height: 35vh;
+            overflow-y: auto;
+            border: 1px solid rgba(212, 168, 83, 0.3);
+        }
+
+        .info-card.active {
+            transform: translateY(0);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .item-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .item-type {
+            background: var(--primary-red);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .card-section {
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            color: var(--primary-gold);
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .section-content {
+            font-size: 14px;
+            color: rgba(255,255,255,0.85);
+            line-height: 1.6;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 14px 20px;
+            border-radius: 12px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary-red);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #a01830;
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* 加载界面 */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #0a0a0a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loading-icon {
+            width: 80px;
+            height: 80px;
+            border: 3px solid rgba(196, 30, 58, 0.2);
+            border-top-color: var(--primary-red);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 24px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        .loading-subtext {
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+            text-align: center;
+            max-width: 280px;
+            line-height: 1.5;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            margin-top: 24px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-red), var(--primary-gold));
+            border-radius: 2px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        /* 错误提示 */
+        .error-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 24px 32px;
+            border-radius: 16px;
+            text-align: center;
+            z-index: 150;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .error-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(196, 30, 58, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            color: var(--primary-red);
+            font-size: 28px;
+        }
+
+        .error-text {
+            color: white;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .error-subtext {
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+        }
+
+        /* 识别状态提示 */
+        .scan-status {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            margin-top: 160px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: white;
+            font-size: 14px;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary-gold);
+            border-radius: 50%;
+            animation: blink 1s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* 识别到的物品标签 */
+        .detected-label {
+            position: absolute;
+            background: rgba(196, 30, 58, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 15;
+            pointer-events: none;
+            transform: translate(-50%, -100%);
+            margin-top: -8px;
+            white-space: nowrap;
+        }
+
+        .detected-label::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 6px 6px 0;
+            border-style: solid;
+            border-color: rgba(196, 30, 58, 0.9) transparent transparent;
+        }
+
+        /* 电脑端适配 */
+        @media (min-width: 768px) {
+            #video-container {
+                max-width: 600px;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+
+            .scan-frame,
+            .scan-pulse {
+                width: 320px;
+                height: 320px;
+            }
+
+            .info-card {
+                max-width: 600px;
+                left: 50%;
+                transform: translateX(-50%) translateY(100%);
+            }
+
+            .info-card.active {
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        /* 隐藏canvas用于模型检测 */
+        #detection-canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载界面 -->
+    <div class="loading-screen" id="loading-screen">
+        <div class="loading-icon"></div>
+        <div class="loading-text" id="loading-text">正在加载AI识别模型...</div>
+        <div class="loading-subtext" id="loading-subtext">首次加载可能需要一些时间，请耐心等待</div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+    </div>
+
+    <!-- 错误提示 -->
+    <div class="error-message" id="error-message">
+        <div class="error-icon">!</div>
+        <div class="error-text" id="error-text">请允许摄像头权限</div>
+        <div class="error-subtext" id="error-subtext">AR功能需要访问摄像头才能正常工作</div>
+    </div>
+
+    <!-- 摄像头视频容器 -->
+    <div id="video-container">
+        <video id="video-element" autoplay playsinline muted></video>
+    </div>
+
+    <!-- 检测用Canvas（隐藏） -->
+    <canvas id="detection-canvas"></canvas>
+
+    <!-- 顶部导航栏 -->
+    <nav class="top-nav">
+        <button class="nav-btn" onclick="goBack()" title="返回">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+        </button>
+        <h1 class="nav-title">AR实景导览</h1>
+        <button class="nav-btn" onclick="switchTo3D()" title="切换3D模式">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                <line x1="12" y1="22.08" x2="12" y2="12"/>
+            </svg>
+        </button>
+    </nav>
+
+    <!-- 扫描框 -->
+    <div class="scan-frame" id="scan-frame">
+        <div class="corner-bottom-left"></div>
+        <div class="corner-bottom-right"></div>
+        <div class="scan-line"></div>
+    </div>
+    <div class="scan-pulse"></div>
+    <div class="crosshair"></div>
+
+    <!-- 识别状态 -->
+    <div class="scan-status" id="scan-status">
+        <span class="status-dot"></span>
+        <span id="status-text">正在识别...</span>
+    </div>
+
+    <!-- 检测到的物品标签容器 -->
+    <div id="labels-container"></div>
+
+    <!-- 讲解卡片 -->
+    <div class="info-card" id="info-card">
+        <div class="card-header">
+            <h2 class="item-name" id="card-item-name">--</h2>
+            <span class="item-type" id="card-item-type">--</span>
+        </div>
+
+        <div class="card-section">
+            <div class="section-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 16v-4M12 8h.01"/>
+                </svg>
+                外观描述
+            </div>
+            <p class="section-content" id="card-appearance">--</p>
+        </div>
+
+        <div class="card-section">
+            <div class="section-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+                功能用途
+            </div>
+            <p class="section-content" id="card-function">--</p>
+        </div>
+
+        <div class="card-section">
+            <div class="section-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>
+                </svg>
+                趣味知识
+            </div>
+            <p class="section-content" id="card-fun">--</p>
+        </div>
+
+        <div class="card-actions">
+            <button class="action-btn btn-primary" onclick="replayAudio()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                </svg>
+                语音朗读
+            </button>
+            <button class="action-btn btn-secondary" onclick="switchTo3D()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                </svg>
+                查看3D模型
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 物品讲解数据 ====================
+        const itemData = {
+            'laptop': {
+                name: '电脑',
+                type: '电子设备',
+                appearance: '银灰色笔记本电脑，15.6英寸屏幕，配有全尺寸键盘和触控板。外壳采用金属材质，轻薄便携，适合移动办公和学习使用。',
+                function: '学习、编程、上网查资料、制作文档和演示文稿。是现代学习和工作中不可或缺的工具，可以帮助我们高效完成各种任务。',
+                fun: '世界上第一台通用电子计算机ENIAC于1946年在美国宾夕法尼亚大学诞生，重达30吨，占地170平方米。而现在的笔记本电脑重量通常不到2公斤，性能却比ENIAC强大数百万倍！'
+            },
+            'cup': {
+                name: '水杯',
+                type: '生活用品',
+                appearance: '白色保温杯，杯身印有红色图案，容量约500毫升。采用双层不锈钢设计，配有密封杯盖和便携提手。',
+                function: '喝水、保持水温。保温杯可以在数小时内保持饮品的温度，无论是冬天的热水还是夏天的冷饮都能保持适宜的温度。',
+                fun: '保温杯的原理来自苏格兰物理学家詹姆斯·杜瓦在1892年发明的杜瓦瓶。他发现双层玻璃之间抽成真空可以大大减少热量传递，这个原理至今仍在使用。'
+            },
+            'chair': {
+                name: '椅子',
+                type: '家具',
+                appearance: '蓝色塑料椅，配有可调节高度的气压杆和五轮滑轮底座。椅背符合人体工学设计，提供良好的腰部支撑。',
+                function: '坐着学习、听课、休息。一把好的椅子可以保护我们的脊椎健康，让我们在长时间学习时保持舒适。',
+                fun: '人体工学椅的概念由比尔·休利特和戴夫·帕卡德（惠普公司创始人）在20世纪60年代推广。他们相信舒适的办公环境能提高工作效率，这个理念彻底改变了办公家具的设计。'
+            },
+            'dining table': {
+                name: '课桌',
+                type: '家具',
+                appearance: '棕色木质课桌，桌面平整光滑，配有抽屉用于存放文具。桌面有使用痕迹，见证了无数学生的学习时光。',
+                function: '写字、放书本、做作业、绘画。课桌是学生每天学习的主要场所，承载着知识的积累和成长的记忆。',
+                fun: '中国古代学生使用的是"案几"，一种矮桌，学生需要跪坐在垫子上学习。直到唐宋时期，高脚桌椅才逐渐普及，改变了人们的坐姿习惯。'
+            },
+            'tv': {
+                name: '黑板/屏幕',
+                type: '教学设备',
+                appearance: '深绿色黑板或电子显示屏，固定在前墙上。黑板配有粉笔槽，电子屏则支持触摸操作和多媒体展示。',
+                function: '老师板书、讲解知识点、展示教学内容。黑板是教学活动中最重要的工具之一，帮助老师清晰地传达知识。',
+                fun: '黑板在19世纪初由苏格兰教师詹姆斯·皮兰发明。他用木板涂上油漆制作出了世界上第一块黑板。而现代电子白板则可以保存书写内容，甚至远程共享给线上学习的学生！'
+            },
+            'book': {
+                name: '书本/教材',
+                type: '学习用品',
+                appearance: '精装或平装书籍，封面印有书名和出版社信息。纸张洁白，印刷清晰，装订牢固，方便翻阅。',
+                function: '学习知识、阅读、查阅资料。书籍是人类智慧的结晶，通过阅读我们可以获取前人的经验和知识。',
+                fun: '世界上现存最早的有明确日期记载的印刷书籍是《金刚经》，印制于公元868年。而现代电子书虽然方便，但纸质书的触感和书香依然是很多人钟爱的阅读体验。'
+            },
+            'cell phone': {
+                name: '手机',
+                type: '电子设备',
+                appearance: '智能手机，配备高清触摸屏，轻薄机身，配有摄像头和各种传感器。屏幕显示清晰，操作流畅。',
+                function: '通讯、上网、拍照、学习、娱乐。现代智能手机功能强大，几乎可以完成电脑的大部分任务，是我们日常生活中最重要的工具之一。',
+                fun: '第一部智能手机IBM Simon于1994年发布，重约500克，售价899美元。它结合了手机、寻呼机、传真机和PDA的功能。如今的智能手机性能比当年强大数千倍，却轻得多、便宜得多。'
+            },
+            'bottle': {
+                name: '水瓶',
+                type: '生活用品',
+                appearance: '透明塑料或玻璃水瓶，容量约500-1000毫升。配有旋盖或吸管，方便饮用。瓶身设计简洁实用。',
+                function: '储存和携带饮用水，保持身体水分充足。多喝水对健康非常重要，尤其是在学习和运动时。',
+                fun: '人类使用容器盛水的历史可以追溯到数千年前。古埃及人使用陶罐，古罗马人使用皮革水袋。现代塑料瓶虽然方便，但为了环保，越来越多的人开始使用可重复使用的水瓶。'
+            },
+            'backpack': {
+                name: '书包',
+                type: '学习用品',
+                appearance: '双肩背包，采用耐磨尼龙材质，配有多个隔层和侧袋。肩带宽厚，背部有透气垫，减轻负重压力。',
+                function: '装载书本、文具、电脑等学习用品。双肩设计可以均匀分散重量，保护脊椎健康。',
+                fun: '现代书包的设计源自登山背包。1967年，美国户外品牌JanSport推出了第一款专为学生设计的双肩背包，彻底改变了学生携带书本的方式。'
+            },
+            'mouse': {
+                name: '鼠标',
+                type: '电子设备',
+                appearance: '人体工学设计的电脑鼠标，配有左右按键和滚轮。有线或无线连接，底部有光学传感器。',
+                function: '控制电脑光标，进行点击、拖拽、滚动等操作。是图形界面操作系统中最重要的输入设备之一。',
+                fun: '世界上第一个鼠标是1964年由斯坦福研究所的道格拉斯·恩格尔巴特发明的。它是一个木质外壳的小盒子，底部有两个滚轮，顶部只有一个按钮。因为拖着一根像尾巴的线缆，所以被戏称为"鼠标"。'
+            },
+            'keyboard': {
+                name: '键盘',
+                type: '电子设备',
+                appearance: '标准QWERTY键盘，配有数字小键盘和功能键区。按键回弹清晰，布局符合人体工学。',
+                function: '输入文字、数字和命令。是电脑最主要的输入设备，熟练掌握键盘输入可以大大提高工作效率。',
+                fun: '键盘的QWERTY布局设计于1873年，目的是为了防止打字机卡键。虽然后来打字机被淘汰，但这个布局却因为人们已经习惯而沿用至今。据说这个布局并非最高效的，但它已经深深融入了我们的文化。'
+            }
+        };
+
+        // 可识别的物品映射（COCO-SSD模型标签 -> 我们的讲解数据）
+        const itemMapping = {
+            'laptop': 'laptop',
+            'cup': 'cup',
+            'chair': 'chair',
+            'dining table': 'dining table',
+            'tv': 'tv',
+            'book': 'book',
+            'cell phone': 'cell phone',
+            'bottle': 'bottle',
+            'backpack': 'backpack',
+            'mouse': 'mouse',
+            'keyboard': 'keyboard'
+        };
+
+        // ==================== 全局变量 ====================
+        let videoElement = null;
+        let canvasElement = null;
+        let canvasContext = null;
+        let model = null;
+        let isDetecting = false;
+        let lastDetectedItem = null;
+        let lastSpeakTime = 0;
+        const SPEAK_COOLDOWN = 10000; // 同一物品不重复讲解的间隔（10秒）
+        let detectionInterval = null;
+
+        // ==================== 初始化 ====================
+        document.addEventListener('DOMContentLoaded', async () => {
+            videoElement = document.getElementById('video-element');
+            canvasElement = document.getElementById('detection-canvas');
+            canvasContext = canvasElement.getContext('2d');
+
+            try {
+                // 步骤1: 请求摄像头权限
+                updateLoadingProgress(20, '正在请求摄像头权限...');
+                await initCamera();
+
+                // 步骤2: 加载AI模型
+                updateLoadingProgress(50, '正在加载AI识别模型...');
+                await loadModel();
+
+                // 步骤3: 开始检测
+                updateLoadingProgress(100, '准备就绪！');
+                setTimeout(() => {
+                    hideLoadingScreen();
+                    startDetection();
+                }, 500);
+
+            } catch (error) {
+                console.error('初始化失败:', error);
+                handleError(error);
+            }
+        });
+
+        // ==================== 摄像头初始化 ====================
+        async function initCamera() {
+            // 检查浏览器支持
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                throw new Error('您的浏览器不支持摄像头功能，请使用现代浏览器（Chrome、Safari、Firefox等）');
+            }
+
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: 'environment', // 优先使用后置摄像头
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                };
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                videoElement.srcObject = stream;
+
+                // 等待视频准备好
+                await new Promise((resolve) => {
+                    videoElement.onloadedmetadata = () => {
+                        resolve();
+                    };
+                });
+
+                // 设置canvas尺寸
+                canvasElement.width = videoElement.videoWidth || 640;
+                canvasElement.height = videoElement.videoHeight || 480;
+
+            } catch (error) {
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    throw new Error('摄像头权限被拒绝');
+                } else if (error.name === 'NotFoundError') {
+                    throw new Error('未找到摄像头设备');
+                } else {
+                    throw new Error('无法访问摄像头: ' + error.message);
+                }
+            }
+        }
+
+        // ==================== 加载AI模型 ====================
+        async function loadModel() {
+            try {
+                // 加载COCO-SSD模型
+                model = await cocoSsd.load({
+                    base: 'lite_mobilenet_v2' // 使用轻量级模型，适合移动端
+                });
+                console.log('COCO-SSD模型加载成功');
+            } catch (error) {
+                throw new Error('模型加载失败: ' + error.message);
+            }
+        }
+
+        // ==================== 开始检测 ====================
+        function startDetection() {
+            if (isDetecting) return;
+            isDetecting = true;
+
+            // 每500ms检测一次
+            detectionInterval = setInterval(async () => {
+                if (!model || !videoElement.readyState === 4) return;
+
+                try {
+                    // 执行检测
+                    const predictions = await model.detect(videoElement);
+
+                    // 处理检测结果
+                    processDetections(predictions);
+                } catch (error) {
+                    console.error('检测错误:', error);
+                }
+            }, 500);
+        }
+
+        // ==================== 处理检测结果 ====================
+        function processDetections(predictions) {
+            // 清除之前的标签
+            const labelsContainer = document.getElementById('labels-container');
+            labelsContainer.innerHTML = '';
+
+            // 过滤出我们关心的物品（置信度>0.6）
+            const validPredictions = predictions.filter(pred => {
+                const mappedKey = itemMapping[pred.class];
+                return mappedKey && pred.score > 0.6;
+            });
+
+            if (validPredictions.length > 0) {
+                // 取置信度最高的检测结果
+                const bestPrediction = validPredictions.reduce((prev, current) =>
+                    prev.score > current.score ? prev : current
+                );
+
+                const mappedKey = itemMapping[bestPrediction.class];
+                const itemInfo = itemData[mappedKey];
+
+                if (itemInfo) {
+                    // 显示检测标签
+                    showDetectionLabel(bestPrediction, itemInfo.name);
+
+                    // 更新状态文本
+                    document.getElementById('status-text').textContent = `已识别: ${itemInfo.name}`;
+
+                    // 检查是否需要语音讲解（避免重复）
+                    const now = Date.now();
+                    if (mappedKey !== lastDetectedItem || (now - lastSpeakTime) > SPEAK_COOLDOWN) {
+                        lastDetectedItem = mappedKey;
+                        lastSpeakTime = now;
+
+                        // 显示讲解卡片
+                        showInfoCard(itemInfo);
+
+                        // 自动语音讲解
+                        speakDescription(itemInfo);
+                    }
+                }
+            } else {
+                // 没有识别到有效物品
+                document.getElementById('status-text').textContent = '请将物品对准扫描框';
+            }
+        }
+
+        // ==================== 显示检测标签 ====================
+        function showDetectionLabel(prediction, itemName) {
+            const labelsContainer = document.getElementById('labels-container');
+            const label = document.createElement('div');
+            label.className = 'detected-label';
+            label.textContent = `${itemName} (${Math.round(prediction.score * 100)}%)`;
+
+            // 计算标签位置（相对于视频画面）
+            const videoRect = videoElement.getBoundingClientRect();
+            const scaleX = videoRect.width / videoElement.videoWidth;
+            const scaleY = videoRect.height / videoElement.videoHeight;
+
+            const centerX = prediction.bbox[0] + prediction.bbox[2] / 2;
+            const topY = prediction.bbox[1];
+
+            label.style.left = `${centerX * scaleX}px`;
+            label.style.top = `${topY * scaleY}px`;
+
+            labelsContainer.appendChild(label);
+        }
+
+        // ==================== 显示讲解卡片 ====================
+        function showInfoCard(itemInfo) {
+            document.getElementById('card-item-name').textContent = itemInfo.name;
+            document.getElementById('card-item-type').textContent = itemInfo.type;
+            document.getElementById('card-appearance').textContent = itemInfo.appearance;
+            document.getElementById('card-function').textContent = itemInfo.function;
+            document.getElementById('card-fun').textContent = itemInfo.fun;
+
+            const card = document.getElementById('info-card');
+            card.classList.add('active');
+        }
+
+        // ==================== 隐藏讲解卡片 ====================
+        function hideInfoCard() {
+            const card = document.getElementById('info-card');
+            card.classList.remove('active');
+        }
+
+        // ==================== 语音朗读 ====================
+        function speakDescription(itemInfo) {
+            // 检查浏览器是否支持语音合成
+            if (!window.speechSynthesis) {
+                console.warn('浏览器不支持语音合成');
+                return;
+            }
+
+            // 停止之前的朗读
+            window.speechSynthesis.cancel();
+
+            // 构建朗读文本
+            const text = `${itemInfo.name}，${itemInfo.type}。${itemInfo.appearance}。功能用途：${itemInfo.function}。趣味知识：${itemInfo.fun}`;
+
+            // 创建语音合成实例
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'zh-CN'; // 设置中文
+            utterance.rate = 0.9; // 语速稍慢，便于理解
+            utterance.pitch = 1; // 正常音调
+
+            // 播放语音
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // ==================== 重新播放语音 ====================
+        function replayAudio() {
+            const itemName = document.getElementById('card-item-name').textContent;
+
+            // 查找对应的物品数据
+            for (const key in itemData) {
+                if (itemData[key].name === itemName) {
+                    speakDescription(itemData[key]);
+                    break;
+                }
+            }
+        }
+
+        // ==================== 更新加载进度 ====================
+        function updateLoadingProgress(percent, text) {
+            document.getElementById('progress-fill').style.width = percent + '%';
+            if (text) {
+                document.getElementById('loading-text').textContent = text;
+            }
+        }
+
+        // ==================== 隐藏加载界面 ====================
+        function hideLoadingScreen() {
+            document.getElementById('loading-screen').classList.add('hidden');
+        }
+
+        // ==================== 错误处理 ====================
+        function handleError(error) {
+            hideLoadingScreen();
+
+            const errorMessage = document.getElementById('error-message');
+            const errorText = document.getElementById('error-text');
+            const errorSubtext = document.getElementById('error-subtext');
+
+            if (error.message === '摄像头权限被拒绝') {
+                errorText.textContent = '请允许摄像头权限';
+                errorSubtext.textContent = 'AR功能需要访问摄像头才能正常工作。请在浏览器设置中允许摄像头访问，然后刷新页面重试。';
+            } else if (error.message.includes('模型加载失败')) {
+                errorText.textContent = '模型加载失败';
+                errorSubtext.textContent = '请检查网络连接后刷新页面重试。';
+            } else if (error.message.includes('不支持摄像头')) {
+                errorText.textContent = '浏览器不支持';
+                errorSubtext.textContent = error.message;
+            } else {
+                errorText.textContent = '发生错误';
+                errorSubtext.textContent = error.message;
+            }
+
+            errorMessage.classList.add('show');
+        }
+
+        // ==================== 返回上一页 ====================
+        function goBack() {
+            // 停止检测和语音
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+            }
+            window.speechSynthesis.cancel();
+
+            // 停止摄像头
+            if (videoElement.srcObject) {
+                const tracks = videoElement.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+            }
+
+            // 返回首页
+            window.location.href = 'index.html';
+        }
+
+        // ==================== 切换到3D模式 ====================
+        function switchTo3D() {
+            // 停止检测和语音
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+            }
+            window.speechSynthesis.cancel();
+
+            // 停止摄像头
+            if (videoElement.srcObject) {
+                const tracks = videoElement.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+            }
+
+            // 跳转到3D漫游页面
+            window.location.href = 'panorama.html';
+        }
+
+        // ==================== 页面卸载时清理 ====================
+        window.addEventListener('beforeunload', () => {
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+            }
+            window.speechSynthesis.cancel();
+
+            if (videoElement && videoElement.srcObject) {
+                const tracks = videoElement.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR导览测试二维码 · 八路军太行纪念馆</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --red-primary: #c41e3a;
+            --red-dark: #8b0000;
+            --gold-accent: #d4a853;
+            --bg: #0a0a0a;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .logo {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        h1 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: var(--gold-accent);
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        /* 二维码卡片 */
+        .qr-card {
+            background: linear-gradient(135deg, rgba(196,30,58,0.15), rgba(212,168,83,0.1));
+            border: 2px solid rgba(196,30,58,0.3);
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+            max-width: 360px;
+            width: 100%;
+        }
+        .qr-label {
+            font-size: 14px;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 16px;
+        }
+        #qrcode {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        #qrcode img, #qrcode canvas {
+            border-radius: 12px;
+            padding: 12px;
+            background: #fff;
+        }
+        .qr-url {
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            word-break: break-all;
+            margin-bottom: 16px;
+            padding: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+        }
+        .hint {
+            font-size: 13px;
+            color: var(--gold-accent);
+            line-height: 1.6;
+        }
+
+        /* 步骤说明 */
+        .steps {
+            margin-top: 40px;
+            max-width: 400px;
+            width: 100%;
+        }
+        .steps h3 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+        }
+        .step-num {
+            width: 28px;
+            height: 28px;
+            background: var(--red-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .step-text {
+            font-size: 13px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.8);
+        }
+        .step-text strong {
+            color: #fff;
+        }
+
+        /* 底部 */
+        .footer {
+            margin-top: 40px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" style="position:absolute;left:16px;top:16px;color:#fff;font-size:14px;text-decoration:none;background:rgba(255,255,255,0.1);padding:6px 14px;border-radius:20px;">← 返回主站</a>
+    <div class="logo">🏛️</div>
+    <h1>八路军太行纪念馆</h1>
+    <div class="subtitle">AR智能导览 · 测试二维码</div>
+
+    <div class="qr-card">
+        <div class="qr-label">请使用手机微信/浏览器扫描下方二维码</div>
+        <div id="qrcode"></div>
+        <div class="qr-url" id="qrUrl"></div>
+        <div class="hint">
+            📱 扫码后打开AR导览页面<br>
+            📷 允许摄像头权限即可体验<br>
+            🎧 点击展品卡片收听讲解
+        </div>
+        <a href="ar-demo.html" style="display:inline-block;margin-top:16px;padding:10px 24px;background:linear-gradient(135deg,#c41e3a,#8b0000);color:#fff;text-decoration:none;border-radius:20px;font-size:14px;">👉 直接打开AR导览页面</a>
+    </div>
+
+    <div class="steps">
+        <h3>测试步骤</h3>
+        <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-text"><strong>截图或保存</strong>上方二维码，打印出来或直接在电脑屏幕上展示</div>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-text"><strong>用手机微信</strong>扫描二维码，进入AR导览页面</div>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-text"><strong>允许摄像头权限</strong>，页面会打开相机作为AR背景</div>
+        </div>
+        <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-text"><strong>点击底部展品卡片</strong>（行军锅/草鞋/小木勺）查看讲解</div>
+        </div>
+        <div class="step">
+            <div class="step-num">5</div>
+            <div class="step-text"><strong>点击语音朗读按钮</strong>，收听展品讲解</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        武乡红色文旅平台 · 智慧导览系统 Demo v1.0<br>
+        当前为演示版本，仅包含3件展品用于测试
+    </div>
+
+    <script>
+        // 二维码目标URL（部署到Netlify后的地址）
+        const targetUrl = 'https://amazing-pastelito-6bc545.netlify.app/ar-demo.html';
+
+        // 生成二维码
+        QRCode.toCanvas(document.getElementById('qrcode'), targetUrl, {
+            width: 240,
+            margin: 2,
+            color: {
+                dark: '#8b0000',
+                light: '#ffffff'
+            }
+        }, function(error) {
+            if (error) {
+                console.error(error);
+                document.getElementById('qrcode').innerHTML = '<p style="color:#c41e3a">二维码生成失败，请刷新重试</p>';
+            }
+        });
+
+        // 显示URL
+        document.getElementById('qrUrl').textContent = targetUrl;
+    </script>
+</body>
+</html>
