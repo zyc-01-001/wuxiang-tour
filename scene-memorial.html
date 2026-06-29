@@ -1509,20 +1509,17 @@ function createExhibitionHall() {
         scene.add(lampGroup);
     });
 
-    // ========== 左墙：3个精品展柜（行军锅、草鞋、小木勺） ==========
-    createExhibitDisplay(-5.4, -2.2, '行军锅', ()=>createMarchingPot(), true);
-    createExhibitDisplay(-5.4, 0.5, '叶成焕的草鞋', ()=>createStrawSandals(), true);
-    createExhibitDisplay(-5.4, 2.8, '胡春花的小木勺', ()=>createWoodenSpoon(), true);
-
-    // ========== 右墙：铸字机 + 打字机 + 臂章 + 军号 + 展板（中部留出通行空间） ==========
-    createExhibitDisplay(5.2, -2.8, '何克的打字机', ()=>createTypewriter(), true);
-    createExhibitDisplay(5.2, -1.0, '《新华日报》铸字机', ()=>createPrintingPress(), true);
-    createExhibitDisplay(5.2, 1.0, '八路军臂章', ()=>createArmband(), true);
-    createExhibitDisplay(5.2, 2.8, '崔振芳的军号', ()=>createBugle(), true);
-    createDisplayBoard(5.2, 0, '展板一');
-
-    // ========== 独立展品（左后方角落，不阻挡中央通道） ==========
-    createMainDisplay(-3.8, -2.8, '八路军拉发式迫击炮', ()=>createMortar());
+    // ========== 中间课桌式布局：2列 x 4行，等距排列，两侧留出走廊 ==========
+    // 左列
+    createMainDisplay(-1.5, -1.5, '行军锅', ()=>createMarchingPot());
+    createMainDisplay(-1.5, -0.5, '叶成焕的草鞋', ()=>createStrawSandals());
+    createMainDisplay(-1.5,  0.5, '胡春花的小木勺', ()=>createWoodenSpoon());
+    createMainDisplay(-1.5,  1.5, '崔振芳的军号', ()=>createBugle());
+    // 右列
+    createMainDisplay(1.5, -1.5, '何克的打字机', ()=>createTypewriter());
+    createMainDisplay(1.5, -0.5, '《新华日报》铸字机', ()=>createPrintingPress());
+    createMainDisplay(1.5,  0.5, '八路军臂章', ()=>createArmband());
+    createMainDisplay(1.5,  1.5, '八路军拉发式迫击炮', ()=>createMortar());
 
     // ========== 前墙：八路军太行纪念馆照片墙 ==========
     createPhotoGalleryWall(-roomW/2 + 0.15);
@@ -2802,23 +2799,18 @@ function checkCollision(newX, newZ) {
     if(newX < ROOM_BOUNDS.minX || newX > ROOM_BOUNDS.maxX) return true;
     if(newZ < ROOM_BOUNDS.minZ || newZ > ROOM_BOUNDS.maxZ) return true;
 
-    // 左墙3个展柜
+    // 中间课桌式布局：2列 x 4行
     const displayBoxes = [
-        {cx:-5.05,cz:-2.2,hw:0.25,hd:0.25},
-        {cx:-5.05,cz:0.5,hw:0.25,hd:0.25},
-        {cx:-5.05,cz:2.8,hw:0.25,hd:0.25},
-        // 右墙打字机
-        {cx:4.85,cz:-2.8,hw:0.25,hd:0.25},
-        // 右墙铸字机
-        {cx:4.85,cz:-1.0,hw:0.25,hd:0.25},
-        // 右墙臂章
-        {cx:4.85,cz:1.0,hw:0.25,hd:0.25},
-        // 右墙军号
-        {cx:4.85,cz:2.8,hw:0.25,hd:0.25},
-        // 右墙展板
-        {cx:4.85,cz:0,hw:0.3,hd:0.3},
-        // 中央迫击炮
-        {cx:-3.8,cz:-2.8,hw:0.3,hd:0.3},
+        // 左列
+        {cx:-1.5,cz:-1.5,hw:0.25,hd:0.25},
+        {cx:-1.5,cz:-0.5,hw:0.25,hd:0.25},
+        {cx:-1.5,cz: 0.5,hw:0.25,hd:0.25},
+        {cx:-1.5,cz: 1.5,hw:0.25,hd:0.25},
+        // 右列
+        {cx:1.5,cz:-1.5,hw:0.25,hd:0.25},
+        {cx:1.5,cz:-0.5,hw:0.25,hd:0.25},
+        {cx:1.5,cz: 0.5,hw:0.25,hd:0.25},
+        {cx:1.5,cz: 1.5,hw:0.3,hd:0.3},
         // 入口手册架
         {cx:1.5,cz:3.2,hw:0.25,hd:0.2},
         // 角落绿植
