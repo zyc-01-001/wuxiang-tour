@@ -1681,12 +1681,16 @@ function createPhotoGalleryWall(wallZ) {
     ];
 
     photos.forEach((photo) => {
-        const tex = textureLoader.load(photo.url);
+        const tex = textureLoader.load(photo.url,
+            function(t){ t.needsUpdate = true; },
+            undefined,
+            function(err){ console.error('展板图片加载失败:', photo.url, err); }
+        );
         tex.encoding = THREE.sRGBEncoding;
 
         // 照片主体（有厚度的盒子）
         const photoMat = new THREE.MeshPhysicalMaterial({
-            map: tex, roughness: 0.35, metalness: 0.0
+            map: tex, roughness: 0.35, metalness: 0.0, side: THREE.DoubleSide
         });
         const boxGeo = new THREE.BoxGeometry(photo.w, photo.h, 0.04);
         const mats = [frameMat, frameMat, frameMat, frameMat, photoMat, frameMat];
