@@ -1523,11 +1523,19 @@
 /* ========================================
    加载动画
    ======================================== */
+let loadHidden = false;
+function hideLoader() {
+    if (!loadHidden) {
+        loadHidden = true;
+        const el = document.getElementById('loadingOverlay');
+        if (el) el.classList.add('hidden');
+    }
+}
 window.addEventListener('load', function() {
-    setTimeout(function() {
-        document.getElementById('loadingOverlay').classList.add('hidden');
-    }, 800);
+    setTimeout(hideLoader, 800);
 });
+// 5秒强制隐藏，避免资源加载慢或卡住
+setTimeout(hideLoader, 5000);
 
 /* ========================================
    导航栏滚动效果 & 汉堡菜单
