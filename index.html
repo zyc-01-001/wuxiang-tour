@@ -4,28 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>武乡红色文旅 - 八路军太行纪念馆</title>
+    <meta name="description" content="八路军太行纪念馆3D虚拟展厅，沉浸式体验太行抗战历史，感受红色文化传承">
+    <meta property="og:title" content="八路军太行纪念馆 | 3D虚拟展厅">
+    <meta property="og:description" content="运用3D技术还原纪念馆实景，在线漫游体验红色文化">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://wuxiang-tour.pages.dev/">
+    <link rel="canonical" href="https://wuxiang-tour.pages.dev/">
     <style>
         /* ========== 全局重置与CSS变量 ========== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        :root {
+                :root {
+    /* 统一色彩 */
+    --color-red: #c41e3a;
+    --color-gold: #d4a853;
+    --color-gold-light: #e8c97a;
+    --color-dark: #1a1a2e;
+    --color-dark-secondary: #16213e;
+    --color-text-primary: #ffffff;
+    --color-text-secondary: rgba(255,255,255,0.7);
+    --color-text-muted: rgba(255,255,255,0.5);
+    --color-bg-overlay: rgba(0,0,0,0.6);
+
+    /* 统一字体 */
+    --font-primary: 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+
+    /* 统一圆角 */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --radius-full: 50%;
+
+    /* 统一间距 */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+
+    /* 统一过渡 */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+
             --bg-primary: #0a0a0a;
             --bg-card: rgba(255,255,255,0.05);
             --bg-card-hover: rgba(255,255,255,0.08);
-            --red-primary: #c41e3a;
             --red-dark: #9a1830;
             --red-glow: rgba(196,30,58,0.3);
-            --gold-accent: #d4a853;
-            --gold-light: #e8c87a;
             --gold-glow: rgba(212,168,83,0.25);
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255,255,255,0.7);
-            --text-muted: rgba(255,255,255,0.45);
             --border-subtle: rgba(255,255,255,0.08);
             --border-gold: rgba(212,168,83,0.3);
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 20px;
             --max-width: 1200px;
             --nav-height: 64px;
             --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
@@ -36,7 +65,7 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
             background: var(--bg-primary);
-            color: var(--text-primary);
+            color: var(--color-text-primary);
             line-height: 1.7;
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
@@ -60,14 +89,14 @@
         .loader-ring {
             width: 60px; height: 60px;
             border: 3px solid rgba(196,30,58,0.15);
-            border-top-color: var(--red-primary);
-            border-right-color: var(--gold-accent);
+            border-top-color: var(--color-red);
+            border-right-color: var(--color-gold);
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-bottom: 24px;
         }
         .loader-text {
-            font-size: 14px; color: var(--text-muted);
+            font-size: 14px; color: var(--color-text-muted);
             letter-spacing: 4px; text-transform: uppercase;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -100,7 +129,7 @@
         }
         .nav-logo-icon {
             width: 32px; height: 32px;
-            background: linear-gradient(135deg, var(--red-primary), var(--gold-accent));
+            background: linear-gradient(135deg, var(--color-red), var(--color-gold));
             border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
             font-size: 16px; font-weight: 900;
@@ -113,14 +142,14 @@
         .nav-links a {
             padding: 8px 16px;
             font-size: 14px; font-weight: 500;
-            color: var(--text-secondary);
+            color: var(--color-text-secondary);
             border-radius: var(--radius-sm);
             transition: all var(--transition);
             white-space: nowrap;
         }
         .nav-links a:hover,
         .nav-links a.active {
-            color: var(--text-primary);
+            color: var(--color-text-primary);
             background: rgba(255,255,255,0.06);
         }
 
@@ -132,7 +161,7 @@
         }
         .hamburger span {
             width: 22px; height: 2px;
-            background: var(--text-primary);
+            background: var(--color-text-primary);
             border-radius: 2px;
             transition: all var(--transition);
         }
@@ -156,12 +185,12 @@
         .mobile-menu.show { transform: translateY(0); opacity: 1; }
         .mobile-menu a {
             display: block; padding: 14px 0;
-            font-size: 16px; color: var(--text-secondary);
+            font-size: 16px; color: var(--color-text-secondary);
             border-bottom: 1px solid var(--border-subtle);
             transition: color var(--transition);
         }
         .mobile-menu a:last-child { border-bottom: none; }
-        .mobile-menu a:hover { color: var(--red-primary); }
+        .mobile-menu a:hover { color: var(--color-red); }
 
         /* ========== Hero 轮播区 ========== */
         .hero {
@@ -202,7 +231,7 @@
         .hero-badge {
             display: inline-block;
             padding: 6px 16px;
-            background: var(--red-primary);
+            background: var(--color-red);
             border-radius: 20px;
             font-size: 12px; font-weight: 600;
             letter-spacing: 2px;
@@ -213,14 +242,14 @@
             font-weight: 800;
             line-height: 1.2;
             margin-bottom: 12px;
-            background: linear-gradient(135deg, #fff 60%, var(--gold-accent));
+            background: linear-gradient(135deg, #fff 60%, var(--color-gold));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
         .hero-subtitle {
             font-size: clamp(14px, 2vw, 18px);
-            color: var(--text-secondary);
+            color: var(--color-text-secondary);
             max-width: 600px;
         }
 
@@ -238,7 +267,7 @@
         }
         .hero-dot.active {
             width: 28px; border-radius: 4px;
-            background: var(--red-primary);
+            background: var(--color-red);
         }
 
         /* 轮播箭头 */
@@ -255,7 +284,7 @@
             z-index: 10;
             color: #fff;
         }
-        .hero-arrow:hover { background: var(--red-primary); }
+        .hero-arrow:hover { background: var(--color-red); }
         .hero-arrow.prev { left: 20px; }
         .hero-arrow.next { right: 20px; }
 
@@ -272,14 +301,14 @@
         .section-label {
             display: inline-flex; align-items: center; gap: 8px;
             font-size: 12px; font-weight: 600;
-            color: var(--red-primary);
+            color: var(--color-red);
             letter-spacing: 3px;
             text-transform: uppercase;
             margin-bottom: 12px;
         }
         .section-label::before {
             content: ''; width: 20px; height: 2px;
-            background: var(--red-primary);
+            background: var(--color-red);
         }
         .section-title {
             font-size: clamp(24px, 3vw, 36px);
@@ -289,7 +318,7 @@
         }
         .section-desc {
             font-size: 16px;
-            color: var(--text-secondary);
+            color: var(--color-text-secondary);
             max-width: 600px;
             margin-bottom: 40px;
         }
@@ -304,7 +333,7 @@
         /* 左栏 - 纪念馆介绍 */
         .intro-text {
             font-size: 15px;
-            color: var(--text-secondary);
+            color: var(--color-text-secondary);
             line-height: 1.9;
             margin-bottom: 32px;
         }
@@ -312,11 +341,11 @@
         .intro-highlight {
             padding: 20px 24px;
             background: linear-gradient(135deg, rgba(196,30,58,0.1), rgba(212,168,83,0.05));
-            border-left: 3px solid var(--red-primary);
+            border-left: 3px solid var(--color-red);
             border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
             margin: 24px 0;
             font-style: italic;
-            color: var(--text-secondary);
+            color: var(--color-text-secondary);
         }
 
         /* 图片画廊 */
@@ -373,7 +402,7 @@
             content: '';
             position: absolute; top: 0; left: 0; right: 0;
             height: 3px;
-            background: linear-gradient(90deg, var(--red-primary), var(--gold-accent));
+            background: linear-gradient(90deg, var(--color-red), var(--color-gold));
         }
         .player-header {
             display: flex; align-items: center; gap: 12px;
@@ -381,13 +410,13 @@
         }
         .player-icon {
             width: 44px; height: 44px;
-            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            background: linear-gradient(135deg, var(--color-red), var(--red-dark));
             border-radius: var(--radius-sm);
             display: flex; align-items: center; justify-content: center;
             font-size: 20px;
         }
         .player-title { font-size: 16px; font-weight: 600; }
-        .player-subtitle { font-size: 12px; color: var(--text-muted); }
+        .player-subtitle { font-size: 12px; color: var(--color-text-muted); }
 
         /* 波形动画Canvas */
         .waveform-container {
@@ -412,7 +441,7 @@
             border-radius: 50%;
             background: rgba(255,255,255,0.06);
             display: flex; align-items: center; justify-content: center;
-            font-size: 12px; color: var(--text-secondary);
+            font-size: 12px; color: var(--color-text-secondary);
             transition: all var(--transition);
         }
         .btn-skip:hover { background: rgba(255,255,255,0.12); color: #fff; }
@@ -420,7 +449,7 @@
         .btn-play {
             width: 48px; height: 48px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            background: linear-gradient(135deg, var(--color-red), var(--red-dark));
             display: flex; align-items: center; justify-content: center;
             font-size: 18px;
             box-shadow: 0 4px 20px var(--red-glow);
@@ -429,7 +458,7 @@
         .btn-play:hover { transform: scale(1.08); box-shadow: 0 6px 28px var(--red-glow); }
 
         .player-time {
-            font-size: 12px; color: var(--text-muted);
+            font-size: 12px; color: var(--color-text-muted);
             font-variant-numeric: tabular-nums;
             white-space: nowrap;
         }
@@ -444,7 +473,7 @@
         }
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--red-primary), var(--gold-accent));
+            background: linear-gradient(90deg, var(--color-red), var(--color-gold));
             border-radius: 2px;
             width: 0%;
             transition: width 0.1s linear;
@@ -487,7 +516,7 @@
             font-size: 16px;
             flex-shrink: 0;
         }
-        .info-label { font-size: 12px; color: var(--text-muted); margin-bottom: 2px; }
+        .info-label { font-size: 12px; color: var(--color-text-muted); margin-bottom: 2px; }
         .info-value { font-size: 14px; font-weight: 500; }
 
         /* ========== 历史时间线 ========== */
@@ -506,17 +535,17 @@
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: thin;
-            scrollbar-color: var(--red-primary) transparent;
+            scrollbar-color: var(--color-red) transparent;
         }
         .timeline-track::-webkit-scrollbar { height: 4px; }
         .timeline-track::-webkit-scrollbar-track { background: transparent; }
-        .timeline-track::-webkit-scrollbar-thumb { background: var(--red-primary); border-radius: 2px; }
+        .timeline-track::-webkit-scrollbar-thumb { background: var(--color-red); border-radius: 2px; }
 
         .timeline-line {
             position: absolute;
             top: 52px; left: 40px; right: 40px;
             height: 2px;
-            background: linear-gradient(90deg, transparent, var(--red-primary), var(--gold-accent), var(--red-primary), transparent);
+            background: linear-gradient(90deg, transparent, var(--color-red), var(--color-gold), var(--color-red), transparent);
         }
         .timeline-items {
             display: flex; gap: 0;
@@ -533,15 +562,15 @@
         }
         .timeline-year {
             font-size: 24px; font-weight: 800;
-            color: var(--red-primary);
+            color: var(--color-red);
             margin-bottom: 12px;
         }
         .timeline-dot {
             width: 16px; height: 16px;
-            background: var(--red-primary);
+            background: var(--color-red);
             border: 3px solid var(--bg-primary);
             border-radius: 50%;
-            box-shadow: 0 0 0 3px var(--red-primary), 0 0 20px var(--red-glow);
+            box-shadow: 0 0 0 3px var(--color-red), 0 0 20px var(--red-glow);
             z-index: 2;
             margin-bottom: 12px;
         }
@@ -555,12 +584,12 @@
             transition: all var(--transition);
         }
         .timeline-content:hover {
-            border-color: var(--red-primary);
+            border-color: var(--color-red);
             background: rgba(196,30,58,0.08);
             transform: translateY(-4px);
         }
         .timeline-content h4 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
-        .timeline-content p { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+        .timeline-content p { font-size: 12px; color: var(--color-text-muted); line-height: 1.5; }
 
         /* 垂直时间线（移动端） */
         .timeline-vertical {
@@ -571,7 +600,7 @@
             content: '';
             position: absolute; left: 8px; top: 0; bottom: 0;
             width: 2px;
-            background: linear-gradient(to bottom, var(--red-primary), var(--gold-accent), var(--red-primary));
+            background: linear-gradient(to bottom, var(--color-red), var(--color-gold), var(--color-red));
         }
         .timeline-v-item {
             position: relative;
@@ -582,14 +611,14 @@
             content: '';
             position: absolute; left: -26px; top: 4px;
             width: 12px; height: 12px;
-            background: var(--red-primary);
+            background: var(--color-red);
             border: 2px solid var(--bg-primary);
             border-radius: 50%;
             box-shadow: 0 0 10px var(--red-glow);
         }
         .timeline-v-year {
             font-size: 18px; font-weight: 700;
-            color: var(--red-primary);
+            color: var(--color-red);
             margin-bottom: 6px;
         }
         .timeline-v-content {
@@ -599,7 +628,7 @@
             padding: 16px;
         }
         .timeline-v-content h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
-        .timeline-v-content p { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+        .timeline-v-content p { font-size: 13px; color: var(--color-text-muted); line-height: 1.6; }
 
         /* ========== AI智能问答 ========== */
         .ai-section {
@@ -665,7 +694,7 @@
         }
         .ai-msg.user {
             align-self: flex-end;
-            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            background: linear-gradient(135deg, var(--color-red), var(--red-dark));
         }
 
         .ai-typing {
@@ -674,7 +703,7 @@
         }
         .ai-typing span {
             width: 6px; height: 6px;
-            background: var(--text-muted);
+            background: var(--color-text-muted);
             border-radius: 50%;
             animation: typing 1.4s infinite;
         }
@@ -696,16 +725,16 @@
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-md);
             padding: 12px 16px;
-            color: var(--text-primary);
+            color: var(--color-text-primary);
             font-size: 14px;
             outline: none;
             transition: border-color var(--transition);
         }
-        .ai-input::placeholder { color: var(--text-muted); }
-        .ai-input:focus { border-color: var(--red-primary); }
+        .ai-input::placeholder { color: var(--color-text-muted); }
+        .ai-input:focus { border-color: var(--color-red); }
         .ai-send-btn {
             width: 44px; height: 44px;
-            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            background: linear-gradient(135deg, var(--color-red), var(--red-dark));
             border-radius: var(--radius-sm);
             display: flex; align-items: center; justify-content: center;
             font-size: 18px;
@@ -728,15 +757,15 @@
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-md);
             font-size: 13px;
-            color: var(--text-secondary);
+            color: var(--color-text-secondary);
             text-align: left;
             transition: all var(--transition);
             line-height: 1.5;
         }
         .preset-btn:hover {
-            border-color: var(--red-primary);
+            border-color: var(--color-red);
             background: rgba(196,30,58,0.06);
-            color: var(--text-primary);
+            color: var(--color-text-primary);
             transform: translateX(4px);
         }
         .preset-btn .preset-icon {
@@ -766,30 +795,30 @@
             content: '';
             position: absolute; bottom: 0; left: 0;
             width: 30px; height: 2px;
-            background: var(--red-primary);
+            background: var(--color-red);
         }
         .footer-col p {
-            font-size: 13px; color: var(--text-muted);
+            font-size: 13px; color: var(--color-text-muted);
             line-height: 1.8;
         }
         .footer-links { list-style: none; }
         .footer-links li { margin-bottom: 10px; }
         .footer-links a {
-            font-size: 13px; color: var(--text-muted);
+            font-size: 13px; color: var(--color-text-muted);
             transition: color var(--transition);
         }
-        .footer-links a:hover { color: var(--red-primary); }
+        .footer-links a:hover { color: var(--color-red); }
         .footer-contact-item {
             display: flex; align-items: center; gap: 10px;
             margin-bottom: 12px;
-            font-size: 13px; color: var(--text-muted);
+            font-size: 13px; color: var(--color-text-muted);
         }
         .footer-bottom {
             border-top: 1px solid var(--border-subtle);
             padding-top: 24px;
             text-align: center;
             font-size: 12px;
-            color: var(--text-muted);
+            color: var(--color-text-muted);
         }
 
         /* ========== 图片灯箱 ========== */
@@ -828,7 +857,7 @@
         .back-to-top {
             position: fixed; bottom: 24px; right: 24px;
             width: 44px; height: 44px;
-            background: var(--red-primary);
+            background: var(--color-red);
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             font-size: 18px; color: #fff;
@@ -935,12 +964,13 @@
 
         /* ========== 选择文字样式 ========== */
         ::selection {
-            background: var(--red-primary);
+            background: var(--color-red);
             color: #fff;
         }
     </style>
 </head>
 <body>
+<a href="#main-content" style="position:absolute;top:-100px;left:10px;background:var(--color-red);color:white;padding:8px 16px;border-radius:8px;z-index:99999;text-decoration:none;font-size:14px;" onfocus="this.style.top='10px'" onblur="this.style.top='-100px'">跳转到主要内容</a>
 
 <!-- ========== 加载动画 ========== -->
 <div class="loading-overlay" id="loadingOverlay">
@@ -963,7 +993,7 @@
             <li><a href="ar-demo.html">AR导览</a></li>
             <li><a href="#footer">关于我们</a></li>
         </ul>
-        <button class="hamburger" id="hamburger" aria-label="菜单">
+        <button class="hamburger" id="hamburger" aria-label="菜单" aria-expanded="false">
             <span></span><span></span><span></span>
         </button>
     </div>
@@ -980,34 +1010,34 @@
 </div>
 
 <!-- ========== Hero 轮播区 ========== -->
-<section class="hero" id="hero">
+<section class="hero" id="hero" role="region" aria-label="纪念馆图片轮播">
     <div class="hero-slides" id="heroSlides">
         <div class="hero-slide">
-            <img src="images/memorial.jpg" alt="八路军太行纪念馆">
+            <img src="images/memorial.webp" alt="八路军太行纪念馆">
             <div class="hero-overlay"></div>
         </div>
         <div class="hero-slide">
-            <img src="images/interior1.jpg" alt="馆内实景">
+            <img src="images/interior1.webp" alt="馆内实景" loading="lazy">
             <div class="hero-overlay"></div>
         </div>
         <div class="hero-slide">
-            <img src="images/interior2.jpg" alt="馆内实景">
+            <img src="images/interior2.webp" alt="馆内实景" loading="lazy">
             <div class="hero-overlay"></div>
         </div>
         <div class="hero-slide">
-            <img src="images/interior3.jpg" alt="馆内实景">
+            <img src="images/interior3.webp" alt="馆内实景" loading="lazy">
             <div class="hero-overlay"></div>
         </div>
         <div class="hero-slide">
-            <img src="images/interior4.jpg" alt="馆内实景">
+            <img src="images/interior4.webp" alt="馆内实景" loading="lazy">
             <div class="hero-overlay"></div>
         </div>
         <div class="hero-slide">
-            <img src="images/interior5.jpg" alt="馆内实景">
+            <img src="images/interior5.webp" alt="馆内实景" loading="lazy">
             <div class="hero-overlay"></div>
         </div>
         <div class="hero-slide">
-            <img src="images/interior6.jpg" alt="馆内实景">
+            <img src="images/interior6.webp" alt="馆内实景" loading="lazy">
             <div class="hero-overlay"></div>
         </div>
     </div>
@@ -1035,20 +1065,20 @@
             <div style="display: flex; align-items: center; gap: 20px;">
                 <div style="
                     width: 56px; height: 56px;
-                    background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+                    background: linear-gradient(135deg, var(--color-red), var(--red-dark));
                     border-radius: var(--radius-md);
                     display: flex; align-items: center; justify-content: center;
                     font-size: 28px; flex-shrink: 0;
                 ">&#127963;</div>
                 <div style="flex: 1;">
-                    <div style="font-size: 18px; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);">八路军太行纪念馆 · 3D实景漫游</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">走进全国唯一全面反映八路军抗战历史的大型革命纪念馆，第一人称沉浸式漫游，近距离观看珍贵文物，聆听抗战故事</div>
+                    <div style="font-size: 18px; font-weight: 700; margin-bottom: 4px; color: var(--color-text-primary);">八路军太行纪念馆 · 3D实景漫游</div>
+                    <div style="font-size: 14px; color: var(--color-text-secondary);">走进全国唯一全面反映八路军抗战历史的大型革命纪念馆，第一人称沉浸式漫游，近距离观看珍贵文物，聆听抗战故事</div>
                 </div>
             </div>
             <div style="display: flex; gap: 12px; margin-top: 16px; padding-left: 76px;">
                 <button onclick="toggleVRPreview()" id="vrPreviewBtn" style="
                     padding: 10px 24px;
-                    background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+                    background: linear-gradient(135deg, var(--color-red), var(--red-dark));
                     border: none; border-radius: var(--radius-md);
                     color: #fff; font-size: 14px; font-weight: 600;
                     cursor: pointer; transition: all 0.3s;
@@ -1058,12 +1088,12 @@
                 <a href="scene-memorial.html" target="_blank" style="
                     padding: 10px 24px;
                     background: transparent;
-                    border: 1px solid var(--gold-accent);
+                    border: 1px solid var(--color-gold);
                     border-radius: var(--radius-md);
-                    color: var(--gold-accent); font-size: 14px; font-weight: 600;
+                    color: var(--color-gold); font-size: 14px; font-weight: 600;
                     text-decoration: none; display: inline-flex; align-items: center;
                     transition: all 0.3s;
-                " onmouseover="this.style.background='var(--gold-accent)';this.style.color='#0a0a0a'" onmouseout="this.style.background='transparent';this.style.color='var(--gold-accent)'">
+                " onmouseover="this.style.background='var(--color-gold)';this.style.color='#0a0a0a'" onmouseout="this.style.background='transparent';this.style.color='var(--color-gold)'">
                     全屏体验 &#10140;
                 </a>
             </div>
@@ -1071,8 +1101,8 @@
         <!-- ========== 3D展厅 iframe 嵌套预览 ========== -->
         <div id="vrPreviewBox" style="display:none; margin-top: 16px; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid rgba(196,30,58,0.25); background: #000;">
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: linear-gradient(90deg, rgba(196,30,58,0.2), rgba(212,168,83,0.1)); border-bottom: 1px solid rgba(196,30,58,0.2);">
-                <span style="font-size: 13px; color: var(--text-secondary);">&#127963; 八路军太行纪念馆 · 3D实景漫游</span>
-                <button onclick="toggleVRPreview()" style="font-size: 12px; color: var(--gold-accent); background: transparent; border: 1px solid var(--gold-accent); border-radius: 4px; padding: 4px 12px; cursor: pointer;">收起</button>
+                <span style="font-size: 13px; color: var(--color-text-secondary);">&#127963; 八路军太行纪念馆 · 3D实景漫游</span>
+                <button onclick="toggleVRPreview()" style="font-size: 12px; color: var(--color-gold); background: transparent; border: 1px solid var(--color-gold); border-radius: 4px; padding: 4px 12px; cursor: pointer;">收起</button>
             </div>
             <iframe id="vrIframe" src="" style="width:100%; height: 600px; border: none; display: block;" allowfullscreen allow="fullscreen; autoplay; microphone; camera"></iframe>
         </div>
@@ -1097,11 +1127,11 @@
                 font-size: 28px; flex-shrink: 0;
             ">&#128247;</div>
             <div style="flex: 1;">
-                <div style="font-size: 18px; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);">AR智能导览 · 扫码体验</div>
-                <div style="font-size: 14px; color: var(--text-secondary);">手机扫码进入AR导览，对准展品即可触发语音讲解，沉浸式红色文化体验</div>
+                <div style="font-size: 18px; font-weight: 700; margin-bottom: 4px; color: var(--color-text-primary);">AR智能导览 · 扫码体验</div>
+                <div style="font-size: 14px; color: var(--color-text-secondary);">手机扫码进入AR导览，对准展品即可触发语音讲解，沉浸式红色文化体验</div>
             </div>
             <div style="
-                font-size: 20px; color: var(--gold-accent);
+                font-size: 20px; color: var(--color-gold);
                 transition: transform 0.3s;
             ">&#10140;</div>
         </a>
@@ -1109,6 +1139,7 @@
 </section>
 
 <!-- ========== 纪念馆介绍 + 侧边栏 ========== -->
+<main id="main-content">
 <section class="section" id="intro">
     <div class="container">
         <div class="section-label fade-up">纪念馆介绍</div>
@@ -1132,28 +1163,28 @@
 
                 <!-- 图片画廊 -->
                 <div class="gallery-grid">
-                    <div class="gallery-item" onclick="openLightbox('images/interior1.jpg')">
-                        <img src="images/interior1.jpg" alt="馆内实景1" loading="lazy">
+                    <div class="gallery-item" onclick="openLightbox('images/interior1.webp')">
+                        <img src="images/interior1.webp" alt="馆内实景1" loading="lazy">
                         <div class="gallery-caption">主展厅</div>
                     </div>
-                    <div class="gallery-item" onclick="openLightbox('images/interior2.jpg')">
-                        <img src="images/interior2.jpg" alt="馆内实景2" loading="lazy">
+                    <div class="gallery-item" onclick="openLightbox('images/interior2.webp')">
+                        <img src="images/interior2.webp" alt="馆内实景2" loading="lazy">
                         <div class="gallery-caption">抗战文物展区</div>
                     </div>
-                    <div class="gallery-item" onclick="openLightbox('images/interior3.jpg')">
-                        <img src="images/interior3.jpg" alt="馆内实景3" loading="lazy">
+                    <div class="gallery-item" onclick="openLightbox('images/interior3.webp')">
+                        <img src="images/interior3.webp" alt="馆内实景3" loading="lazy">
                         <div class="gallery-caption">历史照片墙</div>
                     </div>
-                    <div class="gallery-item" onclick="openLightbox('images/interior4.jpg')">
-                        <img src="images/interior4.jpg" alt="馆内实景4" loading="lazy">
+                    <div class="gallery-item" onclick="openLightbox('images/interior4.webp')">
+                        <img src="images/interior4.webp" alt="馆内实景4" loading="lazy">
                         <div class="gallery-caption">将领纪念馆</div>
                     </div>
-                    <div class="gallery-item" onclick="openLightbox('images/interior5.jpg')">
-                        <img src="images/interior5.jpg" alt="馆内实景5" loading="lazy">
+                    <div class="gallery-item" onclick="openLightbox('images/interior5.webp')">
+                        <img src="images/interior5.webp" alt="馆内实景5" loading="lazy">
                         <div class="gallery-caption">场景复原区</div>
                     </div>
-                    <div class="gallery-item" onclick="openLightbox('images/interior6.jpg')">
-                        <img src="images/interior6.jpg" alt="馆内实景6" loading="lazy">
+                    <div class="gallery-item" onclick="openLightbox('images/interior6.webp')">
+                        <img src="images/interior6.webp" alt="馆内实景6" loading="lazy">
                         <div class="gallery-caption">多媒体展厅</div>
                     </div>
                 </div>
@@ -1202,7 +1233,7 @@
                         <div>
                             <div class="info-label">开放时间</div>
                             <div class="info-value">周二至周日 9:00 - 17:00</div>
-                            <div class="info-value" style="color:var(--text-muted);font-size:12px">周一闭馆（法定节假日除外）</div>
+                            <div class="info-value" style="color:var(--color-text-muted);font-size:12px">周一闭馆（法定节假日除外）</div>
                         </div>
                     </div>
                     <div class="info-item">
@@ -1443,6 +1474,7 @@
 </section>
 
 <!-- ========== 页脚 ========== -->
+</main>
 <footer class="footer" id="footer">
     <div class="container">
         <div class="footer-grid">
@@ -1560,12 +1592,15 @@ window.addEventListener('scroll', function() {
 hamburger.addEventListener('click', function() {
     this.classList.toggle('open');
     mobileMenu.classList.toggle('show');
+    const isOpen = this.classList.contains('open');
+    this.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
 });
 
 // 点击移动端菜单链接后关闭菜单
 mobileMenu.querySelectorAll('a').forEach(function(link) {
     link.addEventListener('click', function() {
         hamburger.classList.remove('open');
+        hamburger.setAttribute('aria-expanded', 'false');
         mobileMenu.classList.remove('show');
     });
 });

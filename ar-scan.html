@@ -4,17 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AR实景导览 - 无相学途</title>
+    <meta name="description" content="八路军太行纪念馆AR实景导览，通过摄像头扫描展品获取沉浸式讲解">
+    <link rel="canonical" href="https://wuxiang-tour.pages.dev/ar-scan.html">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- TensorFlow.js 和 COCO-SSD 模型 -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    <!-- TensorFlow.js 和 COCO-SSD 模型 - 改为动态按需加载（点击"开始扫描"后加载） -->
     <style>
         /* 自定义样式 */
-        :root {
-            --primary-red: #c41e3a;
-            --primary-gold: #d4a853;
-        }
+                :root {
+    /* 统一色彩 */
+    --color-red: #c41e3a;
+    --color-gold: #d4a853;
+    --color-gold-light: #e8c97a;
+    --color-dark: #1a1a2e;
+    --color-dark-secondary: #16213e;
+    --color-text-primary: #ffffff;
+    --color-text-secondary: rgba(255,255,255,0.7);
+    --color-text-muted: rgba(255,255,255,0.5);
+    --color-bg-overlay: rgba(0,0,0,0.6);
+
+    /* 统一字体 */
+    --font-primary: 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+
+    /* 统一圆角 */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --radius-full: 50%;
+
+    /* 统一间距 */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+
+    /* 统一过渡 */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+}
 
         * {
             margin: 0;
@@ -66,7 +95,7 @@
             position: absolute;
             width: 30px;
             height: 30px;
-            border-color: var(--primary-red);
+            border-color: var(--color-red);
             border-style: solid;
         }
 
@@ -89,7 +118,7 @@
             position: absolute;
             width: 30px;
             height: 30px;
-            border-color: var(--primary-red);
+            border-color: var(--color-red);
             border-style: solid;
         }
 
@@ -115,7 +144,7 @@
             transform: translate(-50%, -50%);
             width: 280px;
             height: 280px;
-            border: 2px solid var(--primary-red);
+            border: 2px solid var(--color-red);
             border-radius: 12px;
             opacity: 0;
             animation: pulse 2s ease-out infinite;
@@ -148,7 +177,7 @@
         .crosshair::after {
             content: '';
             position: absolute;
-            background: var(--primary-gold);
+            background: var(--color-gold);
         }
 
         .crosshair::before {
@@ -174,7 +203,7 @@
             left: 0;
             width: 100%;
             height: 2px;
-            background: linear-gradient(90deg, transparent, var(--primary-gold), transparent);
+            background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
             animation: scanMove 2s linear infinite;
         }
 
@@ -260,7 +289,7 @@
         }
 
         .item-type {
-            background: var(--primary-red);
+            background: var(--color-red);
             color: white;
             padding: 3px 10px;
             border-radius: 15px;
@@ -274,7 +303,7 @@
 
         .section-title {
             font-size: 14px;
-            color: var(--primary-gold);
+            color: var(--color-gold);
             font-weight: 600;
             margin-bottom: 8px;
             display: flex;
@@ -310,7 +339,7 @@
         }
 
         .btn-primary {
-            background: var(--primary-red);
+            background: var(--color-red);
             color: white;
         }
 
@@ -353,7 +382,7 @@
             width: 80px;
             height: 80px;
             border: 3px solid rgba(196, 30, 58, 0.2);
-            border-top-color: var(--primary-red);
+            border-top-color: var(--color-red);
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-bottom: 24px;
@@ -389,7 +418,7 @@
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--primary-red), var(--primary-gold));
+            background: linear-gradient(90deg, var(--color-red), var(--color-gold));
             border-radius: 2px;
             transition: width 0.3s ease;
             width: 0%;
@@ -422,7 +451,7 @@
             align-items: center;
             justify-content: center;
             margin: 0 auto 16px;
-            color: var(--primary-red);
+            color: var(--color-red);
             font-size: 28px;
         }
 
@@ -459,7 +488,7 @@
         .status-dot {
             width: 8px;
             height: 8px;
-            background: var(--primary-gold);
+            background: var(--color-gold);
             border-radius: 50%;
             animation: blink 1s ease-in-out infinite;
         }
@@ -527,14 +556,44 @@
         }
     </style>
 </head>
-<body>
-    <!-- 加载界面 -->
+<body style="padding-top:48px">
+    <!-- 初始欢迎界面（点击按钮后才加载TF.js和模型） -->
     <div class="loading-screen" id="loading-screen">
-        <div class="loading-icon"></div>
-        <div class="loading-text" id="loading-text">正在加载AI识别模型...</div>
-        <div class="loading-subtext" id="loading-subtext">首次加载可能需要一些时间，请耐心等待</div>
-        <div class="progress-bar">
-            <div class="progress-fill" id="progress-fill"></div>
+        <div id="start-screen-content">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#c41e3a" stroke-width="1.5" style="margin-bottom: 24px;">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+            </svg>
+            <div class="loading-text" style="margin-bottom: 8px;">AR 实景导览</div>
+            <div class="loading-subtext" style="margin-bottom: 32px;">使用AI识别身边的物品，获取有趣的讲解</div>
+            <button id="start-scan-btn" onclick="startScan()" style="
+                padding: 16px 48px;
+                background: #c41e3a;
+                color: white;
+                border: none;
+                border-radius: 12px;
+                font-size: 18px;
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                transition: all 0.3s ease;
+            " onmouseover="this.style.background='#a01830'" onmouseout="this.style.background='#c41e3a'">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                </svg>
+                开始扫描
+            </button>
+        </div>
+        <div id="loading-progress-content" style="display: none;">
+            <div class="loading-icon"></div>
+            <div class="loading-text" id="loading-text">正在加载AI识别引擎...</div>
+            <div class="loading-subtext" id="loading-subtext">首次加载可能需要一些时间，请耐心等待</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
         </div>
     </div>
 
@@ -553,21 +612,14 @@
     <!-- 检测用Canvas（隐藏） -->
     <canvas id="detection-canvas"></canvas>
 
-    <!-- 顶部导航栏 -->
-    <nav class="top-nav">
-        <button class="nav-btn" onclick="goBack()" title="返回">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
-        </button>
-        <h1 class="nav-title">AR实景导览</h1>
-        <button class="nav-btn" onclick="switchTo3D()" title="切换3D模式">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-                <line x1="12" y1="22.08" x2="12" y2="12"/>
-            </svg>
-        </button>
+    <!-- 统一导航栏 -->
+    <nav class="site-nav" aria-label="站点导航" style="position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,rgba(196,30,58,0.95),rgba(26,26,46,0.95));backdrop-filter:blur(10px);padding:0 20px;height:48px;display:flex;align-items:center;box-shadow:0 2px 20px rgba(0,0,0,0.3);">
+        <a href="index.html" style="color:var(--color-gold, #d4a853);font-size:15px;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:6px;font-family:var(--font-primary,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            返回首页
+        </a>
+        <span style="flex:1"></span>
+        <span style="color:rgba(255,255,255,0.5);font-size:12px;font-family:var(--font-primary,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif);">八路军太行纪念馆 | 3D虚拟展厅</span>
     </nav>
 
     <!-- 扫描框 -->
@@ -754,22 +806,49 @@
         const SPEAK_COOLDOWN = 10000; // 同一物品不重复讲解的间隔（10秒）
         let detectionInterval = null;
 
-        // ==================== 初始化 ====================
-        document.addEventListener('DOMContentLoaded', async () => {
+        // ==================== 初始化（仅初始化DOM引用，不加载模型） ====================
+        document.addEventListener('DOMContentLoaded', () => {
             videoElement = document.getElementById('video-element');
             canvasElement = document.getElementById('detection-canvas');
             canvasContext = canvasElement.getContext('2d');
+            // 不再自动加载模型，等待用户点击"开始扫描"
+        });
+
+        // ==================== 动态加载脚本工具 ====================
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = () => reject(new Error('加载脚本失败: ' + src));
+                document.head.appendChild(script);
+            });
+        }
+
+        // ==================== 用户点击"开始扫描"后按需加载 ====================
+        async function startScan() {
+            // 切换界面：隐藏按钮，显示进度
+            document.getElementById('start-screen-content').style.display = 'none';
+            document.getElementById('loading-progress-content').style.display = 'block';
 
             try {
-                // 步骤1: 请求摄像头权限
-                updateLoadingProgress(20, '正在请求摄像头权限...');
+                // 步骤1: 动态加载 TensorFlow.js
+                updateLoadingProgress(10, '正在加载 TensorFlow.js 引擎...');
+                await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs');
+
+                // 步骤2: 动态加载 COCO-SSD 模型库
+                updateLoadingProgress(30, '正在加载目标检测模型库...');
+                await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd');
+
+                // 步骤3: 请求摄像头权限
+                updateLoadingProgress(50, '正在请求摄像头权限...');
                 await initCamera();
 
-                // 步骤2: 加载AI模型
-                updateLoadingProgress(50, '正在加载AI识别模型...');
+                // 步骤4: 初始化AI模型
+                updateLoadingProgress(70, '正在初始化AI识别模型...');
                 await loadModel();
 
-                // 步骤3: 开始检测
+                // 步骤5: 准备就绪
                 updateLoadingProgress(100, '准备就绪！');
                 setTimeout(() => {
                     hideLoadingScreen();
@@ -780,7 +859,7 @@
                 console.error('初始化失败:', error);
                 handleError(error);
             }
-        });
+        }
 
         // ==================== 摄像头初始化 ====================
         async function initCamera() {
@@ -844,7 +923,7 @@
 
             // 每500ms检测一次
             detectionInterval = setInterval(async () => {
-                if (!model || !videoElement.readyState === 4) return;
+                if (!model || videoElement.readyState !== 4) return;
 
                 try {
                     // 执行检测
@@ -1052,7 +1131,7 @@
             }
 
             // 跳转到3D漫游页面
-            window.location.href = 'panorama.html';
+            window.location.href = 'scene-memorial.html';
         }
 
         // ==================== 页面卸载时清理 ====================

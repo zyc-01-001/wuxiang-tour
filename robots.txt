@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://wuxiang-tour.pages.dev/sitemap.xml

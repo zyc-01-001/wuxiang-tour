@@ -4,27 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>3D场景导览演示 - 武乡红色文旅</title>
+    <meta name="description" content="武乡红色文旅3D场景导览演示，沉浸式体验太行抗战历史">
+    <link rel="canonical" href="https://wuxiang-tour.pages.dev/scene3d.html">
     <style>
         /* ========== 全局重置与变量 ========== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
+                :root {
+    /* 统一色彩 */
+    --color-red: #c41e3a;
+    --color-gold: #d4a853;
+    --color-gold-light: #e8c97a;
+    --color-dark: #1a1a2e;
+    --color-dark-secondary: #16213e;
+    --color-text-primary: #ffffff;
+    --color-text-secondary: rgba(255,255,255,0.7);
+    --color-text-muted: rgba(255,255,255,0.5);
+    --color-bg-overlay: rgba(0,0,0,0.6);
+
+    /* 统一字体 */
+    --font-primary: 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+
+    /* 统一圆角 */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --radius-full: 50%;
+
+    /* 统一间距 */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+
+    /* 统一过渡 */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+
             --bg-primary: #0a0a0a;
-            --red-primary: #c41e3a;
             --red-dark: #9a1830;
-            --gold-accent: #d4a853;
-            --gold-light: #e8c87a;
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255,255,255,0.7);
-            --text-muted: rgba(255,255,255,0.45);
             --border-subtle: rgba(255,255,255,0.08);
-            --radius-sm: 8px;
-            --radius-md: 12px;
         }
         html, body { width: 100%; height: 100%; overflow: hidden; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
             background: var(--bg-primary);
-            color: var(--text-primary);
+            color: var(--color-text-primary);
             -webkit-font-smoothing: antialiased;
             touch-action: none;
         }
@@ -38,7 +64,7 @@
         }
         .loading-bar {
             height: 100%; width: 0%;
-            background: linear-gradient(90deg, var(--red-primary), var(--gold-accent));
+            background: linear-gradient(90deg, var(--color-red), var(--color-gold));
             transition: width 0.3s ease;
         }
         .loading-overlay {
@@ -53,14 +79,14 @@
         .loader-ring {
             width: 50px; height: 50px;
             border: 3px solid rgba(196,30,58,0.15);
-            border-top-color: var(--red-primary);
-            border-right-color: var(--gold-accent);
+            border-top-color: var(--color-red);
+            border-right-color: var(--color-gold);
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-bottom: 20px;
         }
-        .loader-text { font-size: 14px; color: var(--text-muted); letter-spacing: 3px; }
-        .loader-percent { font-size: 28px; font-weight: 700; color: var(--gold-accent); margin-bottom: 8px; }
+        .loader-text { font-size: 14px; color: var(--color-text-muted); letter-spacing: 3px; }
+        .loader-percent { font-size: 28px; font-weight: 700; color: var(--color-gold); margin-bottom: 8px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* ========== 开始界面 ========== */
@@ -77,14 +103,14 @@
         .start-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
         .start-title {
             font-size: 36px; font-weight: 800;
-            background: linear-gradient(135deg, var(--red-primary), var(--gold-accent));
+            background: linear-gradient(135deg, var(--color-red), var(--color-gold));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 8px;
             letter-spacing: 2px;
         }
         .start-subtitle {
-            font-size: 16px; color: var(--text-muted);
+            font-size: 16px; color: var(--color-text-muted);
             margin-bottom: 40px;
             letter-spacing: 4px;
         }
@@ -97,7 +123,7 @@
             text-align: center;
         }
         .start-controls .control-row {
-            font-size: 14px; color: var(--text-secondary);
+            font-size: 14px; color: var(--color-text-secondary);
             margin-bottom: 8px;
             line-height: 1.8;
         }
@@ -110,12 +136,12 @@
             border-radius: 4px;
             font-size: 12px;
             font-weight: 600;
-            color: var(--gold-light);
+            color: var(--color-gold-light);
             margin: 0 2px;
         }
         .start-btn {
             padding: 16px 60px;
-            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            background: linear-gradient(135deg, var(--color-red), var(--red-dark));
             border: none; border-radius: var(--radius-md);
             color: #fff; font-size: 18px; font-weight: 700;
             cursor: pointer;
@@ -160,7 +186,7 @@
             top: -1px; left: -10px;
         }
         .crosshair.active::before, .crosshair.active::after {
-            background: var(--gold-accent);
+            background: var(--color-gold);
         }
 
         /* ========== 物品名称标签（准星下方） ========== */
@@ -171,10 +197,10 @@
             transform: translateX(-50%);
             padding: 6px 16px;
             background: rgba(10,10,10,0.85);
-            border: 1px solid var(--gold-accent);
+            border: 1px solid var(--color-gold);
             border-radius: var(--radius-sm);
             font-size: 14px;
-            color: var(--gold-light);
+            color: var(--color-gold-light);
             pointer-events: none;
             z-index: 800;
             opacity: 0;
@@ -195,7 +221,7 @@
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 20px;
             font-size: 13px;
-            color: var(--text-secondary);
+            color: var(--color-text-secondary);
             pointer-events: none;
             z-index: 800;
             opacity: 0;
@@ -210,7 +236,7 @@
             border: 1px solid rgba(255,255,255,0.2);
             border-radius: 3px;
             font-weight: 600;
-            color: var(--gold-light);
+            color: var(--color-gold-light);
             margin: 0 3px;
         }
 
@@ -227,7 +253,7 @@
             border: 1px solid rgba(196,30,58,0.3);
             border-radius: var(--radius-md);
             font-size: 13px;
-            color: var(--text-secondary);
+            color: var(--color-text-secondary);
             line-height: 1.6;
             pointer-events: none;
             z-index: 800;
@@ -238,7 +264,7 @@
         .narration-bar.visible { opacity: 1; }
         .narration-bar .nar-label {
             font-size: 11px;
-            color: var(--red-primary);
+            color: var(--color-red);
             font-weight: 600;
             margin-bottom: 4px;
             letter-spacing: 1px;
@@ -272,7 +298,7 @@
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: var(--radius-sm);
             font-size: 12px;
-            color: var(--text-muted);
+            color: var(--color-text-muted);
             z-index: 800;
             pointer-events: none;
             display: none;
@@ -296,7 +322,7 @@
         .pause-title {
             font-size: 28px; font-weight: 700;
             margin-bottom: 32px;
-            color: var(--text-primary);
+            color: var(--color-text-primary);
         }
         .pause-btn {
             display: block;
@@ -306,15 +332,15 @@
             background: rgba(255,255,255,0.06);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: var(--radius-sm);
-            color: var(--text-primary);
+            color: var(--color-text-primary);
             font-size: 15px;
             cursor: pointer;
             text-align: center;
             transition: background 0.3s, border-color 0.3s;
         }
-        .pause-btn:hover { background: rgba(196,30,58,0.2); border-color: var(--red-primary); }
+        .pause-btn:hover { background: rgba(196,30,58,0.2); border-color: var(--color-red); }
         .pause-btn.primary {
-            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            background: linear-gradient(135deg, var(--color-red), var(--red-dark));
             border: none;
             font-weight: 600;
         }
@@ -326,7 +352,7 @@
             border: 1px solid rgba(255,255,255,0.06);
             border-radius: var(--radius-sm);
             font-size: 13px;
-            color: var(--text-muted);
+            color: var(--color-text-muted);
             line-height: 2;
             text-align: center;
         }
@@ -377,7 +403,7 @@
         .panel-section { margin-bottom: 20px; }
         .panel-section-title {
             font-size: 11px; font-weight: 600;
-            color: var(--red-primary);
+            color: var(--color-red);
             letter-spacing: 2px;
             text-transform: uppercase;
             margin-bottom: 8px;
@@ -385,11 +411,11 @@
         }
         .panel-section-title::before {
             content: ''; width: 12px; height: 2px;
-            background: var(--red-primary);
+            background: var(--color-red);
         }
         .panel-section p {
             font-size: 14px; line-height: 1.8;
-            color: var(--text-secondary);
+            color: var(--color-text-secondary);
         }
 
         .panel-tag {
@@ -399,7 +425,7 @@
             border: 1px solid rgba(196,30,58,0.3);
             border-radius: 20px;
             font-size: 12px;
-            color: var(--red-primary);
+            color: var(--color-red);
             margin-bottom: 16px;
         }
 
@@ -407,7 +433,7 @@
         .btn-speak {
             display: flex; align-items: center; gap: 8px;
             padding: 10px 20px;
-            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            background: linear-gradient(135deg, var(--color-red), var(--red-dark));
             border-radius: var(--radius-sm);
             color: #fff;
             font-size: 14px;
@@ -432,7 +458,7 @@
             flex-shrink: 0;
         }
         .panel-ai-title {
-            font-size: 12px; color: var(--text-muted);
+            font-size: 12px; color: var(--color-text-muted);
             margin-bottom: 10px;
             display: flex; align-items: center; gap: 6px;
         }
@@ -453,11 +479,11 @@
         }
         .ai-msg.bot {
             background: rgba(255,255,255,0.04);
-            color: var(--text-secondary);
+            color: var(--color-text-secondary);
         }
         .ai-msg.user {
             background: rgba(196,30,58,0.15);
-            color: var(--text-primary);
+            color: var(--color-text-primary);
             margin-left: auto;
             text-align: right;
         }
@@ -468,15 +494,15 @@
             background: rgba(255,255,255,0.06);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: var(--radius-sm);
-            color: var(--text-primary);
+            color: var(--color-text-primary);
             font-size: 13px;
             outline: none;
             transition: border-color 0.3s;
         }
-        .ai-input-row input:focus { border-color: var(--gold-accent); }
+        .ai-input-row input:focus { border-color: var(--color-gold); }
         .ai-input-row button {
             padding: 8px 16px;
-            background: var(--red-primary);
+            background: var(--color-red);
             border-radius: var(--radius-sm);
             color: #fff;
             font-size: 13px;
@@ -526,7 +552,7 @@
             width: 60px; height: 60px;
             border-radius: 50%;
             background: rgba(196,30,58,0.6);
-            border: 2px solid var(--red-primary);
+            border: 2px solid var(--color-red);
             color: #fff;
             font-size: 13px;
             font-weight: 600;
@@ -577,12 +603,12 @@
         <div class="start-desktop-controls">
             <div class="control-row"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> 移动 &nbsp;|&nbsp; 鼠标 环顾</div>
             <div class="control-row"><span class="key">E</span> 查看物品详情 &nbsp;|&nbsp; <span class="key">ESC</span> 暂停</div>
-            <div class="control-row" style="margin-top:8px;color:var(--text-muted);font-size:12px;">靠近物品自动触发语音讲解</div>
+            <div class="control-row" style="margin-top:8px;color:var(--color-text-muted);font-size:12px;">靠近物品自动触发语音讲解</div>
         </div>
         <div class="start-mobile-controls">
             <div class="control-row">左侧摇杆 移动 &nbsp;|&nbsp; 右侧摇杆 视角</div>
             <div class="control-row">点击按钮 查看物品详情</div>
-            <div class="control-row" style="margin-top:8px;color:var(--text-muted);font-size:12px;">靠近物品自动触发语音讲解</div>
+            <div class="control-row" style="margin-top:8px;color:var(--color-text-muted);font-size:12px;">靠近物品自动触发语音讲解</div>
         </div>
     </div>
     <button class="start-btn" id="startBtn">进入场景</button>
@@ -594,12 +620,12 @@
     <button class="pause-btn primary" id="resumeBtn">继续导览</button>
     <a href="index.html" class="pause-btn">返回主站</a>
     <div class="pause-controls-info">
-        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">W</span>
-        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">A</span>
-        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">S</span>
-        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">D</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c97a;">W</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c97a;">A</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c97a;">S</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c97a;">D</span>
         移动 &nbsp;|&nbsp; 鼠标 环顾 &nbsp;|&nbsp;
-        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">E</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c97a;">E</span>
         交互
     </div>
 </div>

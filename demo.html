@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>武乡红色文旅 · 场景导览演示系统</title>
+<meta name="description" content="武乡红色文旅场景导览演示系统，体验八路军太行纪念馆虚拟导览">
+<link rel="canonical" href="https://wuxiang-tour.pages.dev/demo.html">
 <style>
 /* ========== 全局重置与基础样式 ========== */
 *, *::before, *::after {
@@ -12,22 +14,50 @@
   box-sizing: border-box;
 }
 
-:root {
-  --bg-primary: #0f1923;
-  --bg-panel: rgba(15, 25, 35, 0.95);
-  --floor-color: #d4a574;
-  --floor-dark: #c49464;
-  --accent-gold: #d4a853;
-  --accent-red: #c41e3a;
-  --text-white: #ffffff;
-  --text-muted: #8899aa;
-  --border-color: rgba(212, 168, 83, 0.3);
-}
+        :root {
+    /* 统一色彩 */
+    --color-red: #c41e3a;
+    --color-gold: #d4a853;
+    --color-gold-light: #e8c97a;
+    --color-dark: #1a1a2e;
+    --color-dark-secondary: #16213e;
+    --color-text-primary: #ffffff;
+    --color-text-secondary: rgba(255,255,255,0.7);
+    --color-text-muted: rgba(255,255,255,0.5);
+    --color-bg-overlay: rgba(0,0,0,0.6);
+
+    /* 统一字体 */
+    --font-primary: 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+
+    /* 统一圆角 */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --radius-full: 50%;
+
+    /* 统一间距 */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+
+    /* 统一过渡 */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+
+            --bg-primary: #0f1923;
+            --bg-panel: rgba(15, 25, 35, 0.95);
+            --floor-color: #d4a574;
+            --floor-dark: #c49464;
+            --border-color: rgba(212, 168, 83, 0.3);
+        }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   background: var(--bg-primary);
-  color: var(--text-white);
+  color: var(--color-text-primary);
   min-height: 100vh;
   overflow-x: hidden;
 }
@@ -67,8 +97,8 @@ body {
 .loading-spinner::before {
   width: 60px; height: 60px;
   border: 3px solid transparent;
-  border-top-color: var(--accent-gold);
-  border-right-color: var(--accent-gold);
+  border-top-color: var(--color-gold);
+  border-right-color: var(--color-gold);
   animation: spin 1s linear infinite;
 }
 
@@ -76,8 +106,8 @@ body {
   width: 40px; height: 40px;
   top: 7px; left: 7px;
   border: 3px solid transparent;
-  border-bottom-color: var(--accent-red);
-  border-left-color: var(--accent-red);
+  border-bottom-color: var(--color-red);
+  border-left-color: var(--color-red);
   animation: spin 0.7s linear infinite reverse;
 }
 
@@ -86,7 +116,7 @@ body {
 }
 
 .loading-text {
-  color: var(--accent-gold);
+  color: var(--color-gold);
   font-size: 16px;
   letter-spacing: 2px;
   animation: pulse-text 1.5s ease-in-out infinite;
@@ -109,7 +139,7 @@ body {
 .header h1 {
   font-size: clamp(18px, 3vw, 28px);
   font-weight: 700;
-  background: linear-gradient(135deg, var(--accent-gold), #f0d78c, var(--accent-gold));
+  background: linear-gradient(135deg, var(--color-gold), #f0d78c, var(--color-gold));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -118,7 +148,7 @@ body {
 
 .header .subtitle {
   font-size: clamp(12px, 2vw, 15px);
-  color: var(--text-muted);
+  color: var(--color-text-muted);
   margin-top: 6px;
   letter-spacing: 1px;
 }
@@ -407,7 +437,7 @@ body {
   left: 20%;
   width: 60%;
   height: 30%;
-  background: var(--accent-red);
+  background: var(--color-red);
   border-radius: 50%;
   opacity: 0.7;
 }
@@ -425,7 +455,7 @@ body {
 .hotspot-dot {
   width: 12px;
   height: 12px;
-  background: var(--accent-red);
+  background: var(--color-red);
   border-radius: 50%;
   position: absolute;
   top: 50%;
@@ -481,7 +511,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   background: var(--bg-panel);
-  color: var(--text-white);
+  color: var(--color-text-primary);
   padding: 4px 10px;
   border-radius: 4px;
   font-size: 12px;
@@ -559,7 +589,7 @@ body {
 
 .panel-header h2 {
   font-size: 20px;
-  color: var(--accent-gold);
+  color: var(--color-gold);
   font-weight: 600;
 }
 
@@ -568,7 +598,7 @@ body {
   height: 36px;
   border: none;
   background: rgba(255,255,255,0.1);
-  color: var(--text-white);
+  color: var(--color-text-primary);
   border-radius: 50%;
   font-size: 20px;
   cursor: pointer;
@@ -609,7 +639,7 @@ body {
   border: 1px solid var(--border-color);
   border-radius: 20px;
   font-size: 12px;
-  color: var(--accent-gold);
+  color: var(--color-gold);
 }
 
 /* 讲解内容 */
@@ -619,10 +649,10 @@ body {
 
 .content-section h3 {
   font-size: 14px;
-  color: var(--accent-gold);
+  color: var(--color-gold);
   margin-bottom: 6px;
   padding-left: 10px;
-  border-left: 3px solid var(--accent-gold);
+  border-left: 3px solid var(--color-gold);
 }
 
 .content-section p {
@@ -640,7 +670,7 @@ body {
 
 .qa-section h3 {
   font-size: 14px;
-  color: var(--accent-gold);
+  color: var(--color-gold);
   margin-bottom: 10px;
 }
 
@@ -678,7 +708,7 @@ body {
 
 .qa-message .label {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
   margin-bottom: 4px;
 }
 
@@ -693,23 +723,23 @@ body {
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.15);
   border-radius: 8px;
-  color: var(--text-white);
+  color: var(--color-text-primary);
   font-size: 13px;
   outline: none;
   transition: border-color 0.2s;
 }
 
 .qa-input::placeholder {
-  color: var(--text-muted);
+  color: var(--color-text-muted);
 }
 
 .qa-input:focus {
-  border-color: var(--accent-gold);
+  border-color: var(--color-gold);
 }
 
 .qa-send-btn {
   padding: 10px 16px;
-  background: linear-gradient(135deg, var(--accent-gold), #c49843);
+  background: linear-gradient(135deg, var(--color-gold), #c49843);
   border: none;
   border-radius: 8px;
   color: #1a1a1a;
@@ -746,7 +776,7 @@ body {
   background: rgba(196, 30, 58, 0.15);
   border: 1px solid rgba(196, 30, 58, 0.3);
   border-radius: 8px;
-  color: var(--text-white);
+  color: var(--color-text-primary);
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
@@ -779,7 +809,7 @@ body {
   text-align: center;
   padding: 12px;
   background: linear-gradient(0deg, rgba(15,25,35,1) 0%, transparent 100%);
-  color: var(--text-muted);
+  color: var(--color-text-muted);
   font-size: 13px;
   letter-spacing: 1px;
   z-index: 5;
@@ -805,7 +835,7 @@ body {
   position: absolute;
   width: 2px;
   height: 2px;
-  background: var(--accent-gold);
+  background: var(--color-gold);
   border-radius: 50%;
   opacity: 0;
   animation: float-particle linear infinite;
@@ -940,7 +970,7 @@ body {
 .typing-indicator span {
   width: 6px;
   height: 6px;
-  background: var(--text-muted);
+  background: var(--color-text-muted);
   border-radius: 50%;
   animation: typing-bounce 1.4s ease-in-out infinite;
 }
@@ -954,7 +984,16 @@ body {
 }
 </style>
 </head>
-<body>
+<body style="padding-top:48px">
+
+<nav class="site-nav" aria-label="站点导航" style="position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,rgba(196,30,58,0.95),rgba(26,26,46,0.95));backdrop-filter:blur(10px);padding:0 20px;height:48px;display:flex;align-items:center;box-shadow:0 2px 20px rgba(0,0,0,0.3);">
+    <a href="index.html" style="color:var(--color-gold, #d4a853);font-size:15px;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:6px;font-family:var(--font-primary,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        返回首页
+    </a>
+    <span style="flex:1"></span>
+    <span style="color:rgba(255,255,255,0.5);font-size:12px;font-family:var(--font-primary,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif);">八路军太行纪念馆 | 3D虚拟展厅</span>
+</nav>
 
 <!-- 加载动画 -->
 <div class="loading-overlay" id="loadingOverlay">

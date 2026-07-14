@@ -4,27 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>展览馆3D漫游 - 武乡红色文旅</title>
+    <meta name="description" content="武乡红色文旅展览馆3D虚拟漫游，在线体验红色文化展览">
+    <link rel="canonical" href="https://wuxiang-tour.pages.dev/scene-exhibit.html">
     <style>
         /* ========== 全局重置与变量 ========== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
+                :root {
+    /* 统一色彩 */
+    --color-red: #c41e3a;
+    --color-gold: #d4a853;
+    --color-gold-light: #e8c97a;
+    --color-dark: #1a1a2e;
+    --color-dark-secondary: #16213e;
+    --color-text-primary: #ffffff;
+    --color-text-secondary: rgba(255,255,255,0.7);
+    --color-text-muted: rgba(255,255,255,0.5);
+    --color-bg-overlay: rgba(0,0,0,0.6);
+
+    /* 统一字体 */
+    --font-primary: 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+
+    /* 统一圆角 */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --radius-full: 50%;
+
+    /* 统一间距 */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+
+    /* 统一过渡 */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+
             --bg-primary: #0a0a0a;
-            --red-primary: #c41e3a;
             --red-dark: #9a1830;
-            --gold-accent: #d4a853;
-            --gold-light: #e8c87a;
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255,255,255,0.7);
-            --text-muted: rgba(255,255,255,0.45);
             --border-subtle: rgba(255,255,255,0.08);
-            --radius-sm: 8px;
-            --radius-md: 12px;
         }
         html, body { width: 100%; height: 100%; overflow: hidden; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
             background: var(--bg-primary);
-            color: var(--text-primary);
+            color: var(--color-text-primary);
             -webkit-font-smoothing: antialiased;
             touch-action: none;
         }
@@ -38,7 +64,7 @@
         }
         .loading-bar {
             height: 100%; width: 0%;
-            background: linear-gradient(90deg, var(--red-primary), var(--gold-accent));
+            background: linear-gradient(90deg, var(--color-red), var(--color-gold));
             transition: width 0.3s ease;
         }
         .loading-overlay {
@@ -53,14 +79,14 @@
         .loader-ring {
             width: 50px; height: 50px;
             border: 3px solid rgba(196,30,58,0.15);
-            border-top-color: var(--red-primary);
-            border-right-color: var(--gold-accent);
+            border-top-color: var(--color-red);
+            border-right-color: var(--color-gold);
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-bottom: 20px;
         }
-        .loader-text { font-size: 14px; color: var(--text-muted); letter-spacing: 3px; }
-        .loader-percent { font-size: 28px; font-weight: 700; color: var(--gold-accent); margin-bottom: 8px; }
+        .loader-text { font-size: 14px; color: var(--color-text-muted); letter-spacing: 3px; }
+        .loader-percent { font-size: 28px; font-weight: 700; color: var(--color-gold); margin-bottom: 8px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* ========== 开始界面 ========== */
@@ -77,14 +103,14 @@
         .start-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
         .start-title {
             font-size: 36px; font-weight: 800;
-            background: linear-gradient(135deg, var(--red-primary), var(--gold-accent));
+            background: linear-gradient(135deg, var(--color-red), var(--color-gold));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 8px;
             letter-spacing: 2px;
         }
         .start-subtitle {
-            font-size: 16px; color: var(--text-muted);
+            font-size: 16px; color: var(--color-text-muted);
             margin-bottom: 40px;
             letter-spacing: 4px;
         }
@@ -97,7 +123,7 @@
             text-align: center;
         }
         .start-controls .control-row {
-            font-size: 14px; color: var(--text-secondary);
+            font-size: 14px; color: var(--color-text-secondary);
             margin-bottom: 8px;
             line-height: 1.8;
         }
@@ -110,12 +136,12 @@
             border-radius: 4px;
             font-size: 12px;
             font-weight: 600;
-            color: var(--gold-light);
+            color: var(--color-gold-light);
             margin: 0 2px;
         }
         .start-btn {
             padding: 16px 60px;
-            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            background: linear-gradient(135deg, var(--color-red), var(--red-dark));
             border: none; border-radius: var(--radius-md);
             color: #fff; font-size: 18px; font-weight: 700;
             cursor: pointer;
@@ -160,7 +186,7 @@
             top: -1px; left: -10px;
         }
         .crosshair.active::before, .crosshair.active::after {
-            background: var(--gold-accent);
+            background: var(--color-gold);
         }
 
         /* ========== 物品名称标签（准星下方） ========== */
@@ -171,10 +197,10 @@
             transform: translateX(-50%);
             padding: 6px 16px;
             background: rgba(10,10,10,0.85);
-            border: 1px solid var(--gold-accent);
+            border: 1px solid var(--color-gold);
             border-radius: var(--radius-sm);
             font-size: 14px;
-            color: var(--gold-light);
+            color: var(--color-gold-light);
             pointer-events: none;
             z-index: 800;
             opacity: 0;
@@ -195,7 +221,7 @@
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 20px;
             font-size: 13px;
-            color: var(--text-secondary);
+            color: var(--color-text-secondary);
             pointer-events: none;
             z-index: 800;
             opacity: 0;
@@ -210,7 +236,7 @@
             border: 1px solid rgba(255,255,255,0.2);
             border-radius: 3px;
             font-weight: 600;
-            color: var(--gold-light);
+            color: var(--color-gold-light);
             margin: 0 3px;
         }
 
@@ -227,7 +253,7 @@
             border: 1px solid rgba(196,30,58,0.3);
             border-radius: var(--radius-md);
             font-size: 13px;
-            color: var(--text-secondary);
+            color: var(--color-text-secondary);
             line-height: 1.6;
             pointer-events: none;
             z-index: 800;
@@ -238,7 +264,7 @@
         .narration-bar.visible { opacity: 1; }
         .narration-bar .nar-label {
             font-size: 11px;
-            color: var(--red-primary);
+            color: var(--color-red);
             font-weight: 600;
             margin-bottom: 4px;
             letter-spacing: 1px;
@@ -272,7 +298,7 @@
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: var(--radius-sm);
             font-size: 12px;
-            color: var(--text-muted);
+            color: var(--color-text-muted);
             z-index: 800;
             pointer-events: none;
             display: none;
@@ -296,7 +322,7 @@
         .pause-title {
             font-size: 28px; font-weight: 700;
             margin-bottom: 32px;
-            color: var(--text-primary);
+            color: var(--color-text-primary);
         }
         .pause-btn {
             display: block;
@@ -306,15 +332,15 @@
             background: rgba(255,255,255,0.06);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: var(--radius-sm);
-            color: var(--text-primary);
+            color: var(--color-text-primary);
             font-size: 15px;
             cursor: pointer;
             text-align: center;
             transition: background 0.3s, border-color 0.3s;
         }
-        .pause-btn:hover { background: rgba(196,30,58,0.2); border-color: var(--red-primary); }
+        .pause-btn:hover { background: rgba(196,30,58,0.2); border-color: var(--color-red); }
         .pause-btn.primary {
-            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            background: linear-gradient(135deg, var(--color-red), var(--red-dark));
             border: none;
             font-weight: 600;
         }
@@ -326,7 +352,7 @@
             border: 1px solid rgba(255,255,255,0.06);
             border-radius: var(--radius-sm);
             font-size: 13px;
-            color: var(--text-muted);
+            color: var(--color-text-muted);
             line-height: 2;
             text-align: center;
         }
@@ -377,7 +403,7 @@
         .panel-section { margin-bottom: 20px; }
         .panel-section-title {
             font-size: 11px; font-weight: 600;
-            color: var(--red-primary);
+            color: var(--color-red);
             letter-spacing: 2px;
             text-transform: uppercase;
             margin-bottom: 8px;
@@ -385,11 +411,11 @@
         }
         .panel-section-title::before {
             content: ''; width: 12px; height: 2px;
-            background: var(--red-primary);
+            background: var(--color-red);
         }
         .panel-section p {
             font-size: 14px; line-height: 1.8;
-            color: var(--text-secondary);
+            color: var(--color-text-secondary);
         }
 
         .panel-tag {
@@ -399,7 +425,7 @@
             border: 1px solid rgba(196,30,58,0.3);
             border-radius: 20px;
             font-size: 12px;
-            color: var(--red-primary);
+            color: var(--color-red);
             margin-bottom: 16px;
         }
 
@@ -407,7 +433,7 @@
         .btn-speak {
             display: flex; align-items: center; gap: 8px;
             padding: 10px 20px;
-            background: linear-gradient(135deg, var(--red-primary), var(--red-dark));
+            background: linear-gradient(135deg, var(--color-red), var(--red-dark));
             border-radius: var(--radius-sm);
             color: #fff;
             font-size: 14px;
@@ -432,7 +458,7 @@
             flex-shrink: 0;
         }
         .panel-ai-title {
-            font-size: 12px; color: var(--text-muted);
+            font-size: 12px; color: var(--color-text-muted);
             margin-bottom: 10px;
             display: flex; align-items: center; gap: 6px;
         }
@@ -453,11 +479,11 @@
         }
         .ai-msg.bot {
             background: rgba(255,255,255,0.04);
-            color: var(--text-secondary);
+            color: var(--color-text-secondary);
         }
         .ai-msg.user {
             background: rgba(196,30,58,0.15);
-            color: var(--text-primary);
+            color: var(--color-text-primary);
             margin-left: auto;
             text-align: right;
         }
@@ -468,15 +494,15 @@
             background: rgba(255,255,255,0.06);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: var(--radius-sm);
-            color: var(--text-primary);
+            color: var(--color-text-primary);
             font-size: 13px;
             outline: none;
             transition: border-color 0.3s;
         }
-        .ai-input-row input:focus { border-color: var(--gold-accent); }
+        .ai-input-row input:focus { border-color: var(--color-gold); }
         .ai-input-row button {
             padding: 8px 16px;
-            background: var(--red-primary);
+            background: var(--color-red);
             border-radius: var(--radius-sm);
             color: #fff;
             font-size: 13px;
@@ -526,7 +552,7 @@
             width: 60px; height: 60px;
             border-radius: 50%;
             background: rgba(196,30,58,0.6);
-            border: 2px solid var(--red-primary);
+            border: 2px solid var(--color-red);
             color: #fff;
             font-size: 13px;
             font-weight: 600;
@@ -559,6 +585,15 @@
 </head>
 <body>
 
+<nav class="site-nav" aria-label="站点导航" style="position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,rgba(196,30,58,0.95),rgba(26,26,46,0.95));backdrop-filter:blur(10px);padding:0 20px;height:48px;display:flex;align-items:center;box-shadow:0 2px 20px rgba(0,0,0,0.3);">
+    <a href="index.html" style="color:var(--color-gold, #d4a853);font-size:15px;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:6px;font-family:var(--font-primary,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        返回首页
+    </a>
+    <span style="flex:1"></span>
+    <span style="color:rgba(255,255,255,0.5);font-size:12px;font-family:var(--font-primary,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif);">八路军太行纪念馆 | 3D虚拟展厅</span>
+</nav>
+
 <!-- ========== 加载界面 ========== -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="loader-ring"></div>
@@ -577,13 +612,18 @@
         <div class="start-desktop-controls">
             <div class="control-row"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> 移动 &nbsp;|&nbsp; 鼠标 环顾</div>
             <div class="control-row"><span class="key">E</span> 查看展品详情 &nbsp;|&nbsp; <span class="key">ESC</span> 暂停</div>
-            <div class="control-row" style="margin-top:8px;color:var(--text-muted);font-size:12px;">靠近展品自动触发语音讲解，靠近视频屏幕自动播放</div>
+            <div class="control-row" style="margin-top:8px;color:var(--color-text-muted);font-size:12px;">靠近展品自动触发语音讲解，靠近视频屏幕自动播放</div>
         </div>
         <div class="start-mobile-controls">
             <div class="control-row">左侧摇杆 移动 &nbsp;|&nbsp; 右侧摇杆 视角</div>
             <div class="control-row">点击按钮 查看展品详情</div>
-            <div class="control-row" style="margin-top:8px;color:var(--text-muted);font-size:12px;">靠近展品自动触发语音讲解</div>
+            <div class="control-row" style="margin-top:8px;color:var(--color-text-muted);font-size:12px;">靠近展品自动触发语音讲解</div>
         </div>
+    </div>
+    <div style="margin-bottom:20px;text-align:center;color:rgba(255,255,255,0.65);font-size:13px;line-height:2;">
+        <div>🖱️ 桌面端：鼠标移动控制视角，WASD移动，滚轮缩放</div>
+        <div>📱 移动端：左侧虚拟摇杆移动，右侧滑动控制视角</div>
+        <div>🔍 靠近展品后按 E 键或点击查看详情</div>
     </div>
     <button class="start-btn" id="startBtn">进入展览馆</button>
 </div>
@@ -594,12 +634,12 @@
     <button class="pause-btn primary" id="resumeBtn">继续漫游</button>
     <a href="index.html" class="pause-btn">返回主站</a>
     <div class="pause-controls-info">
-        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">W</span>
-        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">A</span>
-        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">S</span>
-        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">D</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c97a;">W</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c97a;">A</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c97a;">S</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c97a;">D</span>
         移动 &nbsp;|&nbsp; 鼠标 环顾 &nbsp;|&nbsp;
-        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c87a;">E</span>
+        <span class="key" style="display:inline-block;padding:1px 8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:12px;font-weight:600;color:#e8c97a;">E</span>
         交互
     </div>
 </div>
@@ -682,7 +722,7 @@
 </div>
 
 <!-- ========== 视频元素（隐藏，用于VideoTexture） ========== -->
-<video id="exhibitVideo" style="display:none;" loop muted playsinline preload="auto">
+<video id="exhibitVideo" style="display:none;" loop muted playsinline preload="none">
     <source src="media/exhibit1.mp4" type="video/mp4">
 </video>
 
@@ -807,7 +847,7 @@ function createTextTexture(text, width, height, fontSize, bgColor, textColor) {
     ctx.fillRect(0, 0, width, height);
 
     // 文字
-    ctx.fillStyle = textColor || '#e8c87a';
+    ctx.fillStyle = textColor || '#e8c97a';
     ctx.font = (fontSize || 32) + 'px "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -859,9 +899,20 @@ function init() {
     // 创建渲染器
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // ========== 性能自适应变量 ==========
+    const _perfMonitor = {
+        frameCount: 0,
+        lastTime: performance.now(),
+        fps: 60,
+        isDegraded: false,
+        checkInterval: 2000, // 每2秒检查一次
+        lastCheck: performance.now(),
+        pixelRatioCap: 1.5,
+        normalPixelRatio: Math.min(window.devicePixelRatio, 1.5)
+    };
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.0;
     document.getElementById('scene-container').appendChild(renderer.domElement);
@@ -1586,12 +1637,16 @@ function checkVideoPlayback() {
     const dist = playerPos.distanceTo(videoPos);
 
     if (dist < 3 && !videoIsPlaying && isPlaying) {
-        // 靠近屏幕，播放视频
+        // 靠近屏幕，播放视频（强制静音，不播放任何声音）
+        videoElement.muted = true;
+        videoElement.volume = 0;
         videoElement.play().then(() => {
+            videoElement.muted = true;
+            videoElement.volume = 0;
             videoIsPlaying = true;
         }).catch(() => {
-            // 自动播放可能被阻止，静音状态下重试
             videoElement.muted = true;
+            videoElement.volume = 0;
             videoElement.play().then(() => {
                 videoIsPlaying = true;
             }).catch(() => {});
@@ -2090,9 +2145,45 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+
+    // ========== 移动端性能提示 ==========
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        console.log('[移动端检测] 已限制像素比上限为1.5以优化性能');
+    }
+
 // ========== 渲染循环 ==========
 function animate() {
     requestAnimationFrame(animate);
+
+    // ========== FPS 监控与自适应降级 ==========
+    _perfMonitor.frameCount++;
+    const now = performance.now();
+    if (now - _perfMonitor.lastTime >= 1000) {
+        _perfMonitor.fps = _perfMonitor.frameCount;
+        _perfMonitor.frameCount = 0;
+        _perfMonitor.lastTime = now;
+    }
+    // 每2秒检查一次FPS并自适应调整
+    if (now - _perfMonitor.lastCheck >= _perfMonitor.checkInterval) {
+        _perfMonitor.lastCheck = now;
+        if (!_perfMonitor.isDegraded && _perfMonitor.fps < 25) {
+            // 降级：降低像素比，关闭PCFSoftShadowMap
+            _perfMonitor.isDegraded = true;
+            renderer.setPixelRatio(1.0);
+            if (renderer.shadowMap.enabled) {
+                renderer.shadowMap.type = THREE.BasicShadowMap;
+            }
+            console.warn('[性能监控] FPS过低(' + _perfMonitor.fps + ')，已自动降级渲染质量');
+        } else if (_perfMonitor.isDegraded && _perfMonitor.fps > 35) {
+            // 恢复：恢复像素比和阴影质量
+            _perfMonitor.isDegraded = false;
+            renderer.setPixelRatio(_perfMonitor.normalPixelRatio);
+            if (renderer.shadowMap.enabled) {
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            }
+            console.log('[性能监控] FPS已恢复(' + _perfMonitor.fps + ')，已恢复渲染质量');
+        }
+    }
 
     // 处理移动
     handleMovement();
