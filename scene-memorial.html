@@ -2415,106 +2415,24 @@ function createMarchingPot() {
     return group;
 }
 
-// 草鞋（3D模型——基于数十组真实照片高精度重建 v2）
+// 草鞋（3D模型——基于真实照片高精度重建 v3）
 function createStrawSandals() {
     const group = new THREE.Group();
 
-    // 颜色体系——基于真实照片（中央灰蓝/边缘灰白/包边浅褐/磨损深褐）
+    // 颜色体系——基于真实照片（中央灰蓝/边缘灰白/绳索米白/磨损深褐）
     const colors = [
-        0xe0dcd0,  // 0 米白（鞋面边缘主色）
-        0xd5d1c5,  // 1 浅灰白
-        0xc8c2b5,  // 2 灰白
-        0xb8b0a0,  // 3 浅灰褐（外圈包边）
-        0x9a9088,  // 4 灰褐（鞋底中层）
-        0x8a9a9e,  // 5 灰蓝色（中央凹陷区——脚踩处氧化染色，最关键！）
-        0x706050,  // 6 深褐（磨损、绳结）
-        0x5a5048,  // 7 深灰褐（鞋底底面）
+        0xf0ece4,  // 0 米白色（边缘绳索主色）
+        0xe5e0d6,  // 1 浅灰白（编织面）
+        0xd8d2c8,  // 2 灰白色
+        0xc8c2b5,  // 3 浅灰褐
+        0x7a8890,  // 4 灰蓝色（中央脚踩区氧化染色——最关键！）
+        0x8a95a0,  // 5 浅灰蓝（过渡区）
+        0x6a5a4a,  // 6 深褐（磨损、绳结）
+        0x5a5048,  // 7 深灰褐（老化）
     ];
 
-    // ===== 生成编织纹理贴图（程序化——基于真实稻草编织图案）=====
-    function createWeaveTexture() {
-        const canvas = document.createElement('canvas');
-        canvas.width = 512; canvas.height = 512;
-        const ctx = canvas.getContext('2d');
-        // 底色——白色（中性，让 color 属性正确 tint）
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, 512, 512);
-        // 编织纹理——交叉斜线模拟稻草编织（灰度，让 color 属性正确染色）
-        ctx.strokeStyle = 'rgba(180,180,180,0.35)';
-        ctx.lineWidth = 2;
-        for (let i = -512; i < 1024; i += 8) {
-            ctx.beginPath();
-            ctx.moveTo(i, 0); ctx.lineTo(i + 512, 512);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(i + 512, 0); ctx.lineTo(i, 512);
-            ctx.stroke();
-        }
-        // 横向编织线
-        ctx.strokeStyle = 'rgba(160,160,160,0.25)';
-        ctx.lineWidth = 1.5;
-        for (let i = 0; i < 512; i += 6) {
-            ctx.beginPath();
-            ctx.moveTo(0, i); ctx.lineTo(512, i);
-            ctx.stroke();
-        }
-        // 纵向编织线
-        for (let i = 0; i < 512; i += 6) {
-            ctx.beginPath();
-            ctx.moveTo(i, 0); ctx.lineTo(i, 512);
-            ctx.stroke();
-        }
-        // 噪点——模拟稻草粗糙感
-        const imgData = ctx.getImageData(0, 0, 512, 512);
-        for (let i = 0; i < imgData.data.length; i += 4) {
-            const noise = (Math.random() - 0.5) * 30;
-            imgData.data[i] = Math.max(0, Math.min(255, imgData.data[i] + noise));
-            imgData.data[i+1] = Math.max(0, Math.min(255, imgData.data[i+1] + noise));
-            imgData.data[i+2] = Math.max(0, Math.min(255, imgData.data[i+2] + noise));
-        }
-        ctx.putImageData(imgData, 0, 0);
-        // 边缘渐变暗化（模拟老化——灰度，让 color 属性正确染色）
-        const grad = ctx.createRadialGradient(256, 256, 100, 256, 256, 350);
-        grad.addColorStop(0, 'rgba(0,0,0,0)');
-        grad.addColorStop(1, 'rgba(40,40,40,0.25)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, 512, 512);
-        const tex = new THREE.CanvasTexture(canvas);
-        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-        tex.repeat.set(3, 3);
-        return tex;
-    }
-    const weaveTex = createWeaveTexture();
-    // 凹凸贴图——增强编织立体感
-    function createBumpTexture() {
-        const canvas = document.createElement('canvas');
-        canvas.width = 512; canvas.height = 512;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#808080';
-        ctx.fillRect(0, 0, 512, 512);
-        for (let i = 0; i < 512; i += 8) {
-            const v = Math.floor(128 + (Math.random() * 60));
-            ctx.strokeStyle = `rgb(${v},${v},${v})`;
-            ctx.lineWidth = 3;
-            ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + 512, 512); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(i + 512, 0); ctx.lineTo(i, 512); ctx.stroke();
-        }
-        for (let i = 0; i < 512; i += 6) {
-            const v = Math.floor(128 + (Math.random() * 40));
-            ctx.strokeStyle = `rgb(${v},${v},${v})`;
-            ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(512, i); ctx.stroke();
-        }
-        const tex = new THREE.CanvasTexture(canvas);
-        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-        tex.repeat.set(3, 3);
-        return tex;
-    }
-    const bumpTex = createBumpTexture();
-
-    const mats = colors.map(c => new THREE.MeshPhysicalMaterial({
-        color: c, roughness: 0.92, metalness: 0.0, flatShading: false,
-        map: weaveTex, bumpMap: bumpTex, bumpScale: 0.015,
+    const mats = colors.map(c => new THREE.MeshStandardMaterial({
+        color: c, roughness: 0.95, metalness: 0.0, flatShading: true,
         side: THREE.DoubleSide
     }));
 
@@ -2523,294 +2441,319 @@ function createStrawSandals() {
         const shoe = new THREE.Group();
         const side = isLeft ? 1 : -1;
 
-        // ========== 鞋底轮廓（基于真实照片——修长弧形）==========
+        // ========== 扁平鞋底轮廓（基于真实照片——修长椭圆，前端比后端窄）==========
         const soleShape = new THREE.Shape();
-        soleShape.moveTo(0.135, 0);
-        soleShape.bezierCurveTo(0.150, 0.028, 0.140, 0.050, 0.115, 0.055);
-        soleShape.bezierCurveTo(0.065, 0.062, 0.025, 0.063, -0.015, 0.061);
-        soleShape.bezierCurveTo(-0.055, 0.058, -0.095, 0.053, -0.120, 0.045);
-        soleShape.bezierCurveTo(-0.138, 0.038, -0.143, 0.022, -0.138, 0);
-        soleShape.bezierCurveTo(-0.143, -0.022, -0.138, -0.038, -0.120, -0.045);
-        soleShape.bezierCurveTo(-0.095, -0.053, -0.055, -0.058, -0.015, -0.061);
-        soleShape.bezierCurveTo(0.025, -0.063, 0.065, -0.062, 0.115, -0.055);
-        soleShape.bezierCurveTo(0.140, -0.050, 0.150, -0.028, 0.135, 0);
+        // 前端（圆头，略尖）
+        soleShape.moveTo(0.145, 0);
+        soleShape.bezierCurveTo(0.150, 0.025, 0.145, 0.045, 0.125, 0.050);
+        soleShape.bezierCurveTo(0.075, 0.056, 0.030, 0.058, -0.010, 0.057);
+        // 中部（最宽处）
+        soleShape.bezierCurveTo(-0.050, 0.055, -0.090, 0.050, -0.115, 0.042);
+        // 后端（圆弧，比前端稍窄）
+        soleShape.bezierCurveTo(-0.135, 0.032, -0.140, 0.018, -0.135, 0);
+        soleShape.bezierCurveTo(-0.140, -0.018, -0.135, -0.032, -0.115, -0.042);
+        soleShape.bezierCurveTo(-0.090, -0.050, -0.050, -0.055, -0.010, -0.057);
+        soleShape.bezierCurveTo(0.030, -0.058, 0.075, -0.056, 0.125, -0.050);
+        soleShape.bezierCurveTo(0.145, -0.045, 0.150, -0.025, 0.145, 0);
 
-        // 鞋底三层结构——真实草鞋非常厚实
-        // 底层（粗糙底面）
-        const bottomGeo = new THREE.ExtrudeGeometry(soleShape, {
-            depth: 0.010, bevelEnabled: false
+        // ========== 扁平单层鞋底（真实草鞋底很薄）==========
+        const soleGeo = new THREE.ExtrudeGeometry(soleShape, {
+            depth: 0.006, bevelEnabled: false
         });
-        const bottom = new THREE.Mesh(bottomGeo, mats[7]);
-        bottom.rotation.x = -Math.PI / 2;
-        bottom.position.y = 0.002;
-        shoe.add(bottom);
+        const sole = new THREE.Mesh(soleGeo, mats[2]);
+        sole.rotation.x = -Math.PI / 2;
+        sole.position.y = 0.001;
+        shoe.add(sole);
 
-        // 中层（主体）
-        const midGeo = new THREE.ExtrudeGeometry(soleShape, {
-            depth: 0.012, bevelEnabled: true,
-            bevelThickness: 0.003, bevelSize: 0.003, bevelSegments: 2
-        });
-        const mid = new THREE.Mesh(midGeo, mats[4]);
-        mid.rotation.x = -Math.PI / 2;
-        mid.position.y = 0.010;
-        shoe.add(mid);
-
-        // 顶层（包边层）
-        const topGeo = new THREE.ExtrudeGeometry(soleShape, {
-            depth: 0.008, bevelEnabled: true,
-            bevelThickness: 0.002, bevelSize: 0.002, bevelSegments: 2
-        });
-        const top = new THREE.Mesh(topGeo, mats[3]);
-        top.rotation.x = -Math.PI / 2;
-        top.position.y = 0.020;
-        shoe.add(top);
-
-        // ========== 外圈粗绳包边（沿鞋底边缘——非常突出）==========
-        const edgePoints = [];
-        for (let a = 0; a <= 40; a++) {
-            const angle = (a / 40) * Math.PI * 2;
+        // ========== 边缘粗绳索缠绕边框（一圈突出的大绳）==========
+        const edgePts = [];
+        for (let a = 0; a <= 60; a++) {
+            const t = a / 60;
+            const angle = t * Math.PI * 2;
             // 沿鞋底轮廓的参数方程
-            let x, z, r;
-            const t = angle / (Math.PI * 2);
+            let rx, rz;
             if (t < 0.25 || t > 0.75) {
-                // 前掌区
-                r = 0.060 + Math.cos(angle) * 0.005;
-                x = Math.sin(angle) * r + 0.02;
-                z = Math.cos(angle) * r * 1.1;
+                // 前掌区（较宽）
+                rx = 0.058 + Math.cos(angle) * 0.004;
+                rz = 0.063 + Math.cos(angle) * 0.002;
             } else {
-                // 后跟区
-                r = 0.048 + Math.cos(angle) * 0.003;
-                x = Math.sin(angle) * r - 0.01;
-                z = Math.cos(angle) * r * 1.05;
+                // 后跟区（较窄）
+                rx = 0.050 + Math.cos(angle) * 0.003;
+                rz = 0.055 + Math.cos(angle) * 0.002;
             }
-            edgePoints.push([x, z]);
+            const x = Math.sin(angle) * rx + 0.005;
+            const z = Math.cos(angle) * rz;
+            edgePts.push(new THREE.Vector3(x, 0.008, z));
         }
-        edgePoints.forEach((pt, i) => {
-            // 交替使用不同大小的球体模拟粗绳
-            const r = 0.006 + Math.random() * 0.003;
-            const bg = new THREE.SphereGeometry(r, 5, 4);
-            const bm = new THREE.Mesh(bg, (i % 4 === 0) ? mats[6] : mats[3]);
-            bm.position.set(pt[0], 0.028, pt[1]);
-            bm.scale.y = 0.6;
-            shoe.add(bm);
-        });
+        const edgeCurve = new THREE.CatmullRomCurve3(edgePts, true);
+        const edgeGeo = new THREE.TubeGeometry(edgeCurve, 80, 0.005, 6, true);
+        const edgeMesh = new THREE.Mesh(edgeGeo, mats[0]);
+        shoe.add(edgeMesh);
 
-        // ========== 鞋面中央大面积灰蓝色凹陷区（最关键特征！）==========
-        // 真实照片中，脚踩处是大面积灰蓝色，贯穿鞋长
+        // ========== 中央蓝灰色脚踩区（最关键特征！大面积灰蓝色）==========
         const centerShape = new THREE.Shape();
-        centerShape.moveTo(0.08, 0);
-        centerShape.bezierCurveTo(0.075, 0.025, 0.065, 0.035, 0.05, 0.038);
-        centerShape.bezierCurveTo(0.02, 0.040, -0.02, 0.040, -0.05, 0.038);
-        centerShape.bezierCurveTo(-0.065, 0.035, -0.075, 0.025, -0.08, 0);
-        centerShape.bezierCurveTo(-0.075, -0.025, -0.065, -0.035, -0.05, -0.038);
-        centerShape.bezierCurveTo(-0.02, -0.040, 0.02, -0.040, 0.05, -0.038);
-        centerShape.bezierCurveTo(0.065, -0.035, 0.075, -0.025, 0.08, 0);
-
+        centerShape.moveTo(0.10, 0);
+        centerShape.bezierCurveTo(0.095, 0.022, 0.085, 0.032, 0.065, 0.036);
+        centerShape.bezierCurveTo(0.030, 0.038, -0.010, 0.038, -0.045, 0.034);
+        centerShape.bezierCurveTo(-0.065, 0.030, -0.080, 0.022, -0.085, 0);
+        centerShape.bezierCurveTo(-0.080, -0.022, -0.065, -0.030, -0.045, -0.034);
+        centerShape.bezierCurveTo(-0.010, -0.038, 0.030, -0.038, 0.065, -0.036);
+        centerShape.bezierCurveTo(0.085, -0.032, 0.095, -0.022, 0.10, 0);
         const centerGeo = new THREE.ExtrudeGeometry(centerShape, {
-            depth: 0.003, bevelEnabled: true,
-            bevelThickness: 0.001, bevelSize: 0.001, bevelSegments: 1
+            depth: 0.002, bevelEnabled: false
         });
-        const centerPad = new THREE.Mesh(centerGeo, mats[5]);
+        const centerPad = new THREE.Mesh(centerGeo, mats[4]);
         centerPad.rotation.x = -Math.PI / 2;
-        centerPad.position.y = 0.022;
+        centerPad.position.y = 0.0075;
         shoe.add(centerPad);
 
-        // ========== 两侧隆起的编织边（从鞋头到鞋跟）==========
-        const sideCount = 20;
-        for (let i = 0; i < sideCount; i++) {
-            const t = i / (sideCount - 1);
-            const x = 0.10 - t * 0.22;
-            // 左侧编织边
-            for (let s = 0; s < 3; s++) {
-                const sg = new THREE.CylinderGeometry(0.004, 0.004, 0.012, 4);
-                const sm = new THREE.Mesh(sg, mats[s % 2 === 0 ? 1 : 2]);
-                sm.position.set(x, 0.025 + s * 0.003, 0.045 + s * 0.003);
-                sm.rotation.z = Math.PI / 2;
-                sm.rotation.y = 0.1;
-                shoe.add(sm);
-            }
-            // 右侧编织边
-            for (let s = 0; s < 3; s++) {
-                const sg = new THREE.CylinderGeometry(0.004, 0.004, 0.012, 4);
-                const sm = new THREE.Mesh(sg, mats[s % 2 === 0 ? 1 : 2]);
-                sm.position.set(x, 0.025 + s * 0.003, -0.045 - s * 0.003);
-                sm.rotation.z = Math.PI / 2;
-                sm.rotation.y = -0.1;
-                shoe.add(sm);
-            }
-        }
+        // 灰蓝色过渡区（边缘渐变）
+        const transShape = new THREE.Shape();
+        transShape.moveTo(0.115, 0);
+        transShape.bezierCurveTo(0.110, 0.028, 0.098, 0.038, 0.075, 0.042);
+        transShape.bezierCurveTo(0.035, 0.045, -0.015, 0.045, -0.055, 0.040);
+        transShape.bezierCurveTo(-0.078, 0.035, -0.093, 0.026, -0.098, 0);
+        transShape.bezierCurveTo(-0.093, -0.026, -0.078, -0.035, -0.055, -0.040);
+        transShape.bezierCurveTo(-0.015, -0.045, 0.035, -0.045, 0.075, -0.042);
+        transShape.bezierCurveTo(0.098, -0.038, 0.110, -0.028, 0.115, 0);
+        const transGeo = new THREE.ExtrudeGeometry(transShape, {
+            depth: 0.001, bevelEnabled: false
+        });
+        const transPad = new THREE.Mesh(transGeo, mats[5]);
+        transPad.rotation.x = -Math.PI / 2;
+        transPad.position.y = 0.0073;
+        shoe.add(transPad);
 
-        // ========== 横向编织草绳（鞋面主体——密集且不规则）==========
-        const crossCount = 22;
+        // ========== 鞋面横向编织草绳（密集交叉）==========
+        const crossCount = 28;
         for (let i = 0; i < crossCount; i++) {
             const t = i / (crossCount - 1);
-            const x = 0.11 - t * 0.25;
+            const x = 0.12 - t * 0.26;
 
-            let halfWidth;
-            if (t < 0.12) halfWidth = 0.038 + t * 0.10;
-            else if (t < 0.45) halfWidth = 0.050;
-            else if (t < 0.75) halfWidth = 0.050 - (t - 0.45) * 0.02;
-            else halfWidth = 0.044 - (t - 0.75) * 0.05;
+            let halfW;
+            if (t < 0.10) halfW = 0.042 + t * 0.12;
+            else if (t < 0.40) halfW = 0.054;
+            else if (t < 0.70) halfW = 0.054 - (t - 0.40) * 0.02;
+            else halfW = 0.048 - (t - 0.70) * 0.06;
 
-            // 鞋面高度——中间低（凹陷），两边高
-            const edgeY = 0.026 + Math.sin(t * Math.PI) * 0.004;
-            const centerY = 0.020 + Math.sin(t * Math.PI) * 0.002;
-
-            const segs = 6;
+            const segs = 8;
             for (let s = 0; s < segs; s++) {
                 const st = s / (segs - 1);
-                const z = (st - 0.5) * 2 * halfWidth * 0.80;
-                // 距离中心的远近决定高度
-                const distRatio = Math.abs(z) / halfWidth;
-                const y = centerY + (edgeY - centerY) * distRatio + (Math.random() - 0.5) * 0.002;
-                const segW = (halfWidth * 1.6) / segs;
+                const z = (st - 0.5) * 2 * halfW * 0.85;
+                const y = 0.008 + Math.abs(z) * 0.06 + (Math.random() - 0.5) * 0.001;
+                const segLen = (halfW * 1.7) / segs;
 
-                const ropeGeo = new THREE.CylinderGeometry(0.0025, 0.0025, segW * 1.0, 4);
-                // 根据位置选择颜色——中央用灰蓝色，边缘用灰白色
-                const matIndex = (Math.abs(z) < halfWidth * 0.4) ? 5 : (Math.floor(Math.random() * 2) + 1);
-                const rope = new THREE.Mesh(ropeGeo, mats[matIndex]);
+                const ropeGeo = new THREE.CylinderGeometry(0.002, 0.002, segLen, 3);
+                // 中央灰蓝色，边缘灰白色
+                const isCenter = Math.abs(z) < halfW * 0.35;
+                const matIdx = isCenter ? 4 : (Math.random() > 0.3 ? 0 : 1);
+                const rope = new THREE.Mesh(ropeGeo, mats[matIdx]);
                 rope.position.set(x, y, z);
                 rope.rotation.z = Math.PI / 2;
-                rope.rotation.y = (Math.random() - 0.5) * 0.15;
+                rope.rotation.y = (Math.random() - 0.5) * 0.2;
                 shoe.add(rope);
             }
         }
 
-        // ========== 纵向固定绳（贯穿鞋长）==========
-        for (let lane = -2; lane <= 2; lane++) {
-            const zBase = lane * 0.018;
-            const segs = 12;
+        // ========== 纵向固定绳（贯穿鞋长，把横向绳固定住）==========
+        for (let lane = -3; lane <= 3; lane++) {
+            const zBase = lane * 0.012;
+            const segs = 16;
             for (let s = 0; s < segs; s++) {
-                const x = 0.10 - s * 0.020;
-                const y = 0.022 + Math.random() * 0.003;
-                const z = zBase + (Math.random() - 0.5) * 0.006;
-                const longGeo = new THREE.CylinderGeometry(0.002, 0.002, 0.022, 4);
-                const longRope = new THREE.Mesh(longGeo, mats[Math.abs(lane) <= 1 ? 5 : 2]);
+                const x = 0.11 - s * 0.016;
+                const y = 0.008 + Math.random() * 0.002;
+                const z = zBase + (Math.random() - 0.5) * 0.004;
+                const longGeo = new THREE.CylinderGeometry(0.0015, 0.0015, 0.018, 3);
+                const isCenterLane = Math.abs(lane) <= 1;
+                const longRope = new THREE.Mesh(longGeo, mats[isCenterLane ? 4 : 1]);
                 longRope.position.set(x, y, z);
                 longRope.rotation.z = Math.PI / 2;
-                longRope.rotation.x = (Math.random() - 0.5) * 0.2;
+                longRope.rotation.x = (Math.random() - 0.5) * 0.15;
                 shoe.add(longRope);
             }
         }
 
-        // ========== 鞋头大绳结（非常粗糙，多根绳汇聚）==========
-        const toeX = 0.128;
-        // 中心大结——多个不规则球体堆叠
-        for (let k = 0; k < 8; k++) {
-            const r = 0.005 + Math.random() * 0.006;
-            const kg = new THREE.SphereGeometry(r, 5, 4);
-            const km = new THREE.Mesh(kg, mats[6]);
-            km.position.set(
-                toeX + (Math.random() - 0.5) * 0.020,
-                0.025 + Math.random() * 0.015,
-                (Math.random() - 0.5) * 0.030
-            );
-            km.scale.set(1 + Math.random() * 0.3, 0.6 + Math.random() * 0.2, 1 + Math.random() * 0.3);
+        // ========== 前端脚趾环（照片中清晰可见的U形环）==========
+        const toeRingCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(0.148, 0.012, -0.018),
+            new THREE.Vector3(0.155, 0.018, -0.010),
+            new THREE.Vector3(0.158, 0.020, 0.000),
+            new THREE.Vector3(0.155, 0.018, 0.010),
+            new THREE.Vector3(0.148, 0.012, 0.018),
+        ]);
+        const toeRingGeo = new THREE.TubeGeometry(toeRingCurve, 12, 0.004, 5, false);
+        const toeRing = new THREE.Mesh(toeRingGeo, mats[0]);
+        shoe.add(toeRing);
+        // 环内侧填充
+        for (let k = 0; k < 5; k++) {
+            const kg = new THREE.SphereGeometry(0.004 + Math.random() * 0.002, 4, 3);
+            const km = new THREE.Mesh(kg, mats[1]);
+            km.position.set(0.152 + Math.random() * 0.004, 0.016, (Math.random() - 0.5) * 0.012);
             shoe.add(km);
         }
-        // 鞋头散开的绳头
-        for (let f = 0; f < 5; f++) {
-            const len = 0.015 + Math.random() * 0.015;
-            const fg = new THREE.CylinderGeometry(0.0015, 0.0015, len, 4);
+
+        // ========== 上部固定带（从鞋面前部延伸到后部，类似鞋带）==========
+        // 左侧固定带
+        const strapCurveL = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(0.12, 0.015, 0.035),
+            new THREE.Vector3(0.08, 0.022, 0.042),
+            new THREE.Vector3(0.02, 0.025, 0.038),
+            new THREE.Vector3(-0.04, 0.022, 0.032),
+            new THREE.Vector3(-0.08, 0.015, 0.025),
+        ]);
+        const strapGeoL = new THREE.TubeGeometry(strapCurveL, 16, 0.003, 4, false);
+        const strapL = new THREE.Mesh(strapGeoL, mats[0]);
+        shoe.add(strapL);
+        // 右侧固定带
+        const strapCurveR = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(0.12, 0.015, -0.035),
+            new THREE.Vector3(0.08, 0.022, -0.042),
+            new THREE.Vector3(0.02, 0.025, -0.038),
+            new THREE.Vector3(-0.04, 0.022, -0.032),
+            new THREE.Vector3(-0.08, 0.015, -0.025),
+        ]);
+        const strapGeoR = new THREE.TubeGeometry(strapCurveR, 16, 0.003, 4, false);
+        const strapR = new THREE.Mesh(strapGeoR, mats[0]);
+        shoe.add(strapR);
+        // 固定带上的绳结
+        for (let kn = 0; kn < 6; kn++) {
+            const t = 0.15 + kn * 0.14;
+            const ptL = strapCurveL.getPoint(t);
+            const ptR = strapCurveR.getPoint(t);
+            for (let k = 0; k < 3; k++) {
+                const rg = new THREE.SphereGeometry(0.003 + Math.random() * 0.002, 4, 3);
+                const rm = new THREE.Mesh(rg, mats[6]);
+                rm.position.set(ptL.x + (Math.random()-0.5)*0.005, ptL.y+0.003, ptL.z + (Math.random()-0.5)*0.005);
+                shoe.add(rm);
+                const rg2 = new THREE.SphereGeometry(0.003 + Math.random() * 0.002, 4, 3);
+                const rm2 = new THREE.Mesh(rg2, mats[6]);
+                rm2.position.set(ptR.x + (Math.random()-0.5)*0.005, ptR.y+0.003, ptR.z + (Math.random()-0.5)*0.005);
+                shoe.add(rm2);
+            }
+        }
+
+        // ========== 鞋头绳结（多根绳汇聚的粗糙大结）==========
+        const toeX = 0.135;
+        for (let k = 0; k < 10; k++) {
+            const r = 0.004 + Math.random() * 0.005;
+            const kg = new THREE.SphereGeometry(r, 4, 3);
+            const km = new THREE.Mesh(kg, mats[6]);
+            km.position.set(
+                toeX + (Math.random() - 0.5) * 0.018,
+                0.012 + Math.random() * 0.012,
+                (Math.random() - 0.5) * 0.025
+            );
+            km.scale.set(1 + Math.random() * 0.4, 0.5 + Math.random() * 0.3, 1 + Math.random() * 0.4);
+            shoe.add(km);
+        }
+        // 鞋头散开的磨损绳头
+        for (let f = 0; f < 8; f++) {
+            const len = 0.012 + Math.random() * 0.012;
+            const fg = new THREE.CylinderGeometry(0.001, 0.001, len, 3);
             const fm = new THREE.Mesh(fg, mats[6]);
-            fm.position.set(toeX + 0.010, 0.018, -0.018 + f * 0.009);
-            fm.rotation.z = Math.PI / 2 + 0.3 + Math.random() * 0.4;
-            fm.rotation.y = (Math.random() - 0.5) * 0.5;
+            fm.position.set(toeX + 0.008, 0.008, -0.020 + f * 0.006);
+            fm.rotation.z = Math.PI / 2 + 0.2 + Math.random() * 0.5;
+            fm.rotation.y = (Math.random() - 0.5) * 0.6;
             shoe.add(fm);
         }
 
-        // ========== 鞋跟绳结与绳头 ==========
-        const heelX = -0.125;
-        for (let k = 0; k < 6; k++) {
-            const r = 0.004 + Math.random() * 0.005;
-            const kg = new THREE.SphereGeometry(r, 5, 4);
+        // ========== 鞋跟绳结与磨损 ==========
+        const heelX = -0.130;
+        for (let k = 0; k < 8; k++) {
+            const r = 0.003 + Math.random() * 0.004;
+            const kg = new THREE.SphereGeometry(r, 4, 3);
             const km = new THREE.Mesh(kg, mats[6]);
             km.position.set(
-                heelX + (Math.random() - 0.5) * 0.012,
-                0.022 + Math.random() * 0.010,
-                (Math.random() - 0.5) * 0.022
+                heelX + (Math.random() - 0.5) * 0.015,
+                0.010 + Math.random() * 0.008,
+                (Math.random() - 0.5) * 0.020
             );
             shoe.add(km);
         }
-        // 后跟纵向绳头
-        for (let h = 0; h < 4; h++) {
-            const len = 0.025 + Math.random() * 0.015;
-            const hg = new THREE.CylinderGeometry(0.0015, 0.0015, len, 4);
+        // 后跟磨损绳头
+        for (let h = 0; h < 6; h++) {
+            const len = 0.020 + Math.random() * 0.018;
+            const hg = new THREE.CylinderGeometry(0.001, 0.001, len, 3);
             const hm = new THREE.Mesh(hg, mats[6]);
-            hm.position.set(heelX - 0.015, 0.018, -0.012 + h * 0.008);
-            hm.rotation.z = Math.PI / 2 - 0.4 + Math.random() * 0.2;
+            hm.position.set(heelX - 0.012, 0.007, -0.015 + h * 0.006);
+            hm.rotation.z = Math.PI / 2 - 0.3 + Math.random() * 0.3;
             shoe.add(hm);
         }
 
-        // ========== 鞋耳（两侧穿绳环）==========
-        const earX = 0.00;
-        const earZ = 0.050 * side;
-        for (let e = 0; e < 4; e++) {
-            const ex = earX + (e - 1.5) * 0.010;
-            const ey = 0.030 + e * 0.003;
-            const ez = earZ + side * (e % 2 === 0 ? 0.005 : 0.003);
-            const eg = new THREE.SphereGeometry(0.004 + Math.random() * 0.002, 5, 4);
-            const em = new THREE.Mesh(eg, mats[3]);
-            em.position.set(ex, ey, ez);
-            shoe.add(em);
+        // ========== 边缘纤维磨损（松散外翻的纤维）==========
+        for (let f = 0; f < 40; f++) {
+            const t = Math.random();
+            const angle = t * Math.PI * 2;
+            let rx, rz;
+            if (t < 0.25 || t > 0.75) {
+                rx = 0.060; rz = 0.065;
+            } else {
+                rx = 0.052; rz = 0.057;
+            }
+            const x = Math.sin(angle) * rx + 0.005;
+            const z = Math.cos(angle) * rz;
+            const len = 0.008 + Math.random() * 0.015;
+            const fg = new THREE.CylinderGeometry(0.0008, 0.0006, len, 3);
+            const fm = new THREE.Mesh(fg, mats[Math.random() > 0.5 ? 1 : 0]);
+            fm.position.set(x, 0.006 + Math.random() * 0.004, z);
+            fm.rotation.z = Math.PI / 2 + (Math.random() - 0.5) * 0.8;
+            fm.rotation.y = angle + (Math.random() - 0.5) * 1.0;
+            shoe.add(fm);
         }
 
-        // ========== 磨损与斑驳细节 ==========
-        for (let w = 0; w < 18; w++) {
+        // ========== 表面磨损斑块 ==========
+        for (let w = 0; w < 25; w++) {
             const wg = new THREE.BoxGeometry(
-                0.006 + Math.random() * 0.012,
-                0.0015,
-                0.005 + Math.random() * 0.010
+                0.008 + Math.random() * 0.015,
+                0.001,
+                0.006 + Math.random() * 0.012
             );
-            const wm = new THREE.Mesh(wg, mats[Math.floor(Math.random() * 2) + 6]);
+            const wm = new THREE.Mesh(wg, mats[Math.random() > 0.5 ? 6 : 7]);
             wm.position.set(
-                0.08 - Math.random() * 0.22,
-                0.030 + Math.random() * 0.004,
-                (Math.random() - 0.5) * 0.07
+                0.09 - Math.random() * 0.24,
+                0.009 + Math.random() * 0.003,
+                (Math.random() - 0.5) * 0.08
             );
             wm.rotation.y = Math.random() * Math.PI;
             shoe.add(wm);
         }
 
-        // ========== 鞋底毛边细节（边缘随机小凸起）==========
-        for (let e = 0; e < 30; e++) {
-            const angle = Math.random() * Math.PI * 2;
-            const r = 0.055 + Math.random() * 0.008;
-            const eg = new THREE.SphereGeometry(0.002 + Math.random() * 0.003, 4, 3);
-            const em = new THREE.Mesh(eg, mats[7]);
-            em.position.set(
-                Math.sin(angle) * r + 0.01,
-                0.005 + Math.random() * 0.008,
-                Math.cos(angle) * r * 1.05
-            );
-            em.scale.y = 0.5 + Math.random() * 0.5;
-            shoe.add(em);
-        }
-
         return shoe;
     }
 
-    // 左脚（左侧）
+    // 左脚（左侧，磨损更多）
     const leftShoe = createSingleSandal(true);
-    leftShoe.position.set(-0.11, 0, 0);
-    leftShoe.rotation.y = 0.05;
+    leftShoe.position.set(-0.09, 0, 0);
+    leftShoe.rotation.y = 0.08;
+    // 左脚更多磨损
+    for (let e = 0; e < 15; e++) {
+        const eg = new THREE.SphereGeometry(0.003 + Math.random() * 0.004, 3, 2);
+        const em = new THREE.Mesh(eg, mats[7]);
+        em.position.set(
+            0.08 - Math.random() * 0.22,
+            0.008 + Math.random() * 0.005,
+            (Math.random() - 0.5) * 0.06
+        );
+        leftShoe.add(em);
+    }
     group.add(leftShoe);
 
-    // 右脚（右侧）
+    // 右脚（右侧，磨损较少）
     const rightShoe = createSingleSandal(false);
-    rightShoe.position.set(0.11, 0, 0.012);
-    rightShoe.rotation.y = -0.03;
+    rightShoe.position.set(0.09, 0, 0.015);
+    rightShoe.rotation.y = -0.05;
+    // 右脚较少磨损
+    for (let e = 0; e < 6; e++) {
+        const eg = new THREE.SphereGeometry(0.002 + Math.random() * 0.003, 3, 2);
+        const em = new THREE.Mesh(eg, mats[6]);
+        em.position.set(
+            0.08 - Math.random() * 0.22,
+            0.008 + Math.random() * 0.005,
+            (Math.random() - 0.5) * 0.06
+        );
+        rightShoe.add(em);
+    }
     group.add(rightShoe);
-
-    // 连接绳（照片中两只鞋之间有细绳相连——微微下垂）
-    const connectCurve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(-0.11, 0.012, 0.032),
-        new THREE.Vector3(0.00, 0.004, 0.042),
-        new THREE.Vector3(0.11, 0.012, 0.032)
-    ]);
-    const connectGeo = new THREE.TubeGeometry(connectCurve, 8, 0.0015, 4, false);
-    const connect = new THREE.Mesh(connectGeo, mats[6]);
-    group.add(connect);
 
     group.userData = { itemName: '叶成焕的草鞋' };
     return group;
