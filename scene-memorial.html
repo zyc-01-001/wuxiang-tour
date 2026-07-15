@@ -1720,20 +1720,18 @@ function createPhotoGalleryWall(wallZ) {
 
     const textureLoader = new THREE.TextureLoader();
 
-    // 12张展板配置：[图片路径, 宽度, 高度, x位置, y位置]
+    // 10张展板配置：[图片路径, 宽度, 高度, x位置, y位置]
     const photos = [
-        {url: 'images/panels/panel_taihang.jpg', w: 1.45, h: 0.9, x: -2.55, y: 2.55},
-        {url: 'images/panels/panel_meeting.jpg', w: 1.05, h: 0.7, x: -0.55, y: 2.95},
-        {url: 'images/panels/panel_baituan.jpg', w: 1.25, h: 0.8, x: 1.05, y: 2.35},
-        {url: 'images/panels/panel_map.jpg', w: 0.9, h: 0.6, x: 2.65, y: 2.75},
-        {url: 'images/panels/panel_huangya.jpg', w: 1.15, h: 0.72, x: -2.05, y: 1.4},
-        {url: 'images/panels/panel_party.jpg', w: 0.95, h: 0.6, x: 0.15, y: 1.5},
-        {url: 'images/panels/panel_changle.jpg', w: 0.9, h: 0.6, x: 1.65, y: 1.4},
-        {url: 'images/panels/panel_spirit.jpg', w: 1.05, h: 0.65, x: 2.85, y: 1.5},
-        {url: 'images/panels/panel_pingxing.jpg', w: 1.0, h: 0.65, x: -2.9, y: 0.55},
-        {url: 'images/panels/panel_zuoquan.jpg', w: 0.85, h: 0.55, x: -1.15, y: 0.6},
-        {url: 'images/panels/panel_guerrilla.jpg', w: 0.9, h: 0.6, x: 0.45, y: 0.55},
-        {url: 'images/panels/panel_support.jpg', w: 1.0, h: 0.65, x: 1.95, y: 0.6},
+        {url: 'images/panels/panel_meeting.jpg', w: 1.05, h: 0.7, x: -2.55, y: 2.95},
+        {url: 'images/panels/panel_baituan.jpg', w: 1.25, h: 0.8, x: -0.55, y: 2.55},
+        {url: 'images/panels/panel_map.jpg', w: 0.9, h: 0.6, x: 1.15, y: 2.75},
+        {url: 'images/panels/panel_huangya.jpg', w: 1.15, h: 0.72, x: 2.45, y: 2.35},
+        {url: 'images/panels/panel_party.jpg', w: 0.95, h: 0.6, x: -2.05, y: 1.4},
+        {url: 'images/panels/panel_changle.jpg', w: 0.9, h: 0.6, x: -0.15, y: 1.5},
+        {url: 'images/panels/panel_pingxing.jpg', w: 1.0, h: 0.65, x: 1.55, y: 1.4},
+        {url: 'images/panels/panel_zuoquan.jpg', w: 0.85, h: 0.55, x: -2.9, y: 0.55},
+        {url: 'images/panels/panel_guerrilla.jpg', w: 0.9, h: 0.6, x: -1.15, y: 0.6},
+        {url: 'images/panels/panel_support.jpg', w: 1.0, h: 0.65, x: 0.45, y: 0.55},
     ];
 
     photos.forEach((photo) => {
