@@ -823,6 +823,7 @@ let isPlaying = false;
 let isPaused = false;
 let isPanelOpen = false;
 
+let _perfMonitor = null;
 let autoNarrating = false;
 let autoNarrateItem = null;
 
@@ -1124,12 +1125,12 @@ function init() {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     // ========== 性能自适应变量 ==========
-    const _perfMonitor = {
+    _perfMonitor = {
         frameCount: 0,
         lastTime: performance.now(),
         fps: 60,
         isDegraded: false,
-        checkInterval: 2000, // 每2秒检查一次
+        checkInterval: 2000,
         lastCheck: performance.now(),
         pixelRatioCap: 1.5,
         normalPixelRatio: Math.min(window.devicePixelRatio, 1.5)
