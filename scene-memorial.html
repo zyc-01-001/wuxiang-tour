@@ -1106,9 +1106,9 @@ function init() {
     updateLoading(10);
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1a0a0a);
+    scene.background = new THREE.Color(0x2a1a1a);
     // 精品展厅雾效更浓（空间小）
-    scene.fog = new THREE.FogExp2(0x1a0a0a, 0.04);
+    scene.fog = new THREE.FogExp2(0x2a1a1a, 0.025);
 
     updateLoading(20);
 
@@ -1278,11 +1278,11 @@ function onKeyUp(event) {
 // ========== 灯光系统（优化为精品展厅小空间） ==========
 function createLights() {
     // 环境光
-    const ambientLight = new THREE.AmbientLight(0xfff5e6, 0.2);
+    const ambientLight = new THREE.AmbientLight(0xfff5e6, 0.5);
     scene.add(ambientLight);
 
     // 半球光
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x3c1a1a, 0.35);
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x3c1a1a, 0.6);
     scene.add(hemiLight);
 
     // 天花板筒灯（减少数量，适应小空间）
