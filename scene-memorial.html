@@ -1696,11 +1696,15 @@ function createWallDecorations() {
         sconce.position.set(p.x, 0, p.z);
         if (p.x > 0) sconce.rotation.y = Math.PI;
         scene.add(sconce);
-        const spotLight = new THREE.SpotLight(0xffeedd, 0.6, 1.5, Math.PI / 4, 0.5, 1);
+        const spotLight = new THREE.SpotLight(0xffeedd, 1.5, 2.5, Math.PI / 4, 0.5, 1);
         spotLight.position.set(p.x, 2.6, p.z + (p.x > 0 ? -0.3 : 0.3));
         spotLight.target.position.set(p.x, 1.2, p.z + (p.x > 0 ? -1.0 : 1.0));
         scene.add(spotLight);
         scene.add(spotLight.target);
+        // 补充点光源——直接照亮展品
+        const fillLight = new THREE.PointLight(0xfff0dd, 0.8, 3, 2);
+        fillLight.position.set(p.x, 2.0, p.z);
+        scene.add(fillLight);
     });
 }
 
@@ -2429,8 +2433,91 @@ function createStrawSandals() {
         0x5a5048,  // 7 深灰褐（鞋底底面）
     ];
 
+    // ===== 生成编织纹理贴图（程序化——基于真实稻草编织图案）=====
+    function createWeaveTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512; canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        // 底色——白色（中性，让 color 属性正确 tint）
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 512, 512);
+        // 编织纹理——交叉斜线模拟稻草编织（灰度，让 color 属性正确染色）
+        ctx.strokeStyle = 'rgba(180,180,180,0.35)';
+        ctx.lineWidth = 2;
+        for (let i = -512; i < 1024; i += 8) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0); ctx.lineTo(i + 512, 512);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(i + 512, 0); ctx.lineTo(i, 512);
+            ctx.stroke();
+        }
+        // 横向编织线
+        ctx.strokeStyle = 'rgba(160,160,160,0.25)';
+        ctx.lineWidth = 1.5;
+        for (let i = 0; i < 512; i += 6) {
+            ctx.beginPath();
+            ctx.moveTo(0, i); ctx.lineTo(512, i);
+            ctx.stroke();
+        }
+        // 纵向编织线
+        for (let i = 0; i < 512; i += 6) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0); ctx.lineTo(i, 512);
+            ctx.stroke();
+        }
+        // 噪点——模拟稻草粗糙感
+        const imgData = ctx.getImageData(0, 0, 512, 512);
+        for (let i = 0; i < imgData.data.length; i += 4) {
+            const noise = (Math.random() - 0.5) * 30;
+            imgData.data[i] = Math.max(0, Math.min(255, imgData.data[i] + noise));
+            imgData.data[i+1] = Math.max(0, Math.min(255, imgData.data[i+1] + noise));
+            imgData.data[i+2] = Math.max(0, Math.min(255, imgData.data[i+2] + noise));
+        }
+        ctx.putImageData(imgData, 0, 0);
+        // 边缘渐变暗化（模拟老化——灰度，让 color 属性正确染色）
+        const grad = ctx.createRadialGradient(256, 256, 100, 256, 256, 350);
+        grad.addColorStop(0, 'rgba(0,0,0,0)');
+        grad.addColorStop(1, 'rgba(40,40,40,0.25)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 512, 512);
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(3, 3);
+        return tex;
+    }
+    const weaveTex = createWeaveTexture();
+    // 凹凸贴图——增强编织立体感
+    function createBumpTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512; canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#808080';
+        ctx.fillRect(0, 0, 512, 512);
+        for (let i = 0; i < 512; i += 8) {
+            const v = Math.floor(128 + (Math.random() * 60));
+            ctx.strokeStyle = `rgb(${v},${v},${v})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + 512, 512); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(i + 512, 0); ctx.lineTo(i, 512); ctx.stroke();
+        }
+        for (let i = 0; i < 512; i += 6) {
+            const v = Math.floor(128 + (Math.random() * 40));
+            ctx.strokeStyle = `rgb(${v},${v},${v})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(512, i); ctx.stroke();
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(3, 3);
+        return tex;
+    }
+    const bumpTex = createBumpTexture();
+
     const mats = colors.map(c => new THREE.MeshPhysicalMaterial({
-        color: c, roughness: 0.95, metalness: 0.0, flatShading: true
+        color: c, roughness: 0.92, metalness: 0.0, flatShading: false,
+        map: weaveTex, bumpMap: bumpTex, bumpScale: 0.015,
+        side: THREE.DoubleSide
     }));
 
     // 创建单只草鞋
