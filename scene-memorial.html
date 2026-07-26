@@ -2427,7 +2427,7 @@ function createStrawSandals() {
         loader.setMeshoptDecoder(MeshoptDecoder);
     }
     loader.load(
-        'models/sandal_meshy.glb?v=2',
+        'models/sandal_meshy.glb?v=3',
         function (gltf) {
             const model = gltf.scene;
             // 计算模型包围盒以确定正确的缩放
@@ -2448,7 +2448,7 @@ function createStrawSandals() {
             model.rotation.y = 0;
             model.rotation.z = 0;
 
-            // 遍历设置阴影、计算法线、应用材质
+            // 遍历设置阴影、计算法线、应用统一黑色材质
             model.traverse(function (child) {
                 if (child.isMesh) {
                     child.castShadow = true;
@@ -2457,18 +2457,36 @@ function createStrawSandals() {
                     if (child.geometry && !child.geometry.attributes.normal) {
                         child.geometry.computeVertexNormals();
                     }
-                    // 模型没有材质，应用草鞋材质
-                    if (!child.material || child.material.isMeshBasicMaterial) {
-                        child.material = new THREE.MeshStandardMaterial({
-                            color: 0x9a8b7a,      // 草绳灰褐色
-                            roughness: 0.92,
-                            metalness: 0.0,
-                            flatShading: false
-                        });
-                    }
+                    // 统一黑色草绳材质——增强编织立体感与褶皱阴影
+                    child.material = new THREE.MeshPhysicalMaterial({
+                        color: 0x1a1a1a,          // 统一深黑色调
+                        roughness: 0.78,           // 略低粗糙度，增加褶皱高光对比
+                        metalness: 0.0,
+                        clearcoat: 0.15,           // 轻微清漆层，强化绳索表面质感
+                        clearcoatRoughness: 0.6,
+                        flatShading: true,         // 平面着色：凸显每条绳索编织面的几何层次
+                        envMapIntensity: 0.8
+                    });
                 }
             });
             group.add(model);
+
+            // 草鞋专用顶部射灯——居中照射两只草鞋，消除左右明暗差异
+            const sandalSpot = new THREE.SpotLight(0xfff5e6, 3.0, 3.0, Math.PI / 5, 0.3, 1.5);
+            sandalSpot.position.set(0, 0.6, 0);
+            sandalSpot.target.position.set(0, 0, 0);
+            sandalSpot.castShadow = true;
+            sandalSpot.shadow.mapSize.width = 2048;
+            sandalSpot.shadow.mapSize.height = 2048;
+            sandalSpot.shadow.bias = -0.0002;
+            sandalSpot.shadow.normalBias = 0.02;
+            group.add(sandalSpot);
+            group.add(sandalSpot.target);
+
+            // 补光：从前方低角度填充阴影，均匀照亮两只草鞋
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
+            fillLight.position.set(0, 0.3, 0.3);
+            group.add(fillLight);
         },
         function (xhr) {
             console.log('草鞋模型加载: ' + (xhr.loaded / xhr.total * 100) + '%');
@@ -2478,7 +2496,7 @@ function createStrawSandals() {
             // 备用：简单方块占位
             const fallback = new THREE.Mesh(
                 new THREE.BoxGeometry(0.2, 0.05, 0.08),
-                new THREE.MeshStandardMaterial({ color: 0x8a95a0, roughness: 0.9 })
+                new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.85 })
             );
             group.add(fallback);
         }
