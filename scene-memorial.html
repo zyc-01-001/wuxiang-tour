@@ -2443,9 +2443,10 @@ function createStrawSandals() {
             const center = box.getCenter(new THREE.Vector3()).multiplyScalar(scale);
             model.position.sub(center);
 
-            // 放平：绕X轴旋转-90度
-            model.rotation.x = -Math.PI / 2;
-            model.rotation.z = 0.1;
+            // 模型天然平放（Y轴最薄），正面朝上，无需旋转
+            model.rotation.x = 0;
+            model.rotation.y = 0;
+            model.rotation.z = 0;
 
             // 遍历设置阴影、计算法线、应用材质
             model.traverse(function (child) {
