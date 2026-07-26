@@ -726,6 +726,7 @@
 <script src="js/three.min.js"></script>
 <script src="js/PointerLockControls.js"></script>
 <script src="js/GLTFLoader.js"></script>
+<script src="js/MeshoptDecoder.js"></script>
 
 <script>
 // ========== 展品数据（精简为精品展厅核心展品） ==========
@@ -2416,27 +2417,54 @@ function createMarchingPot() {
     return group;
 }
 
-// 草鞋（高精度GLB模型——Blender生成）
+// 草鞋（高精度GLB模型——Meshy AI生成）
 function createStrawSandals() {
     const group = new THREE.Group();
 
-    // 加载GLB模型
+    // 加载GLB模型（使用MeshoptDecoder处理压缩缓冲区）
     const loader = new THREE.GLTFLoader();
+    if (typeof MeshoptDecoder !== 'undefined') {
+        loader.setMeshoptDecoder(MeshoptDecoder);
+    }
     loader.load(
-        'models/sandal.glb',
+        'models/sandal_meshy.glb',
         function (gltf) {
             const model = gltf.scene;
-            // 缩放和定位
-            model.scale.set(2.5, 2.5, 2.5);
-            model.position.set(0, 0, 0);
-            // 放平：绕X轴旋转-90度，再加一点Y轴旋转
+            // 计算模型包围盒以确定正确的缩放
+            const box = new THREE.Box3().setFromObject(model);
+            const size = box.getSize(new THREE.Vector3());
+            const maxSize = Math.max(size.x, size.y, size.z);
+            // 目标长度约0.3单位
+            const targetSize = 0.3;
+            const scale = targetSize / maxSize;
+            model.scale.set(scale, scale, scale);
+
+            // 居中模型
+            const center = box.getCenter(new THREE.Vector3()).multiplyScalar(scale);
+            model.position.sub(center);
+
+            // 放平：绕X轴旋转-90度
             model.rotation.x = -Math.PI / 2;
             model.rotation.z = 0.1;
-            // 遍历设置阴影
+
+            // 遍历设置阴影、计算法线、应用材质
             model.traverse(function (child) {
                 if (child.isMesh) {
                     child.castShadow = true;
                     child.receiveShadow = true;
+                    // 模型没有法线数据，自动计算
+                    if (child.geometry && !child.geometry.attributes.normal) {
+                        child.geometry.computeVertexNormals();
+                    }
+                    // 模型没有材质，应用草鞋材质
+                    if (!child.material || child.material.isMeshBasicMaterial) {
+                        child.material = new THREE.MeshStandardMaterial({
+                            color: 0x9a8b7a,      // 草绳灰褐色
+                            roughness: 0.92,
+                            metalness: 0.0,
+                            flatShading: false
+                        });
+                    }
                 }
             });
             group.add(model);
