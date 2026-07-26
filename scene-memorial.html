@@ -2429,7 +2429,9 @@ function createStrawSandals() {
             // 缩放和定位
             model.scale.set(2.5, 2.5, 2.5);
             model.position.set(0, 0, 0);
-            model.rotation.y = 0.1;
+            // 放平：绕X轴旋转-90度，再加一点Y轴旋转
+            model.rotation.x = -Math.PI / 2;
+            model.rotation.z = 0.1;
             // 遍历设置阴影
             model.traverse(function (child) {
                 if (child.isMesh) {
