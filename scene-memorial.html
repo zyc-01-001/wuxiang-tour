@@ -878,14 +878,6 @@ const itemsData = [
         spirit: '一双草鞋，承载着24岁铁血战将的赤诚与担当，"队伍呢"三个字重若千钧，是八路军将领舍生忘死的真实写照。'
     },
     {
-        name: '胡春花的小木勺',
-        emoji: '\uD83E\uDEA9',
-        type: '革命文物',
-        appearance: '一把手工制作的小木勺，勺柄有使用痕迹，木纹清晰可见，边缘已被磨得圆润光滑。看似普通，却承载着深厚的军民情谊。',
-        history: '胡春花是武乡县著名的拥军模范。抗战时期，她带领妇女们日夜操劳，为八路军伤员喂饭、换药、缝补衣物。这把小木勺就是她亲手制作，用来给伤员喂饭的工具。在艰苦的战争年代，武乡县12.5万人口中，有9万多人参加了抗日人民自卫队和各个抗日群众团体，"母亲叫儿打东洋，妻子送郎上战场"的动人事迹层出不穷。胡春花们用一把木勺、一件棉衣、一碗热饭，温暖了战士们的心，也铸就了坚不可摧的军民鱼水情。',
-        spirit: '一把木勺，述说军民鱼水情深。人民群众是八路军最坚强的后盾，军民同心是抗战胜利的根本保证。'
-    },
-    {
         name: '八路军拉发式迫击炮',
         emoji: '\uD83D\uDCA3',
         type: '国家一级文物',
@@ -918,12 +910,12 @@ const itemsData = [
         spirit: '以笔为枪，以铅字为弹。新闻战士用生命守护党的宣传阵地，让抗日的声音传遍太行山。'
     },
     {
-        name: '八路军臂章',
-        emoji: '\uD83C\uDF96',
-        type: '革命文物',
-        appearance: '蓝底白字的"八路"臂章，长方形，布料已泛黄，边缘有磨损痕迹。这是八路军将士佩戴在左臂上的标志，象征着改编后的新身份和抗日救国的坚定信念。',
-        history: '1937年8月，中国工农红军改编为国民革命军第八路军，后改称第十八集团军，但"八路军"的称呼深入人心。臂章上的"八路"二字，代表着4.6万红军将士开赴抗日前线的豪情壮志。到抗战结束时，八路军已发展到102万余人，成为一支威武雄壮的胜利之师。这枚小小的臂章，见证了中国共产党领导的人民军队从弱到强、从胜利走向胜利的光辉历程。',
-        spirit: '从4.6万到102万，一枚臂章见证了人民军队的成长壮大，见证了中华民族从危亡走向复兴。'
+        name: '八路军东渡黄河使用的铁船',
+        emoji: '\u26F4',
+        type: '珍贵革命文物',
+        appearance: '一艘小型铁制渡船，采用铆接钢板结构，平底尖首设计。船体表面覆盖深褐色铁锈氧化层，铆钉呈规律性排列，船舷较高，舷缘有外翻加强结构。船首呈楔形破浪造型，船体外侧设有多组金属系缆环，内部可见横向隔板将船舱分隔为若干区段。',
+        history: '1937年8月至9月，八路军主力部队从陕西韩城芝川镇东渡黄河，开赴华北抗日前线。这艘铁船就是当年渡河时使用的船只之一。朱德、任弼时、左权、邓小平率部分批渡河，4.6万红军将士告别陕北，踏上抗日征程。黄河水流湍急，渡河过程充满艰险，将士们冒着敌机轰炸和黄河天险，以钢铁般的意志完成了这一壮举。此后，这艘铁船见证了八路军在太行山区艰苦卓绝的抗战历程。',
+        spirit: '一艘铁船，承载着4.6万将士东渡黄河、奔赴国难的壮志豪情，见证了中华民族不屈不挠的抗争精神。'
     }
 ];
 
@@ -942,20 +934,8 @@ const storyNodes = [
         arriveHint: '请跟随地面光带，前往展厅内的第一个故事节点。'
     },
     {
-        year: '1937.8',
-        chapter: '第一章 · 臂章',
-        position: { x: 1.5, z: 0.5 },
-        exhibitName: '八路军臂章',
-        narrative: [
-            '你站在队伍前列，左臂上的臂章在风中微微飘动。',
-            '“别小看这枚臂章，”身旁的老班长拍了拍你的肩膀，“它代表着咱们从井冈山一路走来的血与火，代表着四万六千人开赴前线的决心！”',
-            '你握紧拳头，目光坚定地望向东方——那里有沦陷的国土，有等待解放的同胞。从4.6万到102万，这枚小小的臂章，将见证一支人民军队的成长壮大。'
-        ],
-        arriveHint: '向右前方走，找到“八路军臂章”展台。'
-    },
-    {
         year: '1938.4',
-        chapter: '第二章 · 草鞋',
+        chapter: '第一章 · 草鞋',
         position: { x: -1.5, z: -0.5 },
         exhibitName: '叶成焕的草鞋',
         narrative: [
@@ -967,7 +947,7 @@ const storyNodes = [
     },
     {
         year: '1938.6',
-        chapter: '第三章 · 打字机',
+        chapter: '第二章 · 印刷机',
         position: { x: 1.5, z: -1.5 },
         exhibitName: '何克的打字机',
         narrative: [
@@ -978,20 +958,8 @@ const storyNodes = [
         arriveHint: '向右后方走，找到“何克的打字机”展台。'
     },
     {
-        year: '1939',
-        chapter: '第四章 · 木勺',
-        position: { x: -1.5, z: 0.5 },
-        exhibitName: '胡春花的小木勺',
-        narrative: [
-            '伤员转运站里，一位妇女正用一把小木勺，小心翼翼地给伤员喂饭。',
-            '她叫胡春花，武乡县著名的拥军模范。你看着她满是老茧的手，一勺一勺地把稀粥送进伤员干裂的嘴唇。',
-            '在武乡，12.5万人口中有9万多人参加了抗日团体。“母亲叫儿打东洋，妻子送郎上战场。”一把木勺、一件棉衣、一碗热饭，温暖了战士们的心，也铸就了坚不可摧的军民鱼水情。'
-        ],
-        arriveHint: '向左前方走，找到“胡春花的小木勺”展台。'
-    },
-    {
         year: '1940.8',
-        chapter: '第五章 · 神炮',
+        chapter: '第三章 · 神炮',
         position: { x: 1.5, z: 1.5 },
         exhibitName: '八路军拉发式迫击炮',
         narrative: [
@@ -1003,7 +971,7 @@ const storyNodes = [
     },
     {
         year: '1941.11',
-        chapter: '第六章 · 军号',
+        chapter: '第四章 · 军号',
         position: { x: -1.5, z: 1.5 },
         exhibitName: '崔振芳的军号',
         narrative: [
@@ -1773,13 +1741,14 @@ function createExhibitionHall() {
     // 左列
     createMainDisplay(-1.5, -1.5, '行军锅', ()=>createMarchingPot());
     createMainDisplay(-1.5, -0.5, '叶成焕的草鞋', ()=>createStrawSandals());
-    createMainDisplay(-1.5,  0.5, '胡春花的小木勺', ()=>createWoodenSpoon());
     createMainDisplay(-1.5,  1.5, '崔振芳的军号', ()=>createBugle());
     // 右列
     createMainDisplay(1.5, -1.5, '何克的打字机', ()=>createTypewriter());
     createMainDisplay(1.5, -0.5, '《新华日报》铸字机', ()=>createPrintingPress());
-    createMainDisplay(1.5,  0.5, '八路军臂章', ()=>createArmband());
     createMainDisplay(1.5,  1.5, '八路军拉发式迫击炮', ()=>createMortar());
+
+    // ========== 后方大型展品：八路军东渡黄河铁船（地面独立展位） ==========
+    createIronBoatDisplay();
 
     // ========== 前墙：八路军太行纪念馆照片墙 ==========
     createPhotoGalleryWall(-roomW/2 + 0.15);
@@ -2688,50 +2657,6 @@ function createStrawSandals() {
     return group;
 }
 
-// 小木勺（3D模型+木纹材质）
-function createWoodenSpoon() {
-    const group = new THREE.Group();
-
-    // 木纹材质
-    const woodMat = new THREE.MeshPhysicalMaterial({
-        color: 0x8b6914,
-        roughness: 0.75,
-        metalness: 0.05
-    });
-    const darkWoodMat = new THREE.MeshPhysicalMaterial({
-        color: 0x7a5a18,
-        roughness: 0.8,
-        metalness: 0.05
-    });
-
-    // 勺柄（细长圆柱）
-    const handleGeo = new THREE.CylinderGeometry(0.012, 0.015, 0.22, 8);
-    const handle = new THREE.Mesh(handleGeo, woodMat);
-    handle.rotation.z = Math.PI / 2;
-    handle.position.set(-0.1, 0.01, 0);
-    handle.castShadow = false; // 性能优化：关闭小物体阴影
-    group.add(handle);
-
-    // 勺头（扁球体）
-    const bowlGeo = new THREE.SphereGeometry(0.055, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2);
-    const bowl = new THREE.Mesh(bowlGeo, darkWoodMat);
-    bowl.scale.set(1, 0.6, 0.8);
-    bowl.rotation.x = Math.PI;
-    bowl.position.set(0.04, 0.015, 0);
-    bowl.castShadow = false; // 性能优化：关闭小物体阴影
-    group.add(bowl);
-
-    // 勺头边缘
-    const rimGeo = new THREE.TorusGeometry(0.055, 0.005, 8, 16);
-    const rim = new THREE.Mesh(rimGeo, woodMat);
-    rim.rotation.x = Math.PI / 2;
-    rim.position.set(0.04, 0.02, 0);
-    group.add(rim);
-
-    group.userData = { itemName: '胡春花的小木勺' };
-    return group;
-}
-
 // 八路军82毫米拉发式迫击炮（3D模型+照片纹理）
 function createMortar() {
     const group = new THREE.Group();
@@ -2820,64 +2745,103 @@ function createBugle() {
     const bugleTex = texLoader.load('images/memorial/bugle.jpg');
     bugleTex.encoding = THREE.sRGBEncoding;
 
-    // 黄铜材质（带照片纹理）
-    const brassMat = new THREE.MeshPhysicalMaterial({
+    // 氧化铜绿材质——深墨绿到黑褐色，匹配实景铜绿包浆
+    const patinaMat = new THREE.MeshPhysicalMaterial({
         map: bugleTex,
-        color: 0xb8860b,
-        metalness: 0.95,
-        roughness: 0.35,
-        clearcoat: 0.3
+        color: 0x2a3a2a,           // 深墨绿底色
+        metalness: 0.85,
+        roughness: 0.55,              // 粗糙氧化面
+        clearcoat: 0.1               // 微弱光泽
     });
-    const darkBrassMat = new THREE.MeshPhysicalMaterial({
-        color: 0x8b7355, metalness: 0.9, roughness: 0.5
+    const darkPatinaMat = new THREE.MeshPhysicalMaterial({
+        color: 0x1a2a1a, metalness: 0.8, roughness: 0.7
+    });
+    const ringMat = new THREE.MeshPhysicalMaterial({
+        color: 0x5a4a30, metalness: 0.7, roughness: 0.4  // 连接箍——较浅的黄铜原色
     });
 
-    // 号嘴
+    // ===== 号嘴（细短圆柱，末端略收） =====
     const mouthpiece = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.015, 0.025, 0.06, 12),
-        brassMat
+        new THREE.CylinderGeometry(0.012, 0.02, 0.05, 12),
+        patinaMat
     );
     mouthpiece.rotation.z = Math.PI / 2;
-    mouthpiece.position.set(-0.2, 0.02, 0);
+    mouthpiece.position.set(-0.22, 0.02, 0);
     group.add(mouthpiece);
+    // 号嘴杯（碗形）
+    const cupGeo = new THREE.SphereGeometry(0.018, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.6);
+    const cup = new THREE.Mesh(cupGeo, patinaMat);
+    cup.rotation.z = -Math.PI / 2;
+    cup.position.set(-0.24, 0.02, 0);
+    group.add(cup);
 
-    // 号管主体（弯曲的圆柱体，用多个小段模拟弯曲）
-    const segments = 8;
-    for (let i = 0; i < segments; i++) {
-        const t = i / segments;
-        const radius = 0.018 - t * 0.003;
-        const segGeo = new THREE.CylinderGeometry(radius, radius, 0.08, 12);
-        const seg = new THREE.Mesh(segGeo, brassMat);
-        const angle = t * Math.PI * 0.4;
-        seg.position.set(-0.14 + t * 0.35, 0.02 + Math.sin(angle) * 0.03, 0);
-        seg.rotation.z = -angle * 0.5;
-        seg.castShadow = false; // 性能优化：关闭小物体阴影
-        group.add(seg);
-    }
+    // ===== 号管主体——精确S形曲线（用TubeGeometry沿样条曲线生成） =====
+    const curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-0.20, 0.02, 0),      // 号嘴连接处
+        new THREE.Vector3(-0.14, 0.01, 0),      // 略微下弯
+        new THREE.Vector3(-0.06, -0.02, 0),     // U形弯底
+        new THREE.Vector3(0.02, -0.01, 0),      // 弯底过渡
+        new THREE.Vector3(0.10, 0.02, 0),        // 向上弯曲
+        new THREE.Vector3(0.18, 0.05, 0),       // 继续上扬
+        new THREE.Vector3(0.24, 0.07, 0)        // 接喇叭口
+    ]);
+    // 管身——渐变半径用锥形管道近似
+    const tubeRadius = 0.016;
+    const tubeGeo = new THREE.TubeGeometry(curve, 32, tubeRadius, 12, false);
+    const tube = new THREE.Mesh(tubeGeo, patinaMat);
+    group.add(tube);
 
-    // 喇叭口（锥形）
-    const bellGeo = new THREE.CylinderGeometry(0.045, 0.02, 0.08, 24, 1, true);
-    const bell = new THREE.Mesh(bellGeo, brassMat);
-    bell.position.set(0.28, 0.04, 0);
-    bell.rotation.z = -0.2;
+    // ===== 连接箍（管身弯曲处和喇叭口过渡处） =====
+    // 箍1——管身中部弯曲处
+    const ferrule1 = new THREE.Mesh(
+        new THREE.TorusGeometry(0.022, 0.004, 8, 16),
+        ringMat
+    );
+    ferrule1.position.set(0.02, -0.005, 0);
+    ferrule1.rotation.y = Math.PI / 2;
+    group.add(ferrule1);
+    // 箍2——喇叭口过渡处
+    const ferrule2 = new THREE.Mesh(
+        new THREE.TorusGeometry(0.024, 0.004, 8, 16),
+        ringMat
+    );
+    ferrule2.position.set(0.22, 0.06, 0);
+    ferrule2.rotation.y = Math.PI / 2;
+    group.add(ferrule2);
+
+    // ===== 喇叭口——大口径锥形扩口（匹配实物10-12cm比例） =====
+    const bellGeo = new THREE.CylinderGeometry(0.06, 0.022, 0.10, 24, 1, true);
+    const bell = new THREE.Mesh(bellGeo, patinaMat);
+    bell.position.set(0.32, 0.10, 0);
+    bell.rotation.z = 0.25;   // 喇叭口向上45度
     group.add(bell);
-
-    // 喇叭口边缘
-    const bellRimGeo = new THREE.TorusGeometry(0.045, 0.004, 8, 24);
-    const bellRim = new THREE.Mesh(bellRimGeo, darkBrassMat);
-    bellRim.rotation.x = Math.PI / 2;
-    bellRim.position.set(0.32, 0.06, 0);
+    // 喇叭口边缘（稍有不规则——模拟历史磨损）
+    const bellRimGeo = new THREE.TorusGeometry(0.06, 0.003, 8, 24);
+    const bellRim = new THREE.Mesh(bellRimGeo, darkPatinaMat);
+    bellRim.position.set(0.36, 0.13, 0);
+    bellRim.rotation.y = Math.PI / 2;
     group.add(bellRim);
 
-    // 挂绳（红色细绳）
-    const ropeMat = new THREE.MeshPhysicalMaterial({color: 0x8b1a1a, roughness: 0.8});
-    for (let i = 0; i < 5; i++) {
-        const ropeGeo = new THREE.CylinderGeometry(0.003, 0.003, 0.06, 4);
-        const rope = new THREE.Mesh(ropeGeo, ropeMat);
-        rope.position.set(-0.1 + i * 0.02, -0.03, 0);
-        rope.rotation.z = Math.PI / 2;
-        group.add(rope);
-    }
+    // ===== 护手绳金属环（号口根部） =====
+    const hookMat = new THREE.MeshPhysicalMaterial({color: 0x4a3a20, metalness: 0.7, roughness: 0.5});
+    const hookGeo = new THREE.TorusGeometry(0.012, 0.002, 6, 12);
+    const hook = new THREE.Mesh(hookGeo, hookMat);
+    hook.position.set(0.30, 0.08, 0.025);
+    group.add(hook);
+    // 绳子（棉麻质感，已腐朽残留）
+    const ropeMat = new THREE.MeshPhysicalMaterial({color: 0x6a5a3a, roughness: 0.95, metalness: 0.0});
+    const ropeGeo = new THREE.CylinderGeometry(0.003, 0.003, 0.04, 4);
+    const rope = new THREE.Mesh(ropeGeo, ropeMat);
+    rope.position.set(0.30, 0.06, 0.025);
+    group.add(rope);
+
+    // ===== 军号专用射灯 =====
+    const bugleSpot = new THREE.SpotLight(0xfff5e6, 1.0, 3.0, Math.PI / 5, 0.3, 1.5);
+    bugleSpot.position.set(0, 0.6, 0);
+    bugleSpot.target.position.set(0, 0, 0);
+    bugleSpot.castShadow = false;
+    group.add(bugleSpot);
+    group.add(bugleSpot.target);
 
     group.userData = { itemName: '崔振芳的军号' };
     return group;
@@ -2886,66 +2850,369 @@ function createBugle() {
 // 打字机
 function createTypewriter() {
     const group = new THREE.Group();
-    const bodyMat = new THREE.MeshPhysicalMaterial({color:0x2f2f2f,roughness:0.5,metalness:0.3});
-    const keyMat = new THREE.MeshPhysicalMaterial({color:0xf5f0e8,roughness:0.7});
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.12,0.3),bodyMat);
-    body.castShadow = false; // 性能优化：关闭小物体阴影
-    group.add(body);
-    for(let row=0;row<3;row++){
-        for(let col=0;col<6;col++){
-            const key = new THREE.Mesh(new THREE.BoxGeometry(0.035,0.02,0.035),keyMat);
-            key.position.set(-0.12+col*0.05,0.07,-0.08+row*0.05);
-            group.add(key);
-        }
-    }
-    const rollerGeo = new THREE.CylinderGeometry(0.04,0.04,0.32,12);
-    const roller = new THREE.Mesh(rollerGeo,bodyMat);
+
+    // 铸铁材质——深褐色/铁锈色，匹配实景展品
+    const ironMat = new THREE.MeshPhysicalMaterial({
+        color: 0x2a2218,               // 深褐色铁锈
+        metalness: 0.6,
+        roughness: 0.7
+    });
+    const darkIronMat = new THREE.MeshPhysicalMaterial({
+        color: 0x1a1510, metalness: 0.5, roughness: 0.85  // 更深氧化面
+    });
+    const steelMat = new THREE.MeshPhysicalMaterial({
+        color: 0x3a3530, metalness: 0.75, roughness: 0.45  // 钢制传动部件
+    });
+
+    // ===== 底座（四足铸铁框架） =====
+    const baseMat = new THREE.MeshPhysicalMaterial({color:0x222018,metalness:0.5,roughness:0.8});
+    // 底板
+    const basePlate = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.03, 0.30), baseMat);
+    basePlate.position.y = 0.015;
+    group.add(basePlate);
+    // 四条腿
+    const legGeo = new THREE.BoxGeometry(0.03, 0.06, 0.03);
+    const legPositions = [[-0.16, -0.06, -0.12],[-0.16, -0.06, 0.12],[0.16, -0.06, -0.12],[0.16, -0.06, 0.12]];
+    legPositions.forEach(p => {
+        const leg = new THREE.Mesh(legGeo, baseMat);
+        leg.position.set(p[0], p[1], p[2]);
+        group.add(leg);
+    });
+
+    // ===== 机身框架（立式铸铁结构，前低后高） =====
+    // 左侧立柱
+    const leftPillar = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.22, 0.035), ironMat);
+    leftPillar.position.set(-0.16, 0.14, 0);
+    group.add(leftPillar);
+    // 右侧立柱
+    const rightPillar = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.22, 0.035), ironMat);
+    rightPillar.position.set(0.16, 0.14, 0);
+    group.add(rightPillar);
+    // 顶部横梁
+    const topBar = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.03, 0.035), ironMat);
+    topBar.position.set(0, 0.25, 0);
+    group.add(topBar);
+    // 中部横梁（支撑滚筒）
+    const midBar = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.025, 0.03), ironMat);
+    midBar.position.set(0, 0.18, 0);
+    group.add(midBar);
+
+    // ===== 螺旋压杆机构（顶部） =====
+    const screwMat = new THREE.MeshPhysicalMaterial({color:0x3a3525, metalness:0.7, roughness:0.4});
+    // 螺旋轴
+    const screwGeo = new THREE.CylinderGeometry(0.008, 0.008, 0.06, 8);
+    const screw = new THREE.Mesh(screwGeo, screwMat);
+    screw.position.set(0, 0.29, 0);
+    group.add(screw);
+    // 压杆横臂
+    const pressArm = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.015, 0.015), ironMat);
+    pressArm.position.set(0, 0.28, 0);
+    group.add(pressArm);
+    // 旋钮（圆形手柄）
+    const knobGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.015, 12);
+    const knob = new THREE.Mesh(knobGeo, darkIronMat);
+    knob.position.set(0.08, 0.28, 0);
+    knob.rotation.z = Math.PI / 2;
+    group.add(knob);
+
+    // ===== 滚筒系统（中部） =====
+    // 主滚筒
+    const rollerGeo = new THREE.CylinderGeometry(0.045, 0.045, 0.26, 16);
+    const roller = new THREE.Mesh(rollerGeo, darkIronMat);
     roller.rotation.x = Math.PI / 2;
-    roller.position.set(0,0.12,-0.12);
+    roller.position.set(0, 0.18, 0);
     group.add(roller);
+    // 滚筒表面纹理环
+    for (let i = 0; i < 5; i++) {
+        const ringGeo = new THREE.TorusGeometry(0.047, 0.002, 6, 16);
+        const ring = new THREE.Mesh(ringGeo, steelMat);
+        ring.position.set(-0.10 + i * 0.05, 0.18, 0);
+        ring.rotation.y = Math.PI / 2;
+        group.add(ring);
+    }
+
+    // ===== 手摇曲柄（左侧，L形曲柄+球形握把） =====
+    // 曲柄臂
+    const crankArm = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.08, 6), steelMat);
+    crankArm.rotation.z = Math.PI / 2;
+    crankArm.position.set(-0.20, 0.18, 0);
+    group.add(crankArm);
+    // 曲柄弯头（L形竖直部分）
+    const crankBend = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.04, 6), steelMat);
+    crankBend.position.set(-0.24, 0.16, 0);
+    group.add(crankBend);
+    // 球形握把
+    const gripGeo = new THREE.SphereGeometry(0.012, 8, 8);
+    const grip = new THREE.Mesh(gripGeo, darkIronMat);
+    grip.position.set(-0.24, 0.14, 0);
+    group.add(grip);
+
+    // ===== 油墨槽/供墨平台（前部倾斜平台） =====
+    const inkBed = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.01, 0.10), darkIronMat);
+    inkBed.position.set(0, 0.07, 0.08);
+    inkBed.rotation.x = 0.15;    // 微微倾斜
+    group.add(inkBed);
+
+    // ===== 进纸托架（底部前部） =====
+    const trayGeo = new THREE.BoxGeometry(0.30, 0.008, 0.12);
+    const tray = new THREE.Mesh(trayGeo, ironMat);
+    tray.position.set(0, 0.045, -0.08);
+    group.add(tray);
+
+    // ===== 螺栓/铆钉装饰 =====
+    const boltGeo = new THREE.CylinderGeometry(0.004, 0.004, 0.01, 6);
+    const boltMat = new THREE.MeshPhysicalMaterial({color:0x5a5040, metalness:0.6, roughness:0.5});
+    const boltPositions = [
+        [-0.16, 0.06, -0.015], [-0.16, 0.06, 0.015],
+        [0.16, 0.06, -0.015], [0.16, 0.06, 0.015],
+        [-0.16, 0.22, -0.015], [-0.16, 0.22, 0.015],
+        [0.16, 0.22, -0.015], [0.16, 0.22, 0.015]
+    ];
+    boltPositions.forEach(p => {
+        const bolt = new THREE.Mesh(boltGeo, boltMat);
+        bolt.rotation.x = Math.PI / 2;
+        bolt.position.set(p[0], p[1], p[2]);
+        group.add(bolt);
+    });
+
+    // ===== 打字机专用射灯 =====
+    const typeSpot = new THREE.SpotLight(0xfff5e6, 1.0, 3.0, Math.PI / 5, 0.3, 1.5);
+    typeSpot.position.set(0, 0.6, 0);
+    typeSpot.target.position.set(0, 0, 0);
+    typeSpot.castShadow = false;
+    group.add(typeSpot);
+    group.add(typeSpot.target);
+
     group.userData = { itemName: '何克的打字机' };
     return group;
 }
 
-// 八路军臂章
-function createArmband() {
+// ========== 铁船地面独立展位 ==========
+function createIronBoatDisplay() {
     const group = new THREE.Group();
-    // 木制展示托架
-    const standMat = new THREE.MeshPhysicalMaterial({color:0x5c3a1e,roughness:0.8});
-    const stand = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.01, 0.08), standMat);
-    stand.position.y = 0.005;
-    group.add(stand);
-    // 臂章本身（Canvas纹理）
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 128;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#1a3a6b';
-    ctx.fillRect(0, 0, 256, 128);
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(6, 6, 244, 116);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 64px "SimHei", "Microsoft YaHei", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('八路', 128, 64);
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.needsUpdate = true;
-    const badge = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.1, 0.06),
-        new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide })
-    );
-    badge.position.y = 0.03;
-    group.add(badge);
-    const coverMat = new THREE.MeshPhysicalMaterial({
-        color: 0xffffff, transparent: true, opacity: 0.2,
-        roughness: 0.05, metalness: 0, envMapIntensity: 0.5
+    group.userData = { itemName: '八路军东渡黄河使用的铁船' };
+
+    // 仿水纹地面平台
+    const platformGeo = new THREE.BoxGeometry(1.8, 0.03, 1.0);
+    const platformMat = new THREE.MeshPhysicalMaterial({
+        color: 0x5a4a30,    // 黄褐色沙地质感
+        roughness: 0.95,
+        metalness: 0.0
     });
-    const cover = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.025, 0.09), coverMat);
-    cover.position.y = 0.04;
-    group.add(cover);
-    group.userData = { itemName: '八路军臂章' };
+    const platform = new THREE.Mesh(platformGeo, platformMat);
+    platform.position.set(0, 0.015, -2.8);
+    platform.receiveShadow = true;
+    group.add(platform);
+
+    // 铁船模型（放在平台上）
+    const boat = createIronBoat();
+    boat.position.set(0, 0.03, -2.8);
+    boat.scale.set(1.2, 1.2, 1.2);
+    group.add(boat);
+
+    // 绳索围栏
+    createRopeBarrier(0, -2.8, 1.6);
+
+    // 展品说明牌（地面立式）
+    const signGroup = new THREE.Group();
+    // 牌面底座
+    const signBase = new THREE.Mesh(
+        new THREE.BoxGeometry(0.3, 0.01, 0.15),
+        new THREE.MeshPhysicalMaterial({color: 0x1a1a1a, metalness: 0.3, roughness: 0.5})
+    );
+    signBase.position.set(0, 0.005, -3.35);
+    signGroup.add(signBase);
+    // 说明牌面板（Canvas纹理）
+    const signCanvas = document.createElement('canvas');
+    signCanvas.width = 512;
+    signCanvas.height = 256;
+    const signCtx = signCanvas.getContext('2d');
+    signCtx.fillStyle = '#1a1a1a';
+    signCtx.fillRect(0, 0, 512, 256);
+    signCtx.strokeStyle = '#d4a853';
+    signCtx.lineWidth = 3;
+    signCtx.strokeRect(8, 8, 496, 240);
+    signCtx.fillStyle = '#d4a853';
+    signCtx.font = 'bold 28px "SimHei", "Microsoft YaHei", sans-serif';
+    signCtx.textAlign = 'center';
+    signCtx.fillText('八路军东渡黄河使用的铁船', 256, 50);
+    signCtx.font = '18px "SimSun", "Microsoft YaHei", sans-serif';
+    signCtx.fillStyle = '#cccccc';
+    signCtx.fillText('1937年8月—9月', 256, 85);
+    signCtx.fillText('八路军主力从陕西韩城芝川镇东渡黄河', 256, 120);
+    signCtx.fillText('开赴华北抗日前线', 256, 148);
+    signCtx.font = '14px "SimSun", sans-serif';
+    signCtx.fillStyle = '#999999';
+    signCtx.fillText('珍贵革命文物', 256, 190);
+    const signTex = new THREE.CanvasTexture(signCanvas);
+    signTex.needsUpdate = true;
+    const signPanel = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.3, 0.15),
+        new THREE.MeshBasicMaterial({ map: signTex })
+    );
+    signPanel.position.set(0, 0.08, -3.35);
+    signPanel.rotation.x = -Math.PI / 6;
+    signGroup.add(signPanel);
+    group.add(signGroup);
+
+    // 铁船专用射灯（双灯照射大型展品）
+    const boatSpot1 = new THREE.SpotLight(0xfff5e6, 1.5, 4.0, Math.PI / 4, 0.4, 1.5);
+    boatSpot1.position.set(0.8, 2.5, -2.2);
+    boatSpot1.target.position.set(0, 0.15, -2.8);
+    boatSpot1.castShadow = false;
+    group.add(boatSpot1);
+    group.add(boatSpot1.target);
+    const boatSpot2 = new THREE.SpotLight(0xfff5e6, 1.5, 4.0, Math.PI / 4, 0.4, 1.5);
+    boatSpot2.position.set(-0.8, 2.5, -2.2);
+    boatSpot2.target.position.set(0, 0.15, -2.8);
+    boatSpot2.castShadow = false;
+    group.add(boatSpot2);
+    group.add(boatSpot2.target);
+
+    // 注册为可交互物体
+    boat.traverse(function(child) {
+        if (child.isMesh) {
+            interactiveObjects.push(child);
+            interactiveGroups.push(group);
+        }
+    });
+
+    scene.add(group);
+}
+
+// 铁船（高精度3D模型——基于实地调研铆接钢板结构）
+function createIronBoat() {
+    const group = new THREE.Group();
+
+    // 铁锈材质——深褐色/红褐色氧化层
+    const rustMat = new THREE.MeshPhysicalMaterial({
+        color: 0x4a3020,               // 深铁锈色
+        metalness: 0.6,
+        roughness: 0.85                // 粗糙锈面
+    });
+    const darkRustMat = new THREE.MeshPhysicalMaterial({
+        color: 0x2a1a10, metalness: 0.5, roughness: 0.95
+    });
+    const rivetMat = new THREE.MeshPhysicalMaterial({
+        color: 0x5a4030, metalness: 0.65, roughness: 0.5   // 铆钉——略亮的铁色
+    });
+
+    // ===== 船底（平底矩形） =====
+    const bottomGeo = new THREE.BoxGeometry(0.60, 0.02, 0.18);
+    const bottom = new THREE.Mesh(bottomGeo, darkRustMat);
+    bottom.position.set(0, 0.04, 0);
+    group.add(bottom);
+
+    // ===== 船舷侧板（左右对称，垂直舷墙） =====
+    const sideGeo = new THREE.BoxGeometry(0.60, 0.10, 0.015);
+    const leftSide = new THREE.Mesh(sideGeo, rustMat);
+    leftSide.position.set(0, 0.10, 0.09);
+    group.add(leftSide);
+    const rightSide = new THREE.Mesh(sideGeo, rustMat);
+    rightSide.position.set(0, 0.10, -0.09);
+    group.add(rightSide);
+
+    // ===== 船首（楔形V形破浪艏——左板+右板） =====
+    // 左侧船首板
+    const bowLeftGeo = new THREE.BufferGeometry();
+    const bowLeftVerts = new Float32Array([
+        -0.28, 0.04, 0.09,   -0.28, 0.14, 0.09,   -0.34, 0.04, 0.015,
+        -0.34, 0.04, 0.015,  -0.28, 0.14, 0.09,    -0.34, 0.12, 0.015
+    ]);
+    bowLeftGeo.setAttribute('position', new THREE.BufferAttribute(bowLeftVerts, 3));
+    bowLeftGeo.computeVertexNormals();
+    group.add(new THREE.Mesh(bowLeftGeo, rustMat));
+    // 右侧船首板
+    const bowRightGeo = new THREE.BufferGeometry();
+    const bowRightVerts = new Float32Array([
+        -0.28, 0.04, -0.09,  -0.34, 0.04, -0.015, -0.28, 0.14, -0.09,
+        -0.28, 0.14, -0.09,  -0.34, 0.04, -0.015,  -0.34, 0.12, -0.015
+    ]);
+    bowRightGeo.setAttribute('position', new THREE.BufferAttribute(bowRightVerts, 3));
+    bowRightGeo.computeVertexNormals();
+    group.add(new THREE.Mesh(bowRightGeo, rustMat));
+    // 船首底板（V形底部连接）
+    const bowBottomGeo = new THREE.BufferGeometry();
+    const bowBottomVerts = new Float32Array([
+        -0.28, 0.04, 0.09,   -0.34, 0.04, 0.015,  -0.28, 0.04, -0.09,
+        -0.34, 0.04, -0.015, -0.28, 0.04, -0.09,  -0.34, 0.04, 0.015
+    ]);
+    bowBottomGeo.setAttribute('position', new THREE.BufferAttribute(bowBottomVerts, 3));
+    bowBottomGeo.computeVertexNormals();
+    group.add(new THREE.Mesh(bowBottomGeo, darkRustMat));
+
+    // ===== 船尾板（方正） =====
+    const sternGeo = new THREE.BoxGeometry(0.015, 0.10, 0.18);
+    const stern = new THREE.Mesh(sternGeo, rustMat);
+    stern.position.set(0.30, 0.10, 0);
+    group.add(stern);
+
+    // ===== 舷缘加强（外翻卷边） =====
+    const gunwaleMat = new THREE.MeshPhysicalMaterial({color:0x5a4530, metalness:0.6, roughness:0.6});
+    // 左舷缘
+    const leftGunwale = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.012, 0.025), gunwaleMat);
+    leftGunwale.position.set(0.01, 0.15, 0.10);
+    group.add(leftGunwale);
+    // 右舷缘
+    const rightGunwale = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.012, 0.025), gunwaleMat);
+    rightGunwale.position.set(0.01, 0.15, -0.10);
+    group.add(rightGunwale);
+
+    // ===== 横向隔板（内部舱壁，3道） =====
+    const bulkheadGeo = new THREE.BoxGeometry(0.012, 0.10, 0.16);
+    for (let i = 0; i < 3; i++) {
+        const bulkhead = new THREE.Mesh(bulkheadGeo, darkRustMat);
+        bulkhead.position.set(-0.12 + i * 0.16, 0.10, 0);
+        group.add(bulkhead);
+    }
+
+    // ===== 铆钉阵列（沿舷侧和接缝排列） =====
+    const rivetGeo = new THREE.SphereGeometry(0.004, 6, 6);
+    // 左舷铆钉（4排 x 12列）
+    for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 12; col++) {
+            const rivet = new THREE.Mesh(rivetGeo, rivetMat);
+            rivet.position.set(-0.27 + col * 0.048, 0.06 + row * 0.025, 0.098);
+            group.add(rivet);
+        }
+    }
+    // 右舷铆钉（对称）
+    for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 12; col++) {
+            const rivet = new THREE.Mesh(rivetGeo, rivetMat);
+            rivet.position.set(-0.27 + col * 0.048, 0.06 + row * 0.025, -0.098);
+            group.add(rivet);
+        }
+    }
+    // 船首板铆钉（3排 x 4列）
+    for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 4; col++) {
+            const t = (col + 1) / 5;
+            // 左侧
+            const rivetL = new THREE.Mesh(rivetGeo, rivetMat);
+            rivetL.position.set(-0.29 - col * 0.012, 0.06 + row * 0.03, 0.09 - t * 0.075);
+            group.add(rivetL);
+            // 右侧
+            const rivetR = new THREE.Mesh(rivetGeo, rivetMat);
+            rivetR.position.set(-0.29 - col * 0.012, 0.06 + row * 0.03, -0.09 + t * 0.075);
+            group.add(rivetR);
+        }
+    }
+
+    // ===== 系缆环（舷缘上的金属环扣） =====
+    const hookMat2 = new THREE.MeshPhysicalMaterial({color:0x3a2a18, metalness:0.7, roughness:0.5});
+    const hookPositions = [[-0.18, 0.16, 0.11], [0.0, 0.16, 0.11], [0.18, 0.16, 0.11],
+                            [-0.18, 0.16, -0.11], [0.0, 0.16, -0.11], [0.18, 0.16, -0.11],
+                            [-0.30, 0.16, 0.03], [-0.30, 0.16, -0.03]];
+    hookPositions.forEach(p => {
+        const hookGeo = new THREE.TorusGeometry(0.008, 0.002, 6, 12);
+        const hook = new THREE.Mesh(hookGeo, hookMat2);
+        hook.position.set(p[0], p[1], p[2]);
+        hook.rotation.y = Math.PI / 2;
+        group.add(hook);
+    });
+
+    group.userData = { itemName: '八路军东渡黄河使用的铁船' };
     return group;
 }
 
@@ -3470,11 +3737,11 @@ function getLocalAnswer(question, item) {
     const answers = {
         '行军锅':['这口行军锅跟随红军走完长征，又随八路军东渡黄河，见证了革命战争的艰辛历程。','17个补丁记录着战士们省吃俭用、艰苦奋斗的岁月，是革命精神的生动写照。','1938年长乐村战斗中，一位战士牺牲前紧紧抱着这口锅不放，体现了战士对革命事业的忠诚。'],
         '叶成焕的草鞋':['叶成焕是24岁的八路军团长，1938年在长乐村战斗中头部中弹牺牲。','他临终前最后一句话是"队伍，队伍呢？"，展现了一位年轻将领对部队深深的牵挂。','这双草鞋见证了一位铁血战将的赤诚与担当，是太行精神的生动体现。'],
-        '胡春花的小木勺':['胡春花是武乡著名的拥军模范，她带领妇女们日夜操劳，为八路军伤员制作生活用品。','这把小木勺凝聚着军民鱼水情深，体现了人民群众对子弟兵的深厚感情。','在艰苦的抗战岁月中，正是这样的军民团结，铸就了坚不可摧的抗战力量。'],
         '八路军拉发式迫击炮':['这是赵章成改装的82毫米拉发式迫击炮，1941年他在八路军129师将迫击炮改造成曲射、平射两用。','赵章成在关家垴战斗中创造性地采用平射方式，对日军碉堡实施抵近射击，被誉为"神炮手"。','这种改装体现了八路军"没有条件创造条件"的创新精神，是抗战中以智克敌的典范。'],
         '崔振芳的军号':['崔振芳是19岁的八路军号兵，1941年在黄崖洞保卫战中壮烈牺牲。','这把残缺的军号见证了他吹起冲锋号令、与敌血战的最后时刻。','1700多名太行号兵平均年龄不足20岁，用青春谱写了永恒的号谱。'],
         '何克的打字机':['乔治·何克是英国记者，在八路军总部砖壁村采访时使用这台打字机。','他放弃回国的机会，留在中国记录抗战真相，向世界传递中国人民抗战的声音。','这台打字机见证了一位国际友人对真相与正义的坚守。'],
-        '《新华日报》铸字机':['1939年《新华日报》华北版创刊，这台铸字机被从重庆背到沁县。','在日寇重重封锁下，报社先后经历6次反"扫荡"、7次搬家，坚持出版896期。','新闻战士用生命守护党的宣传阵地，让抗日的声音传遍太行山。']
+        '《新华日报》铸字机':['1939年《新华日报》华北版创刊，这台铸字机被从重庆背到沁县。','在日寇重重封锁下，报社先后经历6次反"扫荡"、7次搬家，坚持出版896期。','新闻战士用生命守护党的宣传阵地，让抗日的声音传遍太行山。'],
+        '八路军东渡黄河使用的铁船':['1937年8月至9月，八路军4.6万将士从陕西韩城芝川镇东渡黄河。','朱德、任弼时、左权、邓小平率部渡河，告别陕北奔赴华北抗日前线。','这艘铁船承载着将士们东渡黄河、保家卫国的壮志豪情，是中华民族不屈抗争精神的见证。']
     };
     const itemAnswers = answers[item.name] || ['这是一个很有意义的问题！'+item.name+'承载着深厚的革命历史和精神内涵。'];
     return itemAnswers[Math.floor(Math.random()*itemAnswers.length)];
