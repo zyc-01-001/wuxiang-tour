@@ -1462,17 +1462,21 @@ function startGame(storyMode) {
     document.getElementById('startOverlay').classList.add('hidden');
     isPlaying = true;
 
-    if (storyMode) {
-        isStoryMode = true;
-        initStoryMode();
-    }
-
     if (isMobile) {
         document.getElementById('joystickLeftZone').style.display = 'block';
         document.getElementById('joystickRightZone').style.display = 'block';
         showHUD(true);
+    }
+
+    if (storyMode) {
+        isStoryMode = true;
+        initStoryMode();
+        // 故事模式初始面板已显示，不锁定鼠标（用户需要点击按钮）
+        // 不调用 controls.lock()
     } else {
-        controls.lock();
+        if (!isMobile) {
+            controls.lock();
+        }
     }
 }
 
