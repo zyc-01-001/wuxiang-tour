@@ -582,6 +582,109 @@
             .start-mobile-controls { display: block; }
             .start-desktop-controls { display: none; }
         }
+
+        /* ========== 故事模式样式 ========== */
+        .story-mode-select {
+            display: flex; gap: 16px; justify-content: center; margin: 20px 0;
+        }
+        .story-mode-btn {
+            padding: 14px 32px; border-radius: var(--radius-md);
+            font-size: 15px; font-weight: 600; cursor: pointer;
+            border: 2px solid transparent; transition: var(--transition-normal);
+            font-family: var(--font-primary);
+        }
+        .story-mode-btn.free {
+            background: transparent; color: var(--color-text-primary);
+            border-color: rgba(255,255,255,0.2);
+        }
+        .story-mode-btn.free:hover {
+            border-color: var(--color-gold); background: rgba(212,168,83,0.1);
+        }
+        .story-mode-btn.story {
+            background: linear-gradient(135deg, var(--color-red), #9a1830);
+            color: #fff; box-shadow: 0 4px 20px rgba(196,30,58,0.4);
+        }
+        .story-mode-btn.story:hover {
+            transform: translateY(-2px); box-shadow: 0 6px 28px rgba(196,30,58,0.6);
+        }
+
+        .story-panel {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(180deg, transparent, rgba(0,0,0,0.92));
+            padding: 40px 24px 28px; z-index: 9000;
+            transform: translateY(100%); transition: transform 0.5s ease;
+            pointer-events: none;
+        }
+        .story-panel.visible {
+            transform: translateY(0); pointer-events: auto;
+        }
+        .story-panel-inner {
+            max-width: 720px; margin: 0 auto;
+            background: rgba(20,12,8,0.95);
+            border: 1px solid rgba(196,30,58,0.3);
+            border-radius: var(--radius-lg); padding: 24px 28px;
+            backdrop-filter: blur(12px);
+        }
+        .story-panel-header {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+        }
+        .story-year-badge {
+            background: linear-gradient(135deg, var(--color-red), #9a1830);
+            color: #fff; font-size: 12px; font-weight: 700;
+            padding: 3px 10px; border-radius: 4px;
+        }
+        .story-chapter-title {
+            color: var(--color-gold); font-size: 16px; font-weight: 700;
+        }
+        .story-text {
+            color: rgba(255,255,255,0.88); font-size: 15px; line-height: 1.8;
+            margin-bottom: 16px;
+        }
+        .story-text .highlight {
+            color: var(--color-gold-light); font-weight: 600;
+        }
+        .story-actions {
+            display: flex; gap: 12px; justify-content: flex-end;
+        }
+        .story-btn {
+            padding: 8px 20px; border-radius: var(--radius-sm);
+            font-size: 14px; font-weight: 600; cursor: pointer;
+            border: none; transition: var(--transition-fast);
+            font-family: var(--font-primary);
+        }
+        .story-btn.next {
+            background: linear-gradient(135deg, var(--color-red), #9a1830);
+            color: #fff;
+        }
+        .story-btn.next:hover { background: linear-gradient(135deg, #d42a3a, #b02030); }
+        .story-btn.skip {
+            background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6);
+        }
+        .story-btn.skip:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+        .story-progress {
+            position: fixed; top: 56px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 6px; z-index: 9001;
+            opacity: 0; transition: opacity 0.5s ease; pointer-events: none;
+        }
+        .story-progress.visible { opacity: 1; }
+        .story-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: rgba(255,255,255,0.2); transition: var(--transition-normal);
+        }
+        .story-dot.active { background: var(--color-red); box-shadow: 0 0 8px rgba(196,30,58,0.6); }
+        .story-dot.completed { background: var(--color-gold); }
+
+        .story-guide-marker {
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--color-gold); font-size: 14px; font-weight: 600;
+            background: rgba(0,0,0,0.6); padding: 8px 16px;
+            border-radius: var(--radius-md); border: 1px solid rgba(212,168,83,0.3);
+            z-index: 9002; opacity: 0; transition: opacity 0.5s ease;
+            pointer-events: none; text-align: center;
+        }
+        .story-guide-marker.visible { opacity: 1; }
     </style>
 </head>
 <body>
@@ -626,7 +729,10 @@
         <div>📱 移动端：左侧虚拟摇杆移动，右侧滑动控制视角</div>
         <div>🔍 靠近展品后按 E 键或点击查看详情</div>
     </div>
-    <button class="start-btn" id="startBtn">进入展厅</button>
+    <div class="story-mode-select">
+        <button class="story-mode-btn free" id="startFreeBtn">🎮 自由漫游</button>
+        <button class="story-mode-btn story" id="startStoryBtn">📖 故事模式</button>
+    </div>
 </div>
 
 <!-- ========== 暂停菜单 ========== -->
@@ -687,6 +793,30 @@
 
 <!-- ========== 手机端交互按钮 ========== -->
 <div class="mobile-interact-btn" id="mobileInteractBtn">查看</div>
+
+<!-- ========== 故事模式叙事面板 ========== -->
+<div class="story-panel" id="storyPanel">
+    <div class="story-panel-inner">
+        <div class="story-panel-header">
+            <span class="story-year-badge" id="storyYear">1937</span>
+            <span class="story-chapter-title" id="storyChapter">序章 · 黄河之滨</span>
+        </div>
+        <div class="story-text" id="storyText"></div>
+        <div class="story-actions">
+            <button class="story-btn skip" id="storySkipBtn">跳过故事</button>
+            <button class="story-btn next" id="storyNextBtn">下一步</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== 故事进度指示器 ========== -->
+<div class="story-progress" id="storyProgress"></div>
+
+<!-- ========== 故事引导提示 ========== -->
+<div class="story-guide-marker" id="storyGuideMarker">
+    <div>🎯 前往下一个故事节点</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;">跟随地面光带前进</div>
+</div>
 
 <!-- ========== 讲解面板 ========== -->
 <div class="info-panel" id="infoPanel">
@@ -797,6 +927,106 @@ const itemsData = [
     }
 ];
 
+// ========== 故事模式数据（按历史时间线） ==========
+const storyNodes = [
+    {
+        year: '1937.8',
+        chapter: '序章 · 黄河之滨',
+        position: { x: 0, z: 2.0 },
+        exhibitName: null,
+        narrative: [
+            '你是一名年轻的八路军战士，今天接到了改编命令。',
+            '清晨的黄河岸边，4.6万红军将士整齐列队。朱德总司令站在高坡上，声音洪亮：“同志们，从今天起，我们改编为国民革命军第八路军！”',
+            '你低头看了看左臂上崭新的臂章——蓝底白字的“八路”二字，心中涌起一股热流。开赴抗日前线，保家卫国，这是多少将士的梦想。'
+        ],
+        arriveHint: '请跟随地面光带，前往展厅内的第一个故事节点。'
+    },
+    {
+        year: '1937.8',
+        chapter: '第一章 · 臂章',
+        position: { x: 1.5, z: 0.5 },
+        exhibitName: '八路军臂章',
+        narrative: [
+            '你站在队伍前列，左臂上的臂章在风中微微飘动。',
+            '“别小看这枚臂章，”身旁的老班长拍了拍你的肩膀，“它代表着咱们从井冈山一路走来的血与火，代表着四万六千人开赴前线的决心！”',
+            '你握紧拳头，目光坚定地望向东方——那里有沦陷的国土，有等待解放的同胞。从4.6万到102万，这枚小小的臂章，将见证一支人民军队的成长壮大。'
+        ],
+        arriveHint: '向右前方走，找到“八路军臂章”展台。'
+    },
+    {
+        year: '1938.4',
+        chapter: '第二章 · 草鞋',
+        position: { x: -1.5, z: -0.5 },
+        exhibitName: '叶成焕的草鞋',
+        narrative: [
+            '长乐村战斗的硝烟还未散尽。你跟随772团撤退，看见战士们抬着一位年轻的团长。',
+            '“队伍……队伍呢？”叶成焕团长用微弱的声音问道，这是他留下的最后一句话。年仅24岁。',
+            '老乡董来旺为他整理遗物时，看到叶团长还穿着那双破旧的草鞋，赶忙拿来一双布鞋给他换上。那双草鞋鞋底已磨穿，棉线断裂，却陪伴着一位铁血战将走完了最后的战斗岁月。'
+        ],
+        arriveHint: '穿过展厅中央，向左前方走，找到“叶成焕的草鞋”展台。'
+    },
+    {
+        year: '1938.6',
+        chapter: '第三章 · 打字机',
+        position: { x: 1.5, z: -1.5 },
+        exhibitName: '何克的打字机',
+        narrative: [
+            '武乡砖壁村，八路军总部。你正站岗，看见一个金发碧眼的外国人扛着一台打字机走来。',
+            '“我叫乔治·何克，英国记者。”他用生硬的中文自我介绍，“我要把你们的故事，告诉全世界。”',
+            '他坐在土炕上，借着油灯的微光，手指在打字机键盘上飞快敲击。那台黑色的机器，将把太行山上的抗战故事，传递到地球的每一个角落。国际友人的正义之声，让世界听到了中国人民抗战的呐喊。'
+        ],
+        arriveHint: '向右后方走，找到“何克的打字机”展台。'
+    },
+    {
+        year: '1939',
+        chapter: '第四章 · 木勺',
+        position: { x: -1.5, z: 0.5 },
+        exhibitName: '胡春花的小木勺',
+        narrative: [
+            '伤员转运站里，一位妇女正用一把小木勺，小心翼翼地给伤员喂饭。',
+            '她叫胡春花，武乡县著名的拥军模范。你看着她满是老茧的手，一勺一勺地把稀粥送进伤员干裂的嘴唇。',
+            '在武乡，12.5万人口中有9万多人参加了抗日团体。“母亲叫儿打东洋，妻子送郎上战场。”一把木勺、一件棉衣、一碗热饭，温暖了战士们的心，也铸就了坚不可摧的军民鱼水情。'
+        ],
+        arriveHint: '向左前方走，找到“胡春花的小木勺”展台。'
+    },
+    {
+        year: '1940.8',
+        chapter: '第五章 · 神炮',
+        position: { x: 1.5, z: 1.5 },
+        exhibitName: '八路军拉发式迫击炮',
+        narrative: [
+            '关家垴高地上，日军的碉堡火力凶猛。你趴在战壕里，看着身旁的赵章成主任正在改装一门迫击炮。',
+            '“没有前支架，照样能打！”他拆掉前支架，只保留炮管和底盘，炮口几乎贴地。',
+            '轰！轰！轰！炮弹像长了眼睛一样钻进碉堡射孔。日军惊呆了——迫击炮还能平射？！这哪是炮，分明是八路军“没有条件创造条件”的智慧结晶。赵章成，神炮手，名副其实。'
+        ],
+        arriveHint: '向右后方走，找到“八路军拉发式迫击炮”展台。'
+    },
+    {
+        year: '1941.11',
+        chapter: '第六章 · 军号',
+        position: { x: -1.5, z: 1.5 },
+        exhibitName: '崔振芳的军号',
+        narrative: [
+            '黄崖洞“翁圪廊”天险上，毒气弥漫。你听到一阵断断续续的号声——那是防毒号令。',
+            '18岁的号兵崔振芳强忍咳嗽，把军号抵在石头上，手指紧扣，牙齿与号嘴几乎熔铸在一起。',
+            '战友们牺牲了，他独自扛起两箱手榴弹，先后投出120余枚。一发炮弹在身旁炸响，他跪着，号声未绝。1700多名太行号兵，平均年龄不足20岁，最小的只有13岁。号声穿越时空，至今回响。'
+        ],
+        arriveHint: '向左后方走，找到“崔振芳的军号”展台。'
+    },
+    {
+        year: '1942.5',
+        chapter: '终章 · 铅字',
+        position: { x: 1.5, z: -0.5 },
+        exhibitName: '《新华日报》铸字机',
+        narrative: [
+            '后沟村的印刷厂里，铸字机日夜运转。没有纸，就收集破布烂鞋造纸浆；没有油墨，就烧松枝取油。',
+            '社长何云带领记者们即审即刻、即校即印。百团大战期间，他们日夜战斗在最前沿，把胜利的捷报传遍太行山。',
+            '1942年5月，日军3万兵力疯狂扫荡。何云等40多位新闻战士壮烈牺牲。报社先后经历6次反“扫荡”、7次搬家，坚持出版896期，从未中断。以笔为枪，以铅字为弹——这是另一种抗战，同样壮烈。'
+        ],
+        arriveHint: '向右前方走，找到最后一个展台——“《新华日报》铸字机”。'
+    }
+];
+
 // ========== 全局变量 ==========
 let scene, camera, renderer, controls;
 let raycaster;
@@ -828,6 +1058,15 @@ let isPanelOpen = false;
 let _perfMonitor = null;
 let autoNarrating = false;
 let autoNarrateItem = null;
+
+// ========== 故事模式全局变量 ==========
+let isStoryMode = false;
+let currentStoryIndex = -1;
+let storyGuideLine = null;
+let storyGuideDots = [];
+let storyTargetMarker = null;
+let isStoryWaitingForPlayer = false;
+let storyExhibitHighlights = [];
 
 const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 let joystickLeft = { active: false, dx: 0, dy: 0, touchId: null };
@@ -1184,9 +1423,14 @@ function init() {
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('keyup', onKeyUp);
 
-    document.getElementById('startBtn').addEventListener('click', startGame);
+    document.getElementById('startFreeBtn').addEventListener('click', () => startGame(false));
+    document.getElementById('startStoryBtn').addEventListener('click', () => startGame(true));
     document.getElementById('resumeBtn').addEventListener('click', resumeGame);
     document.getElementById('panelClose').addEventListener('click', closePanel);
+
+    // 故事面板按钮
+    document.getElementById('storyNextBtn').addEventListener('click', advanceStoryNarrative);
+    document.getElementById('storySkipBtn').addEventListener('click', skipStory);
 
     if (isMobile) {
         setupMobileControls();
@@ -1213,9 +1457,15 @@ function showHUD(show) {
     }
 }
 
-function startGame() {
+function startGame(storyMode) {
     document.getElementById('startOverlay').classList.add('hidden');
     isPlaying = true;
+
+    if (storyMode) {
+        isStoryMode = true;
+        initStoryMode();
+    }
+
     if (isMobile) {
         document.getElementById('joystickLeftZone').style.display = 'block';
         document.getElementById('joystickRightZone').style.display = 'block';
@@ -3502,11 +3752,208 @@ function animate() {
     checkAutoNarration();
     updateDustParticles();
 
+    // 故事模式：检测玩家是否到达当前节点
+    if (isStoryMode && isStoryWaitingForPlayer && currentStoryIndex >= 0) {
+        checkStoryNodeArrival();
+    }
+
     if(isPlaying){
         drawMinimap();
     }
 
     renderer.render(scene, camera);
+}
+
+// ========== 故事模式核心函数 ==========
+function initStoryMode() {
+    // 创建进度指示器圆点
+    const progressContainer = document.getElementById('storyProgress');
+    progressContainer.innerHTML = '';
+    storyNodes.forEach((_, i) => {
+        const dot = document.createElement('div');
+        dot.className = 'story-dot' + (i === 0 ? ' active' : '');
+        dot.dataset.index = i;
+        progressContainer.appendChild(dot);
+    });
+    progressContainer.classList.add('visible');
+
+    // 开始第一个节点
+    currentStoryIndex = 0;
+    showStoryNode(0);
+}
+
+function showStoryNode(index) {
+    const node = storyNodes[index];
+    if (!node) return;
+
+    currentStoryIndex = index;
+    isStoryWaitingForPlayer = false;
+
+    // 更新进度圆点
+    document.querySelectorAll('.story-dot').forEach((dot, i) => {
+        dot.classList.remove('active', 'completed');
+        if (i < index) dot.classList.add('completed');
+        else if (i === index) dot.classList.add('active');
+    });
+
+    // 更新面板内容
+    document.getElementById('storyYear').textContent = node.year;
+    document.getElementById('storyChapter').textContent = node.chapter;
+    document.getElementById('storyText').innerHTML = node.narrative.map(p =>
+        '<p style="margin-bottom:10px;">' + p.replace(/"(.+?)"/g, '<span class="highlight">"$1"</span>') + '</p>'
+    ).join('');
+
+    // 显示面板
+    document.getElementById('storyPanel').classList.add('visible');
+
+    // 高亮对应展品
+    highlightStoryExhibit(node.exhibitName);
+
+    // 创建到下一节点的引导路径
+    if (index < storyNodes.length - 1) {
+        createStoryGuidePath(node.position, storyNodes[index + 1].position);
+    } else {
+        clearStoryGuide();
+    }
+}
+
+function advanceStoryNarrative() {
+    document.getElementById('storyPanel').classList.remove('visible');
+
+    if (currentStoryIndex < storyNodes.length - 1) {
+        // 进入移动阶段：等待玩家走到下一个节点
+        isStoryWaitingForPlayer = true;
+        document.getElementById('storyGuideMarker').classList.add('visible');
+
+        // 2秒后自动隐藏引导提示
+        setTimeout(() => {
+            document.getElementById('storyGuideMarker').classList.remove('visible');
+        }, 4000);
+    } else {
+        // 故事结束
+        endStoryMode();
+    }
+}
+
+function checkStoryNodeArrival() {
+    const targetNode = storyNodes[currentStoryIndex + 1];
+    if (!targetNode) return;
+
+    const dx = camera.position.x - targetNode.position.x;
+    const dz = camera.position.z - targetNode.position.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+
+    if (dist < 1.8) {
+        // 到达节点
+        isStoryWaitingForPlayer = false;
+        document.getElementById('storyGuideMarker').classList.remove('visible');
+        showStoryNode(currentStoryIndex + 1);
+    }
+}
+
+function createStoryGuidePath(from, to) {
+    clearStoryGuide();
+
+    // 创建发光地面路径（一系列小圆点）
+    const dx = to.x - from.x;
+    const dz = to.z - from.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+    const steps = Math.max(3, Math.floor(dist * 3));
+
+    const dotGeo = new THREE.CircleGeometry(0.06, 16);
+    const dotMat = new THREE.MeshBasicMaterial({
+        color: 0xd4a853,
+        transparent: true,
+        opacity: 0.6,
+        side: THREE.DoubleSide
+    });
+
+    for (let i = 1; i <= steps; i++) {
+        const t = i / (steps + 1);
+        const dot = new THREE.Mesh(dotGeo, dotMat.clone());
+        dot.position.set(from.x + dx * t, 0.02, from.z + dz * t);
+        dot.rotation.x = -Math.PI / 2;
+        scene.add(dot);
+        storyGuideDots.push(dot);
+    }
+
+    // 目标位置标记（发光环）
+    const ringGeo = new THREE.RingGeometry(0.3, 0.4, 32);
+    const ringMat = new THREE.MeshBasicMaterial({
+        color: 0xc41e3a,
+        transparent: true,
+        opacity: 0.5,
+        side: THREE.DoubleSide
+    });
+    storyTargetMarker = new THREE.Mesh(ringGeo, ringMat);
+    storyTargetMarker.position.set(to.x, 0.03, to.z);
+    storyTargetMarker.rotation.x = -Math.PI / 2;
+    scene.add(storyTargetMarker);
+}
+
+function clearStoryGuide() {
+    storyGuideDots.forEach(dot => scene.remove(dot));
+    storyGuideDots = [];
+    if (storyTargetMarker) {
+        scene.remove(storyTargetMarker);
+        storyTargetMarker = null;
+    }
+}
+
+function highlightStoryExhibit(exhibitName) {
+    // 恢复所有展品正常亮度
+    storyExhibitHighlights.forEach(obj => {
+        if (obj.material) {
+            obj.material.emissive = new THREE.Color(0x000000);
+        }
+    });
+    storyExhibitHighlights = [];
+
+    if (!exhibitName) return;
+
+    // 找到对应展品并高亮
+    scene.traverse(child => {
+        if (child.userData && child.userData.itemName === exhibitName) {
+            child.traverse(obj => {
+                if (obj.isMesh && obj.material) {
+                    obj.material = obj.material.clone();
+                    obj.material.emissive = new THREE.Color(0x331100);
+                    obj.material.emissiveIntensity = 0.3;
+                    storyExhibitHighlights.push(obj);
+                }
+            });
+        }
+    });
+}
+
+function skipStory() {
+    document.getElementById('storyPanel').classList.remove('visible');
+    document.getElementById('storyGuideMarker').classList.remove('visible');
+    endStoryMode();
+}
+
+function endStoryMode() {
+    isStoryMode = false;
+    currentStoryIndex = -1;
+    isStoryWaitingForPlayer = false;
+    clearStoryGuide();
+    document.getElementById('storyProgress').classList.remove('visible');
+    document.getElementById('storyPanel').classList.remove('visible');
+
+    // 恢复展品正常亮度
+    storyExhibitHighlights.forEach(obj => {
+        if (obj.material) {
+            obj.material.emissive = new THREE.Color(0x000000);
+        }
+    });
+    storyExhibitHighlights = [];
+
+    // 显示结束提示
+    const narrationBar = document.getElementById('narrationBar');
+    const narrationText = document.getElementById('narrationText');
+    narrationText.textContent = '🎉 故事模式已结束，您可以自由漫游展厅，近距离观看每件展品。';
+    narrationBar.classList.add('visible');
+    setTimeout(() => narrationBar.classList.remove('visible'), 5000);
 }
 
 // ========== 启动 ==========
