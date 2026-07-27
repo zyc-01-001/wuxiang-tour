@@ -1121,9 +1121,10 @@ function init() {
 
     updateLoading(30);
 
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    // 性能优化：初始即使用较低的像素比上限，大幅减少GPU填充率开销
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.0));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     // ========== 性能自适应变量 ==========
@@ -1134,8 +1135,8 @@ function init() {
         isDegraded: false,
         checkInterval: 2000,
         lastCheck: performance.now(),
-        pixelRatioCap: 1.5,
-        normalPixelRatio: Math.min(window.devicePixelRatio, 1.5)
+        pixelRatioCap: 1.0,
+        normalPixelRatio: Math.min(window.devicePixelRatio, 1.0)
     };
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.2;
@@ -1278,75 +1279,28 @@ function onKeyUp(event) {
     }
 }
 
-// ========== 灯光系统（优化为精品展厅小空间） ==========
+// ========== 灯光系统（极致性能优化版：仅3盏光源） ==========
 function createLights() {
-    // 环境光
-    const ambientLight = new THREE.AmbientLight(0xfff5e6, 0.5);
+    // 环境光——提高强度，替代多盏点光源的基础照明
+    const ambientLight = new THREE.AmbientLight(0xfff5e6, 1.1);
     scene.add(ambientLight);
 
-    // 半球光
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x3c1a1a, 0.6);
+    // 半球光——天-地补光，模拟整体漫反射，零额外开销
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x4a2a1a, 1.2);
     scene.add(hemiLight);
 
-    // 天花板筒灯（减少数量，适应小空间）
-    const downlightPositions = [
-        {x:-2.5,z:-2},{x:2.5,z:-2},
-        {x:-2.5,z:2},{x:2.5,z:2},
-        {x:0,z:0}
-    ];
-    downlightPositions.forEach(pos=>{
-        const spot=new THREE.SpotLight(0xfff0d4,1.5,12,0.5,0.4,1);
-        spot.position.set(pos.x,3.8,pos.z);
-        spot.target.position.set(pos.x,0,pos.z);
-        spot.castShadow=true;
-        spot.shadow.mapSize.width=1024;
-        spot.shadow.mapSize.height=1024;
-        spot.shadow.bias=-0.0001;
-        scene.add(spot);
-        scene.add(spot.target);
-    });
-
-    // 展品上方独立射灯
-    const exhibitSpots=[
-        {x:-4.8,z:-1.5,target:{x:-4.8,y:0.8,z:-1.5}},
-        {x:-4.8,z:0,target:{x:-4.8,y:0.8,z:0}},
-        {x:-4.8,z:1.5,target:{x:-4.8,y:0.8,z:1.5}},
-        {x:4.8,z:-1,target:{x:4.8,y:0.8,z:-1}},
-        {x:4.8,z:1.5,target:{x:4.8,y:0.8,z:1.5}},
-        {x:0,z:-1.5,target:{x:0,y:0.8,z:-1.5}},
-        {x:0,z:1.5,target:{x:0,y:0.8,z:1.5}}
-    ];
-    exhibitSpots.forEach(sp=>{
-        const spot=new THREE.SpotLight(0xfff5e0,2.5,8,0.35,0.5,1);
-        spot.position.set(sp.x,3.8,sp.z);
-        spot.target.position.set(sp.target.x,sp.target.y,sp.target.z);
-        spot.castShadow=true;
-        spot.shadow.mapSize.width=1024;
-        spot.shadow.mapSize.height=1024;
-        spot.shadow.bias=-0.0001;
-        scene.add(spot);
-        scene.add(spot.target);
-    });
-
-    // 入口壁灯（暖色补光）
-    const wallLights=[
-        {x:-2,z:3.3},{x:2,z:3.3}
-    ];
-    wallLights.forEach(pos=>{
-        const pl=new THREE.PointLight(0xffdca3,0.6,4);
-        pl.position.set(pos.x,2.5,pos.z);
-        scene.add(pl);
-    });
-
-    // 环境补光（四角，较弱）
-    const cornerLights=[
-        {x:-5,z:-3},{x:5,z:-3},{x:-5,z:3},{x:5,z:3}
-    ];
-    cornerLights.forEach(pos=>{
-        const cl=new THREE.PointLight(0xfff5e6,0.2,6);
-        cl.position.set(pos.x,3,pos.z);
-        scene.add(cl);
-    });
+    // 主光源：单盏天花板聚光灯（唯一投射阴影的光源）
+    const mainSpot = new THREE.SpotLight(0xfff0d4, 2.5, 16, 0.7, 0.5, 1);
+    mainSpot.position.set(0, 3.8, 0);
+    mainSpot.target.position.set(0, 0, 0);
+    mainSpot.castShadow = true;  // 主光源保留阴影投射
+    mainSpot.shadow.mapSize.width = 1024;
+    mainSpot.shadow.mapSize.height = 1024;
+    mainSpot.shadow.bias = -0.0001;
+    mainSpot.shadow.camera.near = 1;
+    mainSpot.shadow.camera.far = 10;
+    scene.add(mainSpot);
+    scene.add(mainSpot.target);
 }
 
 // ========== 展厅创建（精品展厅 12m x 8m x 4m） ==========
@@ -1495,10 +1449,7 @@ function createExhibitionHall() {
     frontWallT.position.set(0, foyerH - 0.4, roomW/2 + foyerD);
     scene.add(frontWallT);
 
-    // 门厅迎宾灯
-    const foyerLight = new THREE.PointLight(0xfff5e6, 0.6, 6);
-    foyerLight.position.set(0, 2.8, roomW/2 + foyerD/2);
-    scene.add(foyerLight);
+    // 门厅迎宾灯——性能优化：移除点光源，由全局环境光覆盖
 
     // ========== 可开合双开门 ==========
     const doorFrameMat = new THREE.MeshPhysicalMaterial({color:0x5c4033,roughness:0.5});
@@ -1520,7 +1471,7 @@ function createExhibitionHall() {
     doorLeftGroup.position.set(-0.85, 0, roomW/2); // 旋转轴位置
     const doorL = new THREE.Mesh(new THREE.BoxGeometry(0.85,2,0.06), doorMat);
     doorL.position.set(0.425, 1, 0); // 门扇中心相对于旋转轴
-    doorL.castShadow = true;
+    doorL.castShadow = false; // 性能优化：关闭小物体阴影
     doorLeftGroup.add(doorL);
     scene.add(doorLeftGroup);
 
@@ -1529,7 +1480,7 @@ function createExhibitionHall() {
     doorRightGroup.position.set(0.85, 0, roomW/2); // 旋转轴位置
     const doorR = new THREE.Mesh(new THREE.BoxGeometry(0.85,2,0.06), doorMat);
     doorR.position.set(-0.425, 1, 0); // 门扇中心相对于旋转轴
-    doorR.castShadow = true;
+    doorR.castShadow = false; // 性能优化：关闭小物体阴影
     doorRightGroup.add(doorR);
     scene.add(doorRightGroup);
 
@@ -1698,15 +1649,8 @@ function createWallDecorations() {
         sconce.position.set(p.x, 0, p.z);
         if (p.x > 0) sconce.rotation.y = Math.PI;
         scene.add(sconce);
-        const spotLight = new THREE.SpotLight(0xffeedd, 1.5, 2.5, Math.PI / 4, 0.5, 1);
-        spotLight.position.set(p.x, 2.6, p.z + (p.x > 0 ? -0.3 : 0.3));
-        spotLight.target.position.set(p.x, 1.2, p.z + (p.x > 0 ? -1.0 : 1.0));
-        scene.add(spotLight);
-        scene.add(spotLight.target);
-        // 补充点光源——直接照亮展品
-        const fillLight = new THREE.PointLight(0xfff0dd, 0.8, 3, 2);
-        fillLight.position.set(p.x, 2.0, p.z);
-        scene.add(fillLight);
+        // 性能优化：移除壁灯射灯和点光源，仅保留发光灯泡外观
+        // 照明由全局环境光+半球光+主聚光灯统一提供
     });
 }
 
@@ -1752,7 +1696,7 @@ function createPhotoGalleryWall(wallZ) {
         const mats = [frameMat, frameMat, frameMat, frameMat, photoMat, frameMat];
         const photoMesh = new THREE.Mesh(boxGeo, mats);
         photoMesh.position.set(photo.x, photo.y, 0);
-        photoMesh.castShadow = true;
+        photoMesh.castShadow = false; // 性能优化：关闭小物体阴影
         galleryGroup.add(photoMesh);
 
         // 金色边框
@@ -1764,12 +1708,7 @@ function createPhotoGalleryWall(wallZ) {
         galleryGroup.add(new THREE.Mesh(ev, goldMat)).position.set(photo.x - photo.w/2 - b/2, photo.y, 0);
         galleryGroup.add(new THREE.Mesh(ev, goldMat)).position.set(photo.x + photo.w/2 + b/2, photo.y, 0);
 
-        // 顶部射灯
-        const spot = new THREE.SpotLight(0xfff5e6, 0.8, 4, Math.PI/8, 0.5, 1);
-        spot.position.set(photo.x, 3.8, 1);
-        spot.target = photoMesh;
-        spot.castShadow = false;
-        galleryGroup.add(spot);
+        // 性能优化：移除每张照片的射灯，由全局照明统一覆盖
     });
 
     galleryGroup.position.set(0, 0, wallZ);
@@ -1791,7 +1730,7 @@ function createExhibitDisplay(wallX, zPos, itemName, createItemFn, isAgainstWall
         materials.marble
     );
     marbleBase.position.set(0, baseHeight/2, 0);
-    marbleBase.castShadow = true;
+    marbleBase.castShadow = true;   // 展台底座保留阴影投射
     marbleBase.receiveShadow = true;
     group.add(marbleBase);
 
@@ -1864,7 +1803,7 @@ function createMainDisplay(x, z, itemName, createItemFn) {
         materials.marble
     );
     marbleBase.position.set(0, baseHeight/2, 0);
-    marbleBase.castShadow = true;
+    marbleBase.castShadow = true;   // 展台底座保留阴影投射
     group.add(marbleBase);
 
     // 金色装饰线
@@ -1937,7 +1876,7 @@ function createDisplayBoard(wallX, zPos, label) {
     const panel = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.02), panelMat);
     panel.position.set(0, 1.3, 0.05);
     panel.rotation.x = -0.15;
-    panel.castShadow = true;
+    panel.castShadow = false; // 性能优化：关闭小物体阴影
     group.add(panel);
 
     // 面板边框
@@ -2098,7 +2037,7 @@ function createPlant(x, z) {
         new THREE.MeshPhysicalMaterial({color:0x8b4513,roughness:0.8})
     );
     pot.position.y = 0.125;
-    pot.castShadow = true;
+    pot.castShadow = false; // 性能优化：关闭小物体阴影
     group.add(pot);
 
     // 土壤
@@ -2184,7 +2123,7 @@ function createFireExtinguisher(x, z) {
         new THREE.MeshPhysicalMaterial({color:0xcc0000,roughness:0.4,metalness:0.2})
     );
     tank.position.y = 0.175;
-    tank.castShadow = true;
+    tank.castShadow = false; // 性能优化：关闭小物体阴影
     group.add(tank);
 
     // 顶部盖子
@@ -2226,7 +2165,7 @@ function createBrochureRack(x, z) {
         new THREE.MeshPhysicalMaterial({color:0x5c4033,roughness:0.6})
     );
     stand.position.y = 0.45;
-    stand.castShadow = true;
+    stand.castShadow = false; // 性能优化：关闭小物体阴影
     group.add(stand);
 
     // 顶层倾斜面
@@ -2312,7 +2251,7 @@ function createPhotoExhibit(photoUrl, aspectRatio, itemName) {
         frameMat  // back
     ];
     const photoBoard = new THREE.Mesh(boxGeo, materials);
-    photoBoard.castShadow = true;
+    photoBoard.castShadow = false; // 性能优化：关闭小物体阴影
     group.add(photoBoard);
 
     // 金色边框（四个边条）
@@ -2451,42 +2390,24 @@ function createStrawSandals() {
             // 遍历设置阴影、计算法线、应用统一黑色材质
             model.traverse(function (child) {
                 if (child.isMesh) {
-                    child.castShadow = true;
-                    child.receiveShadow = true;
+                    child.castShadow = false;   // 草鞋不投射阴影，减少阴影渲染开销
+                    child.receiveShadow = false;
                     // 模型没有法线数据，自动计算
                     if (child.geometry && !child.geometry.attributes.normal) {
                         child.geometry.computeVertexNormals();
                     }
-                    // 统一黑色草绳材质——增强编织立体感与褶皱阴影
-                    child.material = new THREE.MeshPhysicalMaterial({
+                    // 统一黑色草绳材质——使用MeshStandardMaterial替代PhysicalMaterial降低着色器开销
+                    child.material = new THREE.MeshStandardMaterial({
                         color: 0x1a1a1a,          // 统一深黑色调
-                        roughness: 0.78,           // 略低粗糙度，增加褶皱高光对比
+                        roughness: 0.78,
                         metalness: 0.0,
-                        clearcoat: 0.15,           // 轻微清漆层，强化绳索表面质感
-                        clearcoatRoughness: 0.6,
-                        flatShading: true,         // 平面着色：凸显每条绳索编织面的几何层次
-                        envMapIntensity: 0.8
+                        flatShading: true          // 平面着色：凸显每条绳索编织面的几何层次
                     });
                 }
             });
             group.add(model);
 
-            // 草鞋专用顶部射灯——居中照射两只草鞋，消除左右明暗差异
-            const sandalSpot = new THREE.SpotLight(0xfff5e6, 3.0, 3.0, Math.PI / 5, 0.3, 1.5);
-            sandalSpot.position.set(0, 0.6, 0);
-            sandalSpot.target.position.set(0, 0, 0);
-            sandalSpot.castShadow = true;
-            sandalSpot.shadow.mapSize.width = 2048;
-            sandalSpot.shadow.mapSize.height = 2048;
-            sandalSpot.shadow.bias = -0.0002;
-            sandalSpot.shadow.normalBias = 0.02;
-            group.add(sandalSpot);
-            group.add(sandalSpot.target);
-
-            // 补光：从前方低角度填充阴影，均匀照亮两只草鞋
-            const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
-            fillLight.position.set(0, 0.3, 0.3);
-            group.add(fillLight);
+            // 性能优化：移除草鞋专用射灯和补光，由全局照明统一覆盖
         },
         function (xhr) {
             console.log('草鞋模型加载: ' + (xhr.loaded / xhr.total * 100) + '%');
@@ -2527,7 +2448,7 @@ function createWoodenSpoon() {
     const handle = new THREE.Mesh(handleGeo, woodMat);
     handle.rotation.z = Math.PI / 2;
     handle.position.set(-0.1, 0.01, 0);
-    handle.castShadow = true;
+    handle.castShadow = false; // 性能优化：关闭小物体阴影
     group.add(handle);
 
     // 勺头（扁球体）
@@ -2536,7 +2457,7 @@ function createWoodenSpoon() {
     bowl.scale.set(1, 0.6, 0.8);
     bowl.rotation.x = Math.PI;
     bowl.position.set(0.04, 0.015, 0);
-    bowl.castShadow = true;
+    bowl.castShadow = false; // 性能优化：关闭小物体阴影
     group.add(bowl);
 
     // 勺头边缘
@@ -2578,7 +2499,7 @@ function createMortar() {
     const barrelGeo = new THREE.CylinderGeometry(0.06, 0.05, 0.7, 24);
     const barrel = new THREE.Mesh(barrelGeo, barrelMat);
     barrel.position.y = 0.35;
-    barrel.castShadow = true;
+    barrel.castShadow = false; // 性能优化：关闭小物体阴影
     group.add(barrel);
 
     // 炮口加强环
@@ -2669,7 +2590,7 @@ function createBugle() {
         const angle = t * Math.PI * 0.4;
         seg.position.set(-0.14 + t * 0.35, 0.02 + Math.sin(angle) * 0.03, 0);
         seg.rotation.z = -angle * 0.5;
-        seg.castShadow = true;
+        seg.castShadow = false; // 性能优化：关闭小物体阴影
         group.add(seg);
     }
 
@@ -2707,7 +2628,7 @@ function createTypewriter() {
     const bodyMat = new THREE.MeshPhysicalMaterial({color:0x2f2f2f,roughness:0.5,metalness:0.3});
     const keyMat = new THREE.MeshPhysicalMaterial({color:0xf5f0e8,roughness:0.7});
     const body = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.12,0.3),bodyMat);
-    body.castShadow = true;
+    body.castShadow = false; // 性能优化：关闭小物体阴影
     group.add(body);
     for(let row=0;row<3;row++){
         for(let col=0;col<6;col++){
@@ -2790,14 +2711,14 @@ function createPrintingPress() {
     const baseGeo = new THREE.BoxGeometry(0.45, 0.12, 0.35);
     const base = new THREE.Mesh(baseGeo, bodyMat);
     base.position.y = 0.06;
-    base.castShadow = true;
+    base.castShadow = false; // 性能优化：关闭小物体阴影
     group.add(base);
 
     // 机身主体
     const bodyGeo = new THREE.BoxGeometry(0.38, 0.25, 0.3);
     const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.position.y = 0.24;
-    body.castShadow = true;
+    body.castShadow = false; // 性能优化：关闭小物体阴影
     group.add(body);
 
     // 字盘（顶部平面）
@@ -2866,13 +2787,19 @@ function createDustParticles() {
 }
 
 function updateDustParticles() {
+    // 性能优化：每3帧才更新一次粒子，减少CPU开销
+    if (!updateDustParticles._skip) { updateDustParticles._skip = 0; }
+    updateDustParticles._skip++;
+    if (updateDustParticles._skip < 3) return;
+    updateDustParticles._skip = 0;
+
     const particles = scene.getObjectByName('dustParticles');
     if(!particles) return;
     const positions = particles.geometry.attributes.position.array;
     for(let i = 0; i < positions.length / 3; i++){
-        positions[i*3] += (Math.random() - 0.5) * 0.002;
-        positions[i*3+1] += (Math.random() - 0.5) * 0.002;
-        positions[i*3+2] += (Math.random() - 0.5) * 0.002;
+        positions[i*3] += (Math.random() - 0.5) * 0.004;
+        positions[i*3+1] += (Math.random() - 0.5) * 0.004;
+        positions[i*3+2] += (Math.random() - 0.5) * 0.004;
         if(positions[i*3+1] < 0) positions[i*3+1] = 4;
         if(positions[i*3+1] > 4) positions[i*3+1] = 0;
     }
