@@ -1395,7 +1395,8 @@ function init() {
     controls.addEventListener('unlock', () => {
         isLocked = false;
         stopAutoNarration();
-        if (!isPanelOpen && isPlaying) {
+        // 故事模式面板显示时不暂停（用户需要点击按钮）
+        if (!isPanelOpen && isPlaying && !isStoryMode && !(document.getElementById('storyPanel').classList.contains('visible'))) {
             isPaused = true;
             document.getElementById('pauseOverlay').classList.add('visible');
         }
@@ -3803,8 +3804,11 @@ function showStoryNode(index) {
         '<p style="margin-bottom:10px;">' + p.replace(/"(.+?)"/g, '<span class="highlight">"$1"</span>') + '</p>'
     ).join('');
 
-    // 显示面板
+    // 显示面板并解锁鼠标，让用户可以点击按钮
     document.getElementById('storyPanel').classList.add('visible');
+    if (controls.isLocked && !isMobile) {
+        controls.unlock();
+    }
 
     // 高亮对应展品
     highlightStoryExhibit(node.exhibitName);
@@ -3821,11 +3825,15 @@ function advanceStoryNarrative() {
     document.getElementById('storyPanel').classList.remove('visible');
 
     if (currentStoryIndex < storyNodes.length - 1) {
-        // 进入移动阶段：等待玩家走到下一个节点
+        // 进入移动阶段：重新锁定鼠标，等待玩家走到下一个节点
         isStoryWaitingForPlayer = true;
         document.getElementById('storyGuideMarker').classList.add('visible');
 
-        // 2秒后自动隐藏引导提示
+        if (!isMobile && !controls.isLocked && isPlaying) {
+            controls.lock();
+        }
+
+        // 4秒后自动隐藏引导提示
         setTimeout(() => {
             document.getElementById('storyGuideMarker').classList.remove('visible');
         }, 4000);
