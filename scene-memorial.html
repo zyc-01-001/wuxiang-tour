@@ -935,62 +935,62 @@ const storyNodes = [
     {
         year: '1938.4',
         chapter: '第一章 · 草鞋',
-        position: { x: -1.5, z: -0.5 },
+        position: { x: -3.8, z: -1.5 },
         exhibitName: '叶成焕的草鞋',
         narrative: [
             '长乐村战斗的硝烟还未散尽。你跟随772团撤退，看见战士们抬着一位年轻的团长。',
             '“队伍……队伍呢？”叶成焕团长用微弱的声音问道，这是他留下的最后一句话。年仅24岁。',
             '老乡董来旺为他整理遗物时，看到叶团长还穿着那双破旧的草鞋，赶忙拿来一双布鞋给他换上。那双草鞋鞋底已磨穿，棉线断裂，却陪伴着一位铁血战将走完了最后的战斗岁月。'
         ],
-        arriveHint: '穿过展厅中央，向左前方走，找到“叶成焕的草鞋”展台。'
+        arriveHint: '向左前方走，找到左墙“叶成焕的草鞋”展台。'
     },
     {
         year: '1938.6',
         chapter: '第二章 · 印刷机',
-        position: { x: 1.5, z: -1.5 },
+        position: { x: 3.8, z: 1.5 },
         exhibitName: '何克的打字机',
         narrative: [
             '武乡砖壁村，八路军总部。你正站岗，看见一个金发碧眼的外国人扛着一台打字机走来。',
             '“我叫乔治·何克，英国记者。”他用生硬的中文自我介绍，“我要把你们的故事，告诉全世界。”',
             '他坐在土炕上，借着油灯的微光，手指在打字机键盘上飞快敲击。那台黑色的机器，将把太行山上的抗战故事，传递到地球的每一个角落。国际友人的正义之声，让世界听到了中国人民抗战的呐喊。'
         ],
-        arriveHint: '向右后方走，找到“何克的打字机”展台。'
+        arriveHint: '向右前方走，找到右墙“何克的打字机”展台。'
     },
     {
         year: '1940.8',
         chapter: '第三章 · 神炮',
-        position: { x: 1.5, z: 1.5 },
+        position: { x: 1.5, z: -3.0 },
         exhibitName: '八路军拉发式迫击炮',
         narrative: [
             '关家垴高地上，日军的碉堡火力凶猛。你趴在战壕里，看着身旁的赵章成主任正在改装一门迫击炮。',
             '“没有前支架，照样能打！”他拆掉前支架，只保留炮管和底盘，炮口几乎贴地。',
             '轰！轰！轰！炮弹像长了眼睛一样钻进碉堡射孔。日军惊呆了——迫击炮还能平射？！这哪是炮，分明是八路军“没有条件创造条件”的智慧结晶。赵章成，神炮手，名副其实。'
         ],
-        arriveHint: '向右后方走，找到“八路军拉发式迫击炮”展台。'
+        arriveHint: '向右后方走，找到前墙“八路军拉发式迫击炮”展台。'
     },
     {
         year: '1941.11',
         chapter: '第四章 · 军号',
-        position: { x: -1.5, z: 1.5 },
+        position: { x: -1.5, z: -3.0 },
         exhibitName: '崔振芳的军号',
         narrative: [
             '黄崖洞“翁圪廊”天险上，毒气弥漫。你听到一阵断断续续的号声——那是防毒号令。',
             '18岁的号兵崔振芳强忍咳嗽，把军号抵在石头上，手指紧扣，牙齿与号嘴几乎熔铸在一起。',
             '战友们牺牲了，他独自扛起两箱手榴弹，先后投出120余枚。一发炮弹在身旁炸响，他跪着，号声未绝。1700多名太行号兵，平均年龄不足20岁，最小的只有13岁。号声穿越时空，至今回响。'
         ],
-        arriveHint: '向左后方走，找到“崔振芳的军号”展台。'
+        arriveHint: '向左后方走，找到前墙“崔振芳的军号”展台。'
     },
     {
         year: '1942.5',
         chapter: '终章 · 铅字',
-        position: { x: 1.5, z: -0.5 },
+        position: { x: 3.8, z: -1.5 },
         exhibitName: '《新华日报》铸字机',
         narrative: [
             '后沟村的印刷厂里，铸字机日夜运转。没有纸，就收集破布烂鞋造纸浆；没有油墨，就烧松枝取油。',
             '社长何云带领记者们即审即刻、即校即印。百团大战期间，他们日夜战斗在最前沿，把胜利的捷报传遍太行山。',
             '1942年5月，日军3万兵力疯狂扫荡。何云等40多位新闻战士壮烈牺牲。报社先后经历6次反“扫荡”、7次搬家，坚持出版896期，从未中断。以笔为枪，以铅字为弹——这是另一种抗战，同样壮烈。'
         ],
-        arriveHint: '向右前方走，找到最后一个展台——“《新华日报》铸字机”。'
+        arriveHint: '向右后方走，找到右墙最后一个展台——“《新华日报》铸字机”。'
     }
 ];
 
@@ -1567,18 +1567,15 @@ function createExhibitionHall() {
     floor.receiveShadow = true;
     scene.add(floor);
 
-    // 中央深色走道引导线
-    const guideGeo = new THREE.PlaneGeometry(1.5, roomW);
-    const guideMat = new THREE.MeshPhysicalMaterial({
-        color: 0x3a0a0a,
-        roughness: 0.95,
-        transparent: true,
-        opacity: 0.6
-    });
-    const guide = new THREE.Mesh(guideGeo, guideMat);
-    guide.rotation.x = -Math.PI / 2;
-    guide.position.y = 0.005;
-    scene.add(guide);
+    // 地面参观引导线（环形，提示顺时针参观动线）
+    const guideCurve = new THREE.EllipseCurve(0, 0, 3.2, 2.0, 0, 2 * Math.PI, false, 0);
+    const guidePoints = guideCurve.getPoints(64);
+    const guideGeo = new THREE.BufferGeometry().setFromPoints(
+        guidePoints.map(p => new THREE.Vector3(p.x, 0.008, p.y))
+    );
+    const guideMat = new THREE.LineBasicMaterial({ color: 0x8b0000, transparent: true, opacity: 0.25 });
+    const guideLine = new THREE.Line(guideGeo, guideMat);
+    scene.add(guideLine);
 
     // 天花板
     const ceilGeo = new THREE.PlaneGeometry(roomL, roomW);
@@ -1767,17 +1764,23 @@ function createExhibitionHall() {
         scene.add(lampGroup);
     });
 
-    // ========== 中间课桌式布局：2列 x 4行，等距排列，两侧留出走廊 ==========
-    // 左列
-    createMainDisplay(-1.5, -1.5, '行军锅', ()=>createMarchingPot());
-    createMainDisplay(-1.5, -0.5, '叶成焕的草鞋', ()=>createStrawSandals());
-    createMainDisplay(-1.5,  1.5, '崔振芳的军号', ()=>createBugle());
-    // 右列
-    createMainDisplay(1.5, -1.5, '何克的打字机', ()=>createTypewriter());
-    createMainDisplay(1.5, -0.5, '《新华日报》铸字机', ()=>createPrintingPress());
-    createMainDisplay(1.5,  1.5, '八路军拉发式迫击炮', ()=>createMortar());
+    // ========== 展厅展品布局：顺时针参观动线 ==========
+    // 入口在后方中央，观众进入后沿顺时针方向参观
+    // 动线：右墙 → 前墙 → 左墙 → 中央，形成自然回路
 
-    // ========== 后方大型展品：八路军东渡黄河铁船（地面独立展位） ==========
+    // ---- 右墙区域：通信与宣传类文物 ----
+    createMainDisplay(3.8, 1.5, '何克的打字机', ()=>createTypewriter());
+    createMainDisplay(3.8, -1.5, '《新华日报》铸字机', ()=>createPrintingPress());
+
+    // ---- 前墙区域：武器与战斗类文物 ----
+    createMainDisplay(1.5, -3.0, '八路军拉发式迫击炮', ()=>createMortar());
+    createMainDisplay(-1.5, -3.0, '崔振芳的军号', ()=>createBugle());
+
+    // ---- 左墙区域：生活与后勤类文物 ----
+    createMainDisplay(-3.8, -1.5, '叶成焕的草鞋', ()=>createStrawSandals());
+    createMainDisplay(-3.8, 1.5, '行军锅', ()=>createMarchingPot());
+
+    // ========== 展厅中央：大型运输类文物 ==========
     createIronBoatDisplay();
 
     // ========== 前墙：八路军太行纪念馆照片墙 ==========
@@ -3061,6 +3064,9 @@ function createIronBoatDisplay() {
     const group = new THREE.Group();
     group.userData = { itemName: '八路军东渡黄河使用的铁船' };
 
+    // 铁船位置：展厅中央偏后
+    const bx = 0, bz = 0.5;
+
     // 仿水纹地面平台
     const platformGeo = new THREE.BoxGeometry(1.8, 0.03, 1.0);
     const platformMat = new THREE.MeshPhysicalMaterial({
@@ -3069,18 +3075,18 @@ function createIronBoatDisplay() {
         metalness: 0.0
     });
     const platform = new THREE.Mesh(platformGeo, platformMat);
-    platform.position.set(0, 0.015, -2.8);
+    platform.position.set(bx, 0.015, bz);
     platform.receiveShadow = true;
     group.add(platform);
 
     // 铁船模型（放在平台上）
     const boat = createIronBoat();
-    boat.position.set(0, 0.03, -2.8);
+    boat.position.set(bx, 0.03, bz);
     boat.scale.set(1.2, 1.2, 1.2);
     group.add(boat);
 
     // 绳索围栏
-    createRopeBarrier(0, -2.8, 1.6);
+    createRopeBarrier(bx, bz, 1.6);
 
     // 展品说明牌（地面立式）
     const signGroup = new THREE.Group();
@@ -3089,7 +3095,7 @@ function createIronBoatDisplay() {
         new THREE.BoxGeometry(0.3, 0.01, 0.15),
         new THREE.MeshPhysicalMaterial({color: 0x1a1a1a, metalness: 0.3, roughness: 0.5})
     );
-    signBase.position.set(0, 0.005, -3.35);
+    signBase.position.set(bx, 0.005, bz - 0.55);
     signGroup.add(signBase);
     // 说明牌面板（Canvas纹理）
     const signCanvas = document.createElement('canvas');
@@ -3119,21 +3125,21 @@ function createIronBoatDisplay() {
         new THREE.PlaneGeometry(0.3, 0.15),
         new THREE.MeshBasicMaterial({ map: signTex })
     );
-    signPanel.position.set(0, 0.08, -3.35);
+    signPanel.position.set(bx, 0.08, bz - 0.55);
     signPanel.rotation.x = -Math.PI / 6;
     signGroup.add(signPanel);
     group.add(signGroup);
 
     // 铁船专用射灯（双灯照射大型展品）
     const boatSpot1 = new THREE.SpotLight(0xfff5e6, 1.5, 4.0, Math.PI / 4, 0.4, 1.5);
-    boatSpot1.position.set(0.8, 2.5, -2.2);
-    boatSpot1.target.position.set(0, 0.15, -2.8);
+    boatSpot1.position.set(bx + 0.8, 2.5, bz + 0.6);
+    boatSpot1.target.position.set(bx, 0.15, bz);
     boatSpot1.castShadow = false;
     group.add(boatSpot1);
     group.add(boatSpot1.target);
     const boatSpot2 = new THREE.SpotLight(0xfff5e6, 1.5, 4.0, Math.PI / 4, 0.4, 1.5);
-    boatSpot2.position.set(-0.8, 2.5, -2.2);
-    boatSpot2.target.position.set(0, 0.15, -2.8);
+    boatSpot2.position.set(bx - 0.8, 2.5, bz + 0.6);
+    boatSpot2.target.position.set(bx, 0.15, bz);
     boatSpot2.castShadow = false;
     group.add(boatSpot2);
     group.add(boatSpot2.target);
