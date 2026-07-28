@@ -1035,6 +1035,7 @@ let storyGuideDots = [];
 let storyTargetMarker = null;
 let isStoryWaitingForPlayer = false;
 let storyExhibitHighlights = [];
+let isEndingStory = false;
 
 const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 let joystickLeft = { active: false, dx: 0, dy: 0, touchId: null };
@@ -1364,7 +1365,8 @@ function init() {
         isLocked = false;
         stopAutoNarration();
         // 故事模式面板显示时不暂停（用户需要点击按钮）
-        if (!isPanelOpen && isPlaying && !isStoryMode && !(document.getElementById('storyPanel').classList.contains('visible'))) {
+        // 故事模式结束时也不暂停（即将重新锁定）
+        if (!isPanelOpen && isPlaying && !isStoryMode && !isEndingStory && !(document.getElementById('storyPanel').classList.contains('visible'))) {
             isPaused = true;
             document.getElementById('pauseOverlay').classList.add('visible');
         }
@@ -4204,6 +4206,7 @@ function skipStory() {
 }
 
 function endStoryMode() {
+    isEndingStory = true;
     isStoryMode = false;
     currentStoryIndex = -1;
     isStoryWaitingForPlayer = false;
@@ -4225,6 +4228,14 @@ function endStoryMode() {
     narrationText.textContent = '🎉 故事模式已结束，您可以自由漫游展厅，近距离观看每件展品。';
     narrationBar.classList.add('visible');
     setTimeout(() => narrationBar.classList.remove('visible'), 5000);
+
+    // 重新锁定鼠标，恢复自由漫游控制
+    if (!isMobile && isPlaying) {
+        controls.lock();
+    }
+
+    // 延迟清除标志，确保 unlock 事件不会触发暂停
+    setTimeout(() => { isEndingStory = false; }, 500);
 }
 
 // ========== 启动 ==========
