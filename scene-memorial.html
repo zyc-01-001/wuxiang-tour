@@ -2600,7 +2600,7 @@ function createStrawSandals() {
 
     // 异步加载GLB模型
     const loader = new THREE.GLTFLoader();
-    loader.meshoptDecoder = MeshoptDecoder;
+    loader.setMeshoptDecoder(MeshoptDecoder);
 
     loader.load('models/straw_sandal.glb', function(gltf) {
         const model = gltf.scene;
