@@ -2582,631 +2582,73 @@ function createMarchingPot() {
     return group;
 }
 
-// 草鞋（程序化生成——基于img2threejs分析框架+三视角参考照片精准重建）
-// img2threejs spec: 螺旋盘绕鞋底(coiled rope sole) + 人字形夹趾绑带(thong-style) + 方形后跟(squared heel)
-// 参考：叶成焕草鞋正面/侧面/俯视照片
+// 草鞋（Tripo3D高质量GLB模型——磨损针织拖鞋风格，真实老化质感）
 function createStrawSandals() {
     const group = new THREE.Group();
 
-    // ===== 材质定义（基于参考照片多视角PBR分析） =====
-    // 鞋底外缘绳条：天然米色氧化纤维（照片显示cream/beige perimeter）
-    const soleRopeMat = new THREE.MeshStandardMaterial({
-        color: 0xc8baa0, roughness: 0.95, metalness: 0.0
-    });
-    // 鞋底footbed灰蓝色：照片显示grayish-blue central footbed（矿物保存/老化）
-    const footbedMat = new THREE.MeshStandardMaterial({
-        color: 0x7a8088, roughness: 0.97, metalness: 0.0
-    });
-    // 编织鞋面材质：浅米色绳条（照片显示off-white/ivory structural cords）
-    const weaveMat = new THREE.MeshStandardMaterial({
-        color: 0xd4c8ac, roughness: 0.92, metalness: 0.0
-    });
-    // 深色磨损编织材质：灰棕色（压缩老化纤维）
-    const wornWeaveMat = new THREE.MeshStandardMaterial({
-        color: 0x988868, roughness: 0.96, metalness: 0.0
-    });
-    // 鞋头/后跟重度磨损：深褐至近黑（照片显示darker brown, soil-stained）
-    const darkWearMat = new THREE.MeshStandardMaterial({
-        color: 0x5a4838, roughness: 0.99, metalness: 0.0
-    });
-    // 绑带绳材质：浅褐色（照片显示lighter bleached fibers for strap system）
-    const strapMat = new THREE.MeshStandardMaterial({
-        color: 0xc4b090, roughness: 0.93, metalness: 0.0
-    });
-    // 土渍污染材质：深褐色（照片显示soil contact staining）
-    const dirtMat = new THREE.MeshStandardMaterial({
-        color: 0x6a5840, roughness: 0.98, metalness: 0.0
-    });
-    // 后跟环材质：浅褐
-    const heelMat = new THREE.MeshStandardMaterial({
-        color: 0xb8a682, roughness: 0.94, metalness: 0.0
-    });
+    // ===== 加载Tripo3D高质量GLB模型 =====
+    const loader = new THREE.GLTFLoader();
+    loader.setMeshoptDecoder(MeshoptDecoder);
 
-    // 确定性随机数（保证每次生成一致）
-    function seedRandom(seed) {
-        let s = seed;
-        return function() {
-            s = (s * 9301 + 49297) % 233280;
-            return s / 233280;
-        };
-    }
+    loader.load(
+        'models/straw_sandal.glb',
+        function(gltf) {
+            const model = gltf.scene;
 
-    // ===== 生成单只草鞋 =====
-    function createOneSandal(offsetX, isLeft) {
-        const sandal = new THREE.Group();
-        const dir = isLeft ? -1 : 1;
-        // 右鞋磨损更严重（照片显示右鞋advanced degradation, collapsed arch）
-        const wearLevel = isLeft ? 1.0 : 1.4;
-        const rng = seedRandom(isLeft ? 42 : 137);
-
-        // --- 1. 鞋底基板（船形轮廓，前翘后方，螺旋盘绕基础面） ---
-        const soleShape = new THREE.Shape();
-        // 船形：前圆后稍方（照片显示squared-off heel, elongated oval footprint）
-        soleShape.moveTo(0, -0.14);
-        soleShape.bezierCurveTo(0.035, -0.14, 0.058, -0.115, 0.062, -0.07);
-        soleShape.bezierCurveTo(0.068, -0.03, 0.062, 0.02, 0.055, 0.055);
-        soleShape.bezierCurveTo(0.05, 0.085, 0.045, 0.10, 0.042, 0.108);
-        // 后跟方形（照片：blunt vertical rear face）
-        soleShape.lineTo(-0.042, 0.108);
-        soleShape.bezierCurveTo(-0.045, 0.10, -0.05, 0.085, -0.055, 0.055);
-        soleShape.bezierCurveTo(-0.062, 0.02, -0.068, -0.03, -0.062, -0.07);
-        soleShape.bezierCurveTo(-0.058, -0.115, -0.035, -0.14, 0, -0.14);
-
-        const soleGeo = new THREE.ExtrudeGeometry(soleShape, {
-            depth: 0.024, bevelEnabled: true,
-            bevelThickness: 0.005, bevelSize: 0.003, bevelSegments: 2,
-            curveSegments: 32
-        });
-        soleGeo.rotateX(-Math.PI / 2);
-        soleGeo.translate(0, 0.012, 0);
-
-        // 鞋头上翘弧度（照片：prominent upward curl, 3-4cm boat-shaped prow）
-        const posAttr = soleGeo.attributes.position;
-        for (let i = 0; i < posAttr.count; i++) {
-            const x = posAttr.getX(i);
-            const y = posAttr.getY(i);
-            const z = posAttr.getZ(i);
-            // 鞋头上翘（z负方向）
-            if (z < -0.05) {
-                const t = (-0.05 - z) / 0.09;
-                posAttr.setY(i, y + t * t * 0.035 * wearLevel);
-            }
-            // 后跟微翘
-            if (z > 0.08) {
-                const t = (z - 0.08) / 0.03;
-                posAttr.setY(i, y + t * t * 0.008);
-            }
-            // 右鞋足弓塌陷（照片显示collapsed arch on right sandal）
-            if (!isLeft && z > -0.02 && z < 0.04) {
-                const archT = 1 - Math.abs(z - 0.01) / 0.03;
-                posAttr.setY(i, y - archT * 0.006);
-            }
-            // 表面磨损噪声（照片显示compression patterns）
-            if (y > 0.015) {
-                const n = (Math.sin(x * 140) * Math.cos(z * 100) + Math.sin(x * 220 + z * 180) * 0.5) * 0.0025;
-                posAttr.setY(i, y + n * wearLevel);
-            }
-        }
-        soleGeo.computeVertexNormals();
-
-        const sole = new THREE.Mesh(soleGeo, soleRopeMat);
-        sole.castShadow = true;
-        sole.receiveShadow = true;
-        sandal.add(sole);
-
-        // --- 2. footbed灰蓝色层（照片：grayish-blue central footbed area） ---
-        const footbedShape = new THREE.Shape();
-        footbedShape.moveTo(-0.032, -0.09);
-        footbedShape.bezierCurveTo(-0.038, -0.04, -0.038, 0.02, -0.032, 0.06);
-        footbedShape.bezierCurveTo(-0.028, 0.085, 0.028, 0.085, 0.032, 0.06);
-        footbedShape.bezierCurveTo(0.038, 0.02, 0.038, -0.04, 0.032, -0.09);
-        footbedShape.bezierCurveTo(0.018, -0.11, -0.018, -0.11, -0.032, -0.09);
-        const footbedGeo = new THREE.ExtrudeGeometry(footbedShape, {
-            depth: 0.002, bevelEnabled: false, curveSegments: 24
-        });
-        footbedGeo.rotateX(-Math.PI / 2);
-        // footbed上翘跟随鞋头
-        const fbPos = footbedGeo.attributes.position;
-        for (let i = 0; i < fbPos.count; i++) {
-            const z = fbPos.getZ(i);
-            const y = fbPos.getY(i);
-            if (z < -0.05) {
-                const t = (-0.05 - z) / 0.06;
-                fbPos.setY(i, y + t * t * 0.035 * wearLevel);
-            }
-            if (!isLeft && z > -0.02 && z < 0.04) {
-                const archT = 1 - Math.abs(z - 0.01) / 0.03;
-                fbPos.setY(i, y - archT * 0.006);
-            }
-        }
-        footbedGeo.computeVertexNormals();
-        footbedGeo.translate(0, 0.022, 0);
-        const footbed = new THREE.Mesh(footbedGeo, footbedMat);
-        footbed.receiveShadow = true;
-        sandal.add(footbed);
-
-        // --- 3. 螺旋盘绕鞋底结构（照片核心特征：coiled rope construction） ---
-        // 从后跟中心开始螺旋向外扩展（照片显示concentric/spiral coiling pattern）
-        const soleCoils = new THREE.Group();
-        const coilLayers = 2; // 2-3层盘绕
-        for (let layer = 0; layer < coilLayers; layer++) {
-            const yBase = 0.024 + layer * 0.006;
-            const numTurns = 3;
-            const pointsPerTurn = 40;
-            const totalPoints = numTurns * pointsPerTurn;
-            for (let turn = 0; turn < totalPoints; turn++) {
-                const t = turn / totalPoints;
-                // Archimedean spiral expanding outward
-                const angle = t * Math.PI * 2 * numTurns;
-                const maxRadius = 0.052 * Math.sqrt(t);
-                // 椭圆变形匹配鞋底形状
-                const rX = maxRadius * 1.0;
-                const rZ = maxRadius * 1.3;
-                const xPos = Math.cos(angle) * rX;
-                const zPos = Math.sin(angle) * rZ * 0.85 - 0.01;
-
-                // 鞋头上翘跟随
-                let yLift = 0;
-                if (zPos < -0.05) {
-                    const toeT = (-0.05 - zPos) / 0.09;
-                    yLift = toeT * toeT * 0.035 * wearLevel;
-                }
-                // 右鞋足弓塌陷
-                if (!isLeft && zPos > -0.02 && zPos < 0.04) {
-                    const archT = 1 - Math.abs(zPos - 0.01) / 0.03;
-                    yLift -= archT * 0.006;
-                }
-
-                // 检查是否在鞋底范围内
-                const widthAtZ = 0.062 * Math.sqrt(Math.max(0, 1 - Math.pow(zPos / 0.13, 2)));
-                if (Math.abs(xPos) > widthAtZ) continue;
-
-                const coilGeo = new THREE.SphereGeometry(0.0045, 6, 4);
-                const coilMat = (layer === 0 && Math.abs(zPos) < 0.05) ? footbedMat : soleRopeMat;
-                const coil = new THREE.Mesh(coilGeo, coilMat);
-                coil.position.set(xPos, yBase + yLift, zPos);
-                coil.scale.set(1.8, 0.8, 1.0);
-                coil.castShadow = true;
-                soleCoils.add(coil);
-
-                // 连接线段（盘绕绳的连续性）
-                if (turn > 0 && turn % 2 === 0) {
-                    const prevT = (turn - 2) / totalPoints;
-                    const prevAngle = prevT * Math.PI * 2 * numTurns;
-                    const prevR = 0.052 * Math.sqrt(prevT);
-                    const prevX = Math.cos(prevAngle) * prevR;
-                    const prevZ = Math.sin(prevAngle) * prevR * 1.3 * 0.85 - 0.01;
-                    let prevYLift = 0;
-                    if (prevZ < -0.05) {
-                        const toeT = (-0.05 - prevZ) / 0.09;
-                        prevYLift = toeT * toeT * 0.035 * wearLevel;
-                    }
-                    const mid = new THREE.Vector3(
-                        (xPos + prevX) / 2,
-                        yBase + (yLift + prevYLift) / 2,
-                        (zPos + prevZ) / 2
-                    );
-                    const start = new THREE.Vector3(prevX, yBase + prevYLift, prevZ);
-                    const end = new THREE.Vector3(xPos, yBase + yLift, zPos);
-                    const dist = start.distanceTo(end);
-                    if (dist < 0.03) {
-                        const segGeo = new THREE.CylinderGeometry(0.003, 0.003, dist, 5);
-                        const seg = new THREE.Mesh(segGeo, soleRopeMat);
-                        seg.position.copy(mid);
-                        seg.lookAt(end);
-                        seg.rotateX(Math.PI / 2);
-                        seg.castShadow = true;
-                        soleCoils.add(seg);
+            // 遍历所有Mesh，优化材质
+            model.traverse(function(child) {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                    // 增强材质粗糙度，模拟老旧草鞋质感
+                    if (child.material) {
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(mat => {
+                                mat.roughness = Math.max(mat.roughness || 0.5, 0.85);
+                                mat.metalness = 0.0;
+                            });
+                        } else {
+                            child.material.roughness = Math.max(child.material.roughness || 0.5, 0.85);
+                            child.material.metalness = 0.0;
+                        }
                     }
                 }
-            }
+            });
+
+            // 模型缩放与定位调整
+            // Tripo3D模型默认尺寸较大，需要缩放到展台合适比例
+            model.scale.set(0.5, 0.5, 0.5);
+            model.rotation.y = Math.PI / 2;  // 旋转90度使草鞋横向展示
+            model.position.y = 0;
+            model.position.x = 0;
+
+            group.add(model);
+        },
+        function(xhr) {
+            console.log('草鞋模型加载进度: ' + (xhr.loaded / xhr.total * 100).toFixed(1) + '%');
+        },
+        function(error) {
+            console.error('草鞋模型加载失败:', error);
         }
-        sandal.add(soleCoils);
+    );
 
-        // --- 4. 鞋底边缘加粗绳条（照片：thicker rope bundles forming raised perimeter） ---
-        const edgeRope = new THREE.Group();
-        const edgeSegments = 48;
-        for (let i = 0; i < edgeSegments; i++) {
-            const t = i / edgeSegments;
-            const angle = t * Math.PI * 2;
-            // 椭圆参数化
-            const rX = 0.062;
-            const rZ = 0.13;
-            const xPos = Math.cos(angle) * rX;
-            const zPos = Math.sin(angle) * rZ;
-            // 鞋头上翘
-            let yLift = 0;
-            if (zPos < -0.05) {
-                const toeT = (-0.05 - zPos) / 0.09;
-                yLift = toeT * toeT * 0.035 * wearLevel;
-            }
-            if (!isLeft && zPos > -0.02 && zPos < 0.04) {
-                const archT = 1 - Math.abs(zPos - 0.01) / 0.03;
-                yLift -= archT * 0.006;
-            }
-            const edgeGeo = new THREE.SphereGeometry(0.006, 6, 4);
-            const edgeMat = (zPos < -0.08 || zPos > 0.08) ? darkWearMat : soleRopeMat;
-            const edge = new THREE.Mesh(edgeGeo, edgeMat);
-            edge.position.set(xPos, 0.026 + yLift, zPos);
-            edge.scale.set(1.2, 0.9, 1.5);
-            edge.castShadow = true;
-            edgeRope.add(edge);
-        }
-        sandal.add(edgeRope);
-
-        // --- 5. 纵向编织绳条（照片：flat twining/plaiting creating smooth walking surface） ---
-        const soleWeave = new THREE.Group();
-        const numLong = 10;
-        for (let i = 0; i < numLong; i++) {
-            const t = i / (numLong - 1);
-            const xPos = -0.048 + t * 0.096;
-            const points = [];
-            for (let j = 0; j <= 16; j++) {
-                const s = j / 16;
-                const zPos = -0.12 + s * 0.23;
-                const widthFactor = Math.sqrt(Math.max(0, 1 - Math.pow(zPos / 0.13, 2)));
-                const yLift = (zPos < -0.05) ? (0.035 * Math.pow((-0.05 - zPos) / 0.09, 2) * wearLevel) : 0;
-                const archDrop = (!isLeft && zPos > -0.02 && zPos < 0.04) ?
-                    (1 - Math.abs(zPos - 0.01) / 0.03) * 0.006 : 0;
-                points.push(new THREE.Vector3(xPos * widthFactor, 0.028 + yLift - archDrop, zPos));
-            }
-            const curve = new THREE.CatmullRomCurve3(points);
-            const ropeGeo = new THREE.TubeGeometry(curve, 20, 0.0028, 5, false);
-            const mat = (Math.abs(xPos) < 0.015) ? footbedMat : weaveMat;
-            const rope = new THREE.Mesh(ropeGeo, mat);
-            rope.castShadow = true;
-            soleWeave.add(rope);
-        }
-        // 横向绑扎线（照片：interstitial binding at rope junction points）
-        const numLat = 9;
-        for (let i = 0; i < numLat; i++) {
-            const t = i / (numLat - 1);
-            const zPos = -0.10 + t * 0.21;
-            const widthAtZ = 0.062 * Math.sqrt(Math.max(0, 1 - Math.pow(zPos / 0.13, 2)));
-            const yLift = (zPos < -0.05) ? (0.035 * Math.pow((-0.05 - zPos) / 0.09, 2) * wearLevel) : 0;
-            const archDrop = (!isLeft && zPos > -0.02 && zPos < 0.04) ?
-                (1 - Math.abs(zPos - 0.01) / 0.03) * 0.006 : 0;
-            const points = [
-                new THREE.Vector3(-widthAtZ, 0.030 + yLift - archDrop, zPos),
-                new THREE.Vector3(0, 0.032 + yLift - archDrop, zPos),
-                new THREE.Vector3(widthAtZ, 0.030 + yLift - archDrop, zPos)
-            ];
-            const curve = new THREE.CatmullRomCurve3(points);
-            const ropeGeo = new THREE.TubeGeometry(curve, 10, 0.0022, 5, false);
-            const rope = new THREE.Mesh(ropeGeo, wornWeaveMat);
-            rope.castShadow = true;
-            soleWeave.add(rope);
-        }
-        sandal.add(soleWeave);
-
-        // --- 6. 鞋头重度磨损（照片：dense wrapping and knotting, reinforced rounded cap） ---
-        // 鞋头缠绕绳团
-        for (let i = 0; i < 8; i++) {
-            const angle = rng() * Math.PI * 2;
-            const r = rng() * 0.028;
-            const wGeo = new THREE.SphereGeometry(0.004 + rng() * 0.003, 5, 4);
-            const w = new THREE.Mesh(wGeo, darkWearMat);
-            const yLift = 0.035 * wearLevel;
-            w.position.set(
-                Math.cos(angle) * r * 0.7,
-                0.028 + yLift + rng() * 0.01,
-                -0.11 + Math.cos(angle) * r
-            );
-            w.scale.set(1.8, 0.6, 1.3);
-            w.castShadow = true;
-            sandal.add(w);
-        }
-        // 鞋头翘起的散乱纤维（照片：fraying at cord ends）
-        const numToeFrays = isLeft ? 5 : 8;
-        for (let i = 0; i < numToeFrays; i++) {
-            const fragGeo = new THREE.CylinderGeometry(0.0012, 0.0018, 0.014 + rng() * 0.012, 4);
-            const frag = new THREE.Mesh(fragGeo, darkWearMat);
-            frag.position.set(
-                (rng() - 0.5) * 0.035,
-                0.035 + rng() * 0.015,
-                -0.12 + rng() * 0.025
-            );
-            frag.rotation.set(
-                rng() * 1.0 - 0.5,
-                rng() * Math.PI,
-                Math.PI / 2 + (rng() - 0.5) * 0.8
-            );
-            frag.castShadow = true;
-            sandal.add(frag);
-        }
-
-        // --- 7. 鞋面/鞋帮（照片：interlaced cord system, lattice pattern over instep） ---
-        const upperWeave = new THREE.Group();
-        // 前挡编织体（脚趾前方，横向弧形隆起，照片：toe cap wrapping）
-        const frontBarPoints = [];
-        for (let i = 0; i <= 12; i++) {
-            const t = i / 12;
-            const xPos = -0.045 + t * 0.09;
-            const zPos = -0.07 + Math.sin(t * Math.PI) * 0.018;
-            const yToeLift = (zPos < -0.05) ? 0.035 * Math.pow((-0.05 - zPos) / 0.09, 2) * wearLevel : 0;
-            frontBarPoints.push(new THREE.Vector3(xPos, 0.038 + yToeLift, zPos));
-        }
-        const frontBarCurve = new THREE.CatmullRomCurve3(frontBarPoints);
-        const frontBarGeo = new THREE.TubeGeometry(frontBarCurve, 16, 0.0065, 6, false);
-        const frontBar = new THREE.Mesh(frontBarGeo, weaveMat);
-        frontBar.castShadow = true;
-        upperWeave.add(frontBar);
-
-        // 鞋面立档（两侧向上延伸的编织壁，照片：basket-weave/lattice pattern）
-        for (let side = -1; side <= 1; side += 2) {
-            // 4层螺旋缠绕（增加密度）
-            for (let layer = 0; layer < 4; layer++) {
-                const yBase = 0.032 + layer * 0.011;
-                const points = [];
-                for (let i = 0; i <= 14; i++) {
-                    const t = i / 14;
-                    const zPos = -0.05 + t * 0.15;
-                    const widthAtZ = 0.052 * Math.sin(t * Math.PI * 0.8 + 0.3) + 0.008;
-                    const yArc = Math.sin(t * Math.PI) * 0.01;
-                    const yToeLift = (zPos < -0.05) ? 0.035 * Math.pow((-0.05 - zPos) / 0.09, 2) * wearLevel : 0;
-                    points.push(new THREE.Vector3(
-                        side * widthAtZ,
-                        yBase + yArc + yToeLift,
-                        zPos
-                    ));
-                }
-                const curve = new THREE.CatmullRomCurve3(points);
-                const ropeGeo = new THREE.TubeGeometry(curve, 16, 0.0042, 5, false);
-                const mat = (layer === 0 || layer === 3) ? wornWeaveMat : weaveMat;
-                const rope = new THREE.Mesh(ropeGeo, mat);
-                rope.castShadow = true;
-                upperWeave.add(rope);
-            }
-
-            // 交叉编织点（照片：cross-weaving of thinner strands）
-            for (let i = 0; i < 6; i++) {
-                const t = i / 5;
-                const zPos = -0.04 + t * 0.12;
-                const xPos = side * (0.04 * Math.sin(t * Math.PI * 0.8 + 0.3) + 0.006);
-                const crossGeo = new THREE.SphereGeometry(0.0035, 5, 4);
-                const cross = new THREE.Mesh(crossGeo, wornWeaveMat);
-                cross.position.set(xPos, 0.045 + Math.sin(t * Math.PI) * 0.02, zPos);
-                cross.castShadow = true;
-                upperWeave.add(cross);
-            }
-        }
-
-        // 后跟杯（照片：wrapped cord system forming semi-enclosed heel counter, squared）
-        // 3层后跟缠绕
-        for (let layer = 0; layer < 3; layer++) {
-            const yBase = 0.03 + layer * 0.014;
-            const heelPoints = [];
-            for (let i = 0; i <= 20; i++) {
-                const t = i / 20;
-                const angle = Math.PI * 0.15 + t * Math.PI * 0.7;
-                const xPos = Math.cos(angle) * 0.038 * dir;
-                const zPos = 0.085 + Math.sin(angle) * 0.024;
-                const yPos = yBase + Math.sin(t * Math.PI) * (0.025 - layer * 0.005);
-                heelPoints.push(new THREE.Vector3(xPos, yPos, zPos));
-            }
-            const curve = new THREE.CatmullRomCurve3(heelPoints);
-            const radius = 0.0055 - layer * 0.0008;
-            const geo = new THREE.TubeGeometry(curve, 20, radius, 6, false);
-            const mat = (layer === 0) ? wornWeaveMat : (layer === 2 ? darkWearMat : heelMat);
-            const heelRing = new THREE.Mesh(geo, mat);
-            heelRing.castShadow = true;
-            upperWeave.add(heelRing);
-        }
-
-        // 后跟方形填充（照片：squared-off heel with denser coil wrapping）
-        for (let i = 0; i < 5; i++) {
-            const t = i / 4;
-            const fillGeo = new THREE.SphereGeometry(0.004, 5, 4);
-            const fill = new THREE.Mesh(fillGeo, wornWeaveMat);
-            fill.position.set(
-                (rng() - 0.5) * 0.06,
-                0.035 + rng() * 0.04,
-                0.095 + (rng() - 0.5) * 0.02
-            );
-            fill.scale.set(1.5, 0.7, 1.0);
-            fill.castShadow = true;
-            upperWeave.add(fill);
-        }
-
-        sandal.add(upperWeave);
-
-        // --- 8. 人字形夹趾绑带系统（照片核心特征：toe-post thong, straps from between toes） ---
-        const straps = new THREE.Group();
-
-        // 趾间主柱（从鞋头前端穿出，照片：toe loop at anterior end for big toe separation）
-        const toePostPts = [
-            new THREE.Vector3(0, 0.040, -0.11),
-            new THREE.Vector3(0, 0.055, -0.10),
-            new THREE.Vector3(0, 0.070, -0.08),
-            new THREE.Vector3(0, 0.085, -0.05)
-        ];
-        const toePostCurve = new THREE.CatmullRomCurve3(toePostPts);
-        const toePostGeo = new THREE.TubeGeometry(toePostCurve, 16, 0.006, 6, false);
-        const toePost = new THREE.Mesh(toePostGeo, strapMat);
-        toePost.castShadow = true;
-        straps.add(toePost);
-
-        // 人字形分叉（从趾间柱顶向两侧分开，照片：diverging to lateral and medial anchor points）
-        for (let side = -1; side <= 1; side += 2) {
-            const pts = [
-                new THREE.Vector3(0, 0.085, -0.05),
-                new THREE.Vector3(side * 0.015, 0.075, -0.02),
-                new THREE.Vector3(side * 0.025, 0.065, 0.02),
-                new THREE.Vector3(side * 0.030, 0.055, 0.06),
-                new THREE.Vector3(side * 0.028, 0.050, 0.09)
-            ];
-            const curve = new THREE.CatmullRomCurve3(pts);
-            const geo = new THREE.TubeGeometry(curve, 18, 0.0055, 6, false);
-            const strap = new THREE.Mesh(geo, strapMat);
-            strap.castShadow = true;
-            straps.add(strap);
-        }
-
-        // 足背横带（照片：instep straps, multiple parallel cords）
-        for (let i = 0; i < 3; i++) {
-            const zPos = -0.02 + i * 0.04;
-            const points = [];
-            for (let j = 0; j <= 10; j++) {
-                const t = j / 10;
-                const xPos = -0.04 + t * 0.08;
-                const yArc = 0.055 + Math.sin(t * Math.PI) * 0.025 - i * 0.005;
-                points.push(new THREE.Vector3(xPos, yArc, zPos));
-            }
-            const curve = new THREE.CatmullRomCurve3(points);
-            const geo = new THREE.TubeGeometry(curve, 14, 0.004, 5, false);
-            const strap = new THREE.Mesh(geo, strapMat);
-            strap.castShadow = true;
-            straps.add(strap);
-        }
-
-        // 侧缚带（从足弓边缘向足背中央，照片：edge binding wraps around sole edge at midfoot）
-        for (let side = -1; side <= 1; side += 2) {
-            const pts = [
-                new THREE.Vector3(side * 0.055, 0.028, 0.0),
-                new THREE.Vector3(side * 0.035, 0.05, 0.01),
-                new THREE.Vector3(side * 0.018, 0.07, 0.02),
-                new THREE.Vector3(0, 0.075, 0.03)
-            ];
-            const curve = new THREE.CatmullRomCurve3(pts);
-            const geo = new THREE.TubeGeometry(curve, 14, 0.0045, 6, false);
-            const strap = new THREE.Mesh(geo, strapMat);
-            strap.castShadow = true;
-            straps.add(strap);
-        }
-
-        // 后跟固定带（从后跟杯向足背延伸，照片：heel counter with tie closure）
-        for (let side = -1; side <= 1; side += 2) {
-            const pts = [
-                new THREE.Vector3(side * 0.030, 0.045, 0.10),
-                new THREE.Vector3(side * 0.025, 0.065, 0.07),
-                new THREE.Vector3(side * 0.015, 0.075, 0.04),
-                new THREE.Vector3(0, 0.078, 0.035)
-            ];
-            const curve = new THREE.CatmullRomCurve3(pts);
-            const geo = new THREE.TubeGeometry(curve, 14, 0.004, 6, false);
-            const strap = new THREE.Mesh(geo, strapMat);
-            strap.castShadow = true;
-            straps.add(strap);
-        }
-
-        // 足背系结点（多带交汇处的绳结，照片：complex knotting visible）
-        const knotGeo = new THREE.SphereGeometry(0.009, 8, 6);
-        const knot = new THREE.Mesh(knotGeo, wornWeaveMat);
-        knot.position.set(0, 0.078, 0.035);
-        knot.castShadow = true;
-        straps.add(knot);
-
-        // 第二系结点（后跟处）
-        const knot2Geo = new THREE.SphereGeometry(0.007, 7, 5);
-        const knot2 = new THREE.Mesh(knot2Geo, wornWeaveMat);
-        knot2.position.set(0, 0.055, 0.09);
-        knot2.castShadow = true;
-        straps.add(knot2);
-
-        // 绑带末端散落绳头（照片：frayed ends, loosened tension）
-        const numFrayEnds = isLeft ? 4 : 7;
-        for (let i = 0; i < numFrayEnds; i++) {
-            const endGeo = new THREE.CylinderGeometry(0.002, 0.001, 0.018 + rng() * 0.015, 4);
-            const end = new THREE.Mesh(endGeo, strapMat);
-            end.position.set(
-                (rng() - 0.5) * 0.03,
-                0.07 + rng() * 0.03,
-                0.02 + rng() * 0.04
-            );
-            end.rotation.set(
-                rng() * 0.8 - 0.4,
-                rng() * Math.PI,
-                Math.PI / 2 + (rng() - 0.5) * 1.0
-            );
-            end.castShadow = true;
-            straps.add(end);
-        }
-
-        sandal.add(straps);
-
-        // --- 9. 锚固结（足弓两侧的绳结凸起，照片：edge binding anchors） ---
-        for (let side = -1; side <= 1; side += 2) {
-            const anchorGeo = new THREE.SphereGeometry(0.008, 8, 6);
-            const anchor = new THREE.Mesh(anchorGeo, wornWeaveMat);
-            anchor.position.set(side * 0.052, 0.030, 0.0);
-            anchor.scale.set(1, 0.6, 1.2);
-            anchor.castShadow = true;
-            sandal.add(anchor);
-        }
-
-        // --- 10. 土渍/污渍（照片：soil-stained areas, darker patches） ---
-        const numStains = isLeft ? 5 : 9;
-        for (let i = 0; i < numStains; i++) {
-            const stainGeo = new THREE.SphereGeometry(0.006 + rng() * 0.004, 5, 4);
-            const stain = new THREE.Mesh(stainGeo, dirtMat);
-            const zPos = -0.08 + rng() * 0.18;
-            const xPos = (rng() - 0.5) * 0.08;
-            let yLift = 0.028;
-            if (zPos < -0.05) {
-                yLift += 0.035 * Math.pow((-0.05 - zPos) / 0.09, 2) * wearLevel;
-            }
-            stain.position.set(xPos, yLift, zPos);
-            stain.scale.set(2.0, 0.3, 1.5);
-            stain.castShadow = false;
-            sandal.add(stain);
-        }
-
-        // --- 11. 散落草绳碎屑（照片：fiber loss, fraying） ---
-        const numDebris = isLeft ? 5 : 9;
-        for (let i = 0; i < numDebris; i++) {
-            const fragGeo = new THREE.CylinderGeometry(0.0015, 0.001, 0.012 + rng() * 0.015, 4);
-            const frag = new THREE.Mesh(fragGeo, wornWeaveMat);
-            const zPos = -0.08 + rng() * 0.18;
-            let yLift = 0.028;
-            if (zPos < -0.05) {
-                yLift += 0.035 * Math.pow((-0.05 - zPos) / 0.09, 2) * wearLevel;
-            }
-            frag.position.set(
-                (rng() - 0.5) * 0.08,
-                yLift + rng() * 0.02,
-                zPos
-            );
-            frag.rotation.set(
-                rng() * Math.PI,
-                rng() * Math.PI,
-                rng() * Math.PI
-            );
-            frag.castShadow = true;
-            sandal.add(frag);
-        }
-
-        // --- 12. 右鞋额外塌陷变形（照片：right sandal collapsed structure, splayed appearance） ---
-        if (!isLeft) {
-            sandal.rotation.z = 0.04; // 略微倾斜
-            sandal.scale.x = 1.05;   // 略微展开
-        }
-
-        // 定位
-        sandal.position.x = offsetX;
-        sandal.rotation.y = isLeft ? 0.08 : -0.12;
-        return sandal;
-    }
-
-    // 生成一双草鞋
-    const leftSandal = createOneSandal(-0.08, true);
-    const rightSandal = createOneSandal(0.08, false);
-    group.add(leftSandal);
-    group.add(rightSandal);
-
-    // 整体缩放
-    group.scale.set(1.5, 1.5, 1.5);
-
-    // 草鞋专用射灯
-    const sandalSpot = new THREE.SpotLight(0xfff5e6, 1.0, 3.0, Math.PI / 5, 0.3, 1.5);
+    // 草鞋专用射灯——暖色调聚光灯突出展品
+    const sandalSpot = new THREE.SpotLight(0xfff5e6, 1.2, 3.0, Math.PI / 5, 0.3, 1.5);
     sandalSpot.position.set(0, 0.6, 0);
     sandalSpot.target.position.set(0, 0, 0);
     sandalSpot.castShadow = false;
     group.add(sandalSpot);
     group.add(sandalSpot.target);
 
+    // 辅助环境光，确保模型细节可见
+    const fillLight = new THREE.DirectionalLight(0xffe8d0, 0.3);
+    fillLight.position.set(0.3, 0.5, 0.3);
+    group.add(fillLight);
+
     group.userData = { itemName: '叶成焕的草鞋' };
     return group;
 }
+
 
 // 八路军82毫米拉发式迫击炮（3D模型+照片纹理）
 function createMortar() {
