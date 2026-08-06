@@ -1387,7 +1387,8 @@ function init() {
     createExhibitionHall();
     updateLoading(85);
 
-    createDustParticles();
+    // 尘埃粒子已移除——保持展厅空间干净整洁，无漂浮杂物
+    // createDustParticles();
     updateLoading(90);
 
     window.addEventListener('resize', onWindowResize);
@@ -1504,21 +1505,21 @@ function onKeyUp(event) {
     }
 }
 
-// ========== 灯光系统（极致性能优化版：仅3盏光源） ==========
+// ========== 灯光系统（沉浸式文博光影：暗环境+展品聚光） ==========
 function createLights() {
-    // 环境光——提高强度，替代多盏点光源的基础照明
-    const ambientLight = new THREE.AmbientLight(0xfff5e6, 1.1);
+    // 环境光——降低强度，营造暗光氛围
+    const ambientLight = new THREE.AmbientLight(0xfff5e6, 0.35);
     scene.add(ambientLight);
 
-    // 半球光——天-地补光，模拟整体漫反射，零额外开销
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x4a2a1a, 1.2);
+    // 半球光——减弱天地补光，保持整体偏暗
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x2a1510, 0.4);
     scene.add(hemiLight);
 
-    // 主光源：单盏天花板聚光灯（唯一投射阴影的光源）
-    const mainSpot = new THREE.SpotLight(0xfff0d4, 2.5, 16, 0.7, 0.5, 1);
+    // 主光源：天花板中央聚光灯（保留阴影投射）
+    const mainSpot = new THREE.SpotLight(0xfff0d4, 1.2, 16, 0.7, 0.5, 1);
     mainSpot.position.set(0, 3.8, 0);
     mainSpot.target.position.set(0, 0, 0);
-    mainSpot.castShadow = true;  // 主光源保留阴影投射
+    mainSpot.castShadow = true;
     mainSpot.shadow.mapSize.width = 1024;
     mainSpot.shadow.mapSize.height = 1024;
     mainSpot.shadow.bias = -0.0001;
@@ -1526,6 +1527,49 @@ function createLights() {
     mainSpot.shadow.camera.far = 10;
     scene.add(mainSpot);
     scene.add(mainSpot.target);
+
+    // ========== 每个展台上方定向暖白射灯 ==========
+    const exhibitLightPositions = [
+        {x: -1.5, z:  2.5},  // 军号
+        {x:  1.5, z:  1.5},  // 迫击炮
+        {x: -1.5, z:  0.5},  // 行军锅
+        {x: -1.5, z: -0.5},  // 草鞋
+        {x:  1.5, z: -1.5},  // 打字机
+        {x: -1.5, z: -2.2},  // 铸字机
+    ];
+    exhibitLightPositions.forEach(function(pos) {
+        var spot = new THREE.SpotLight(0xfff5e6, 1.8, 4.0, Math.PI / 5, 0.35, 1.5);
+        spot.position.set(pos.x, 3.6, pos.z);
+        spot.target.position.set(pos.x, 0.85, pos.z);
+        spot.castShadow = false;
+        scene.add(spot);
+        scene.add(spot.target);
+    });
+
+    // ========== 前墙照片墙洗墙灯（柔和上照） ==========
+    var wallWashPositions = [-3.5, -1.5, 0.5, 2.5];
+    wallWashPositions.forEach(function(wx) {
+        var wash = new THREE.SpotLight(0xfff0d4, 0.6, 5.0, Math.PI / 3, 0.6, 2.0);
+        wash.position.set(wx, 3.6, -3.5);
+        wash.target.position.set(wx, 1.5, -3.85);
+        wash.castShadow = false;
+        scene.add(wash);
+        scene.add(wash.target);
+    });
+
+    // ========== 左右墙面标语洗墙灯 ==========
+    var sideWallWashL = new THREE.SpotLight(0xfff0d4, 0.5, 6.0, Math.PI / 3, 0.7, 2.0);
+    sideWallWashL.position.set(-5.5, 3.6, 0);
+    sideWallWashL.target.position.set(-5.9, 2.0, 0);
+    sideWallWashL.castShadow = false;
+    scene.add(sideWallWashL);
+    scene.add(sideWallWashL.target);
+    var sideWallWashR = new THREE.SpotLight(0xfff0d4, 0.5, 6.0, Math.PI / 3, 0.7, 2.0);
+    sideWallWashR.position.set(5.5, 3.6, 0);
+    sideWallWashR.target.position.set(5.9, 2.0, 0);
+    sideWallWashR.castShadow = false;
+    scene.add(sideWallWashR);
+    scene.add(sideWallWashR.target);
 }
 
 // ========== 展厅创建（精品展厅 12m x 8m x 4m） ==========
@@ -1558,6 +1602,22 @@ function createExhibitionHall() {
     ceil.rotation.x = Math.PI / 2;
     ceil.position.y = roomH;
     scene.add(ceil);
+
+    // 天花板吊顶装饰框（简洁线条框架）
+    var ceilingFrameMat = new THREE.MeshPhysicalMaterial({color: 0x2a2a2a, metalness: 0.3, roughness: 0.6});
+    var framePositions = [
+        {x: 0, z: 0, w: roomL - 0.4, d: 0.04},
+        {x: 0, z: 0, w: 0.04, d: roomW - 0.4},
+        {x: -3, z: 0, w: 0.03, d: roomW - 0.6},
+        {x: 3, z: 0, w: 0.03, d: roomW - 0.6},
+        {x: 0, z: -2, w: roomL - 0.6, d: 0.03},
+        {x: 0, z: 2, w: roomL - 0.6, d: 0.03},
+    ];
+    framePositions.forEach(function(f) {
+        var frame = new THREE.Mesh(new THREE.BoxGeometry(f.w, 0.05, f.d), ceilingFrameMat);
+        frame.position.set(f.x, roomH - 0.025, f.z);
+        scene.add(frame);
+    });
 
     // 天花板筒灯模型
     const downlightPositions = [
@@ -1763,14 +1823,59 @@ function createExhibitionHall() {
     // ========== 监控摄像头 ==========
     createSecurityCamera(0, 3.6, -3.6);
 
-    // ========== 灭火器 ==========
-    createFireExtinguisher(-5.2, -3);
+    // ========== 角落简约消防设施（对称摆放，不突兀） ==========
+    createFireExtinguisher(-5.5, -3.5);
+    createFireExtinguisher(5.5, -3.5);
 
     // ========== 入口导览手册架 ==========
     createBrochureRack(1.5, 3.2);
 
-    // ========== 左右墙面装饰标语 ==========
+    // ========== 左右墙面装饰标语+嵌入式射灯 ==========
     createWallDecorations();
+
+    // ========== 左右墙面嵌入式装饰射灯 ==========
+    createWallRecessedLights();
+}
+
+// ========== 墙面嵌入式装饰射灯 ==========
+function createWallRecessedLights() {
+    var recessedMat = new THREE.MeshPhysicalMaterial({color: 0x1a1a1a, metalness: 0.6, roughness: 0.3});
+    var glowMat = new THREE.MeshBasicMaterial({color: 0xffeedd});
+
+    // 左墙嵌入式射灯（4盏，均匀分布）
+    var leftWallZ = [-3.0, -1.0, 1.0, 3.0];
+    leftWallZ.forEach(function(z) {
+        var housing = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.12, 0.08), recessedMat);
+        housing.position.set(-5.88, 3.2, z);
+        scene.add(housing);
+        var glow = new THREE.Mesh(new THREE.CircleGeometry(0.02, 12), glowMat);
+        glow.position.set(-5.86, 3.2, z);
+        glow.rotation.y = Math.PI / 2;
+        scene.add(glow);
+    });
+
+    // 右墙嵌入式射灯（4盏，均匀分布）
+    var rightWallZ = [-3.0, -1.0, 1.0, 3.0];
+    rightWallZ.forEach(function(z) {
+        var housing = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.12, 0.08), recessedMat);
+        housing.position.set(5.88, 3.2, z);
+        scene.add(housing);
+        var glow = new THREE.Mesh(new THREE.CircleGeometry(0.02, 12), glowMat);
+        glow.position.set(5.86, 3.2, z);
+        glow.rotation.y = -Math.PI / 2;
+        scene.add(glow);
+    });
+
+    // 后墙嵌入式射灯（入口上方2盏）
+    [-1.5, 1.5].forEach(function(x) {
+        var housing = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.04), recessedMat);
+        housing.position.set(x, 3.2, 3.88);
+        scene.add(housing);
+        var glow = new THREE.Mesh(new THREE.CircleGeometry(0.02, 12), glowMat);
+        glow.position.set(x, 3.2, 3.86);
+        glow.rotation.x = Math.PI;
+        scene.add(glow);
+    });
 }
 
 // ========== 左右墙面装饰标语及壁灯 ==========
@@ -2196,58 +2301,66 @@ function createDescriptionPlate(itemName) {
 
 // ========== 绳索围栏（红色天鹅绒绳索+金色立柱） ==========
 function createRopeBarrier(cx, cz, size) {
-    const postHeight = 0.5;
-    const postRadius = 0.025;
-    const half = size / 2 + 0.15;
+    var postHeight = 0.55;
+    var postRadius = 0.022;
+    var ropeHeight = 0.50;  // 统一拉带高度
+    var half = size / 2 + 0.18;
 
-    const postPositions = [
+    // 四角立柱位置——严格矩形对齐
+    var postPositions = [
         {x: cx - half, z: cz - half},
         {x: cx + half, z: cz - half},
         {x: cx + half, z: cz + half},
         {x: cx - half, z: cz + half}
     ];
 
-    // 金色立柱
-    postPositions.forEach(pos=>{
-        const postGroup = new THREE.Group();
-        const post = new THREE.Mesh(
-            new THREE.CylinderGeometry(postRadius, postRadius, postHeight, 8),
+    // 金色立柱——统一规格
+    postPositions.forEach(function(pos) {
+        var postGroup = new THREE.Group();
+        // 立柱主体
+        var post = new THREE.Mesh(
+            new THREE.CylinderGeometry(postRadius, postRadius * 1.1, postHeight, 12),
             materials.goldPost
         );
         post.position.y = postHeight / 2;
         postGroup.add(post);
-
         // 顶部球
-        const ball = new THREE.Mesh(
-            new THREE.SphereGeometry(0.04, 8, 8),
+        var ball = new THREE.Mesh(
+            new THREE.SphereGeometry(0.035, 12, 12),
             materials.goldPost
         );
-        ball.position.y = postHeight + 0.04;
+        ball.position.y = postHeight + 0.035;
         postGroup.add(ball);
-
         // 底座
-        const base = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.04, 0.05, 0.02, 8),
+        var base = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.045, 0.055, 0.025, 12),
             materials.goldPost
         );
-        base.position.y = 0.01;
+        base.position.y = 0.012;
         postGroup.add(base);
+        // 底座装饰环
+        var ring = new THREE.Mesh(
+            new THREE.TorusGeometry(0.04, 0.004, 6, 16),
+            materials.goldPost
+        );
+        ring.position.y = 0.025;
+        ring.rotation.x = Math.PI / 2;
+        postGroup.add(ring);
 
         postGroup.position.set(pos.x, 0, pos.z);
         scene.add(postGroup);
     });
 
-    // 红色绳索（4条）
-    for (let i = 0; i < 4; i++) {
-        const p1 = postPositions[i];
-        const p2 = postPositions[(i + 1) % 4];
-        const dx = p2.x - p1.x;
-        const dz = p2.z - p1.z;
-        const len = Math.sqrt(dx*dx + dz*dz);
-        const ropeGeo = new THREE.CylinderGeometry(0.008, 0.008, len, 6, 1, true);
-        const rope = new THREE.Mesh(ropeGeo, materials.ropeRed);
-        rope.position.set((p1.x + p2.x)/2, postHeight - 0.02, (p1.z + p2.z)/2);
-        // 下垂弧线效果（简化：略微降低中点）
+    // 红色绳索——4条直线，水平拉直无下垂
+    for (var i = 0; i < 4; i++) {
+        var p1 = postPositions[i];
+        var p2 = postPositions[(i + 1) % 4];
+        var dx = p2.x - p1.x;
+        var dz = p2.z - p1.z;
+        var len = Math.sqrt(dx * dx + dz * dz);
+        var ropeGeo = new THREE.CylinderGeometry(0.007, 0.007, len, 6);
+        var rope = new THREE.Mesh(ropeGeo, materials.ropeRed);
+        rope.position.set((p1.x + p2.x) / 2, ropeHeight, (p1.z + p2.z) / 2);
         rope.rotation.y = Math.atan2(dx, dz);
         rope.rotation.z = Math.PI / 2;
         scene.add(rope);
@@ -4180,7 +4293,7 @@ function animate() {
     handleMovement();
     checkItemFocus();
     checkAutoNarration();
-    updateDustParticles();
+    // updateDustParticles(); // 已移除漂浮杂物
 
     // 故事模式：检测玩家是否到达当前节点
     if (isStoryMode && isStoryWaitingForPlayer && currentStoryIndex >= 0) {
