@@ -192,7 +192,7 @@
         .mobile-menu a:last-child { border-bottom: none; }
         .mobile-menu a:hover { color: var(--color-red); }
 
-        /* ========== Hero 轮播区 ========== */
+        /* ========== Hero 视频封面区 ========== */
         .hero {
             position: relative;
             width: 100%; height: 70vh;
@@ -200,17 +200,11 @@
             margin-top: var(--nav-height);
             overflow: hidden;
         }
-        .hero-slides {
-            display: flex; width: 100%; height: 100%;
-            transition: transform 0.8s cubic-bezier(0.4,0,0.2,1);
-        }
-        .hero-slide {
-            min-width: 100%; height: 100%;
-            position: relative;
-        }
-        .hero-slide img {
+        .hero-video {
+            position: absolute; inset: 0;
             width: 100%; height: 100%;
             object-fit: cover;
+            z-index: 0;
         }
         .hero-overlay {
             position: absolute; inset: 0;
@@ -227,6 +221,7 @@
             padding: 60px 24px;
             max-width: var(--max-width);
             margin: 0 auto;
+            z-index: 2;
         }
         .hero-badge {
             display: inline-block;
@@ -252,41 +247,6 @@
             color: var(--color-text-secondary);
             max-width: 600px;
         }
-
-        /* 轮播指示器 */
-        .hero-indicators {
-            position: absolute; bottom: 24px; right: 24px;
-            display: flex; gap: 8px;
-        }
-        .hero-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.3);
-            transition: all var(--transition);
-            cursor: pointer;
-        }
-        .hero-dot.active {
-            width: 28px; border-radius: 4px;
-            background: var(--color-red);
-        }
-
-        /* 轮播箭头 */
-        .hero-arrow {
-            position: absolute; top: 50%;
-            transform: translateY(-50%);
-            width: 44px; height: 44px;
-            border-radius: 50%;
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(8px);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px;
-            transition: all var(--transition);
-            z-index: 10;
-            color: #fff;
-        }
-        .hero-arrow:hover { background: var(--color-red); }
-        .hero-arrow.prev { left: 20px; }
-        .hero-arrow.next { right: 20px; }
 
         /* ========== 通用容器 ========== */
         .container {
@@ -924,7 +884,6 @@
             .mobile-menu { display: block; }
 
             .hero { height: 50vh; min-height: 320px; }
-            .hero-arrow { display: none; }
             .hero-content { padding: 40px 20px; }
 
             .content-grid {
@@ -1009,46 +968,17 @@
     <a href="#footer">关于我们</a>
 </div>
 
-<!-- ========== Hero 轮播区 ========== -->
-<section class="hero" id="hero" role="region" aria-label="纪念馆图片轮播">
-    <div class="hero-slides" id="heroSlides">
-        <div class="hero-slide">
-            <img src="images/memorial.webp" alt="八路军太行纪念馆">
-            <div class="hero-overlay"></div>
-        </div>
-        <div class="hero-slide">
-            <img src="images/interior1.webp" alt="馆内实景" loading="lazy">
-            <div class="hero-overlay"></div>
-        </div>
-        <div class="hero-slide">
-            <img src="images/interior2.webp" alt="馆内实景" loading="lazy">
-            <div class="hero-overlay"></div>
-        </div>
-        <div class="hero-slide">
-            <img src="images/interior3.webp" alt="馆内实景" loading="lazy">
-            <div class="hero-overlay"></div>
-        </div>
-        <div class="hero-slide">
-            <img src="images/interior4.webp" alt="馆内实景" loading="lazy">
-            <div class="hero-overlay"></div>
-        </div>
-        <div class="hero-slide">
-            <img src="images/interior5.webp" alt="馆内实景" loading="lazy">
-            <div class="hero-overlay"></div>
-        </div>
-        <div class="hero-slide">
-            <img src="images/interior6.webp" alt="馆内实景" loading="lazy">
-            <div class="hero-overlay"></div>
-        </div>
-    </div>
+<!-- ========== Hero 视频封面区 ========== -->
+<section class="hero" id="hero" role="region" aria-label="纪念馆视频封面">
+    <video class="hero-video" autoplay muted loop playsinline preload="auto">
+        <source src="media/hero-cover.mp4" type="video/mp4">
+    </video>
+    <div class="hero-overlay"></div>
     <div class="hero-content">
         <div class="hero-badge">全国爱国主义教育示范基地</div>
         <h1 class="hero-title">八路军太行纪念馆</h1>
         <p class="hero-subtitle">铭记抗战历史，传承太行精神。走进这座全面反映八路军抗战史实的大型革命纪念馆，感受那段烽火岁月的伟大与壮烈。</p>
     </div>
-    <div class="hero-indicators" id="heroIndicators"></div>
-    <button class="hero-arrow prev" id="heroPrev">&#10094;</button>
-    <button class="hero-arrow next" id="heroNext">&#10095;</button>
 </section>
 
 <!-- ========== 3D场景演示入口 ========== -->
@@ -1232,8 +1162,7 @@
                         <div class="info-icon">&#128339;</div>
                         <div>
                             <div class="info-label">开放时间</div>
-                            <div class="info-value">周二至周日 9:00 - 17:00</div>
-                            <div class="info-value" style="color:var(--color-text-muted);font-size:12px">周一闭馆（法定节假日除外）</div>
+                            <div class="info-value">周一至周日 9:00 - 17:00</div>
                         </div>
                     </div>
                     <div class="info-item">
@@ -1248,13 +1177,6 @@
                         <div>
                             <div class="info-label">门票</div>
                             <div class="info-value">免费开放（凭身份证入馆）</div>
-                        </div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-icon">&#128222;</div>
-                        <div>
-                            <div class="info-label">咨询电话</div>
-                            <div class="info-value">0355-6437583</div>
                         </div>
                     </div>
                     <div class="info-item">
@@ -1497,9 +1419,8 @@
             <div class="footer-col">
                 <h3>联系方式</h3>
                 <div class="footer-contact-item">&#128205; 山西省长治市武乡县太行街</div>
-                <div class="footer-contact-item">&#128222; 0355-6437583</div>
                 <div class="footer-contact-item">&#128231; info@b8jz.com</div>
-                <div class="footer-contact-item">&#128339; 周二至周日 9:00-17:00</div>
+                <div class="footer-contact-item">&#128339; 周一至周日 9:00-17:00</div>
             </div>
         </div>
         <div class="footer-bottom">
@@ -1627,59 +1548,17 @@ function updateActiveNav() {
 }
 
 /* ========================================
-   Hero 轮播
+   Hero 视频自动播放（兼容移动端）
    ======================================== */
-const heroSlides = document.getElementById('heroSlides');
-const indicators = document.getElementById('heroIndicators');
-const totalSlides = heroSlides.children.length;
-let currentSlide = 0;
-let slideInterval;
-
-// 创建指示器
-for (let i = 0; i < totalSlides; i++) {
-    const dot = document.createElement('div');
-    dot.className = 'hero-dot' + (i === 0 ? ' active' : '');
-    dot.addEventListener('click', function() { goToSlide(i); });
-    indicators.appendChild(dot);
-}
-
-function goToSlide(n) {
-    currentSlide = n;
-    heroSlides.style.transform = 'translateX(-' + (n * 100) + '%)';
-    // 更新指示器
-    document.querySelectorAll('.hero-dot').forEach(function(dot, i) {
-        dot.classList.toggle('active', i === n);
+const heroVideo = document.querySelector('.hero-video');
+if (heroVideo) {
+    heroVideo.play().catch(function() {
+        // 某些浏览器需要用户交互才能自动播放，监听首次点击后重试
+        document.addEventListener('click', function() {
+            heroVideo.play().catch(function() {});
+        }, { once: true });
     });
 }
-
-function nextSlide() {
-    goToSlide((currentSlide + 1) % totalSlides);
-}
-
-function prevSlide() {
-    goToSlide((currentSlide - 1 + totalSlides) % totalSlides);
-}
-
-// 自动轮播
-function startAutoSlide() {
-    slideInterval = setInterval(nextSlide, 5000);
-}
-function stopAutoSlide() {
-    clearInterval(slideInterval);
-}
-
-startAutoSlide();
-
-document.getElementById('heroNext').addEventListener('click', function() {
-    stopAutoSlide(); nextSlide(); startAutoSlide();
-});
-document.getElementById('heroPrev').addEventListener('click', function() {
-    stopAutoSlide(); prevSlide(); startAutoSlide();
-});
-
-// 鼠标悬停暂停
-document.querySelector('.hero').addEventListener('mouseenter', stopAutoSlide);
-document.querySelector('.hero').addEventListener('mouseleave', startAutoSlide);
 
 /* ========================================
    音频播放器
@@ -1879,18 +1758,18 @@ const AI_MODEL = 'gpt-4o-mini';
 // 本地知识库
 const localKnowledge = {
     '纪念馆': '八路军太行纪念馆位于山西省长治市武乡县城西，是全国唯一一座全面反映八路军抗战史实的大型革命纪念馆。纪念馆始建于1988年，由邓小平同志亲笔题写馆名。馆区占地面积45万平方米，建筑面积1.6万平方米，馆藏文物8000余件，其中国家一级文物150件。',
-    '开放时间': '纪念馆开放时间为周二至周日 8:30-17:30（17:00停止入馆），周一闭馆（法定节假日除外）。建议预留2-3小时参观时间。游客可通过微信小程序提前预约门票，扫码即可快速入馆。',
+    '开放时间': '纪念馆开放时间为周一至周日 9:00-17:00（17:00停止入馆）。建议预留2-3小时参观时间。游客可通过微信小程序提前预约门票，扫码即可快速入馆。',
     '门票': '八路军抗战史基本陈列展览免费向公众开放，凭有效身份证件领取门票入馆。临时展览、百团大战半景画馆、窑洞战景观、语音导览、专业讲解等服务需另行收费。',
-    '交通': '前往纪念馆的交通方式：1.自驾：太长高速（二广高速）武乡出口下，沿指示牌行驶约5分钟即到。2.火车：乘太焦铁路到武乡站，出站后打车约10分钟可达。3.长途汽车：长治市、太原市均有直达武乡的班车。纪念馆地址：山西省长治市武乡县太行街363号。咨询电话：0355-6437583。',
+    '交通': '前往纪念馆的交通方式：1.自驾：太长高速（二广高速）武乡出口下，沿指示牌行驶约5分钟即到。2.火车：乘太焦铁路到武乡站，出站后打车约10分钟可达。3.长途汽车：长治市、太原市均有直达武乡的班车。纪念馆地址：山西省长治市武乡县太行街363号。',
     '展览': '馆内主要展览包括：1."八路军抗战史陈列"——展线长1450米，分7个部分全面展示八路军抗战历程，是核心展览。2."八路军将领馆"——介绍八路军主要将领生平事迹。3."百团大战半景画馆"——以声光电技术再现百团大战壮观场面。4."窑洞战景观"——复原太行山区军民利用窑洞与日寇周旋的战斗场景。5.序厅8根铜柱浮雕、抗战纪念碑等。馆内运用了大量现代展陈技术，包括场景复原、幻影成像、电子沙盘等。',
     '百团大战': '百团大战是1940年8月20日至12月15日，八路军在彭德怀副总司令指挥下发动的大规模破袭战。参战兵力达105个团约40万人，主要破坏日军在华北的交通线（正太铁路、同蒲铁路、平汉铁路等）和据点。百团大战历时三个半月，进行大小战斗1800余次，毙伤日伪军2.5万余人，破坏铁路470余公里、公路1500余公里，沉重打击了日军的"囚笼政策"，鼓舞了全国军民的抗战信心，是抗日战争中八路军发动的规模最大的一次战役。',
     '拍照': '纪念馆内大部分区域允许拍照，但请遵守以下规定：1.请勿使用闪光灯拍摄文物，强光会损害珍贵文物。2.百团大战半景画馆和部分临时展览可能限制拍照，请注意现场提示。3.请勿使用自拍杆等可能影响其他游客的设备。4.禁止使用三脚架（如需拍摄需提前向馆方申请）。5.拍摄的照片仅限个人使用，不得用于商业用途。',
     '历史背景': '八路军太行纪念馆的历史背景：1937年7月7日卢沟桥事变后，中国工农红军改编为国民革命军第八路军（简称八路军），共4.6万人，在朱德、彭德怀率领下东渡黄河，挺进华北抗日前线。八路军总部曾长期驻扎在武乡县砖壁村、王家峪村等地，武乡成为华北抗战的指挥中心。朱德、彭德怀、左权、刘伯承、邓小平等老一辈革命家都在这里战斗和生活过。为铭记这段光辉历史，弘扬太行精神，1988年建成了八路军太行纪念馆，由邓小平同志亲笔题写馆名。2005年进行了大规模改陈扩建。',
     '平型关': '平型关大捷是1937年9月25日，八路军第115师在林彪、聂荣臻指挥下，于山西省灵丘县平型关伏击日军板垣师团辎重部队的战斗。此战歼灭日军1000余人，缴获大量军用物资，是全面抗战爆发后中国军队取得的第一个大胜仗，打破了日军"不可战胜"的神话，极大地鼓舞了全国军民的抗战信心。',
-    '地址': '八路军太行纪念馆地址：山西省长治市武乡县太行街363号。邮编：046300。咨询电话：0355-6437583；投诉电话：0355-5543661。邮箱：bltjnguan@163.com。',
+    '地址': '八路军太行纪念馆地址：山西省长治市武乡县太行街363号。邮编：046300。邮箱：bltjnguan@163.com。',
     '参观时间': '建议预留2-3小时参观。核心展览"八路军抗战史陈列"展线长1450米，仔细观看需要约1.5-2小时。如果还要参观百团大战半景画馆、八路军将领馆等，建议安排3小时以上。节假日游客较多，建议错峰参观。',
     '多长时间': '建议预留2-3小时参观。核心展览"八路军抗战史陈列"展线长1450米，仔细观看需要约1.5-2小时。如果还要参观百团大战半景画馆、八路军将领馆等，建议安排3小时以上。节假日游客较多，建议错峰参观。',
-    '如何前往': '前往纪念馆的交通方式：1.自驾：太长高速（二广高速）武乡出口下，沿指示牌行驶约5分钟即到。2.火车：乘太焦铁路到武乡站，出站后打车约10分钟可达。3.长途汽车：长治市、太原市均有直达武乡的班车。纪念馆地址：山西省长治市武乡县太行街363号。咨询电话：0355-6437583。',
+    '如何前往': '前往纪念馆的交通方式：1.自驾：太长高速（二广高速）武乡出口下，沿指示牌行驶约5分钟即到。2.火车：乘太焦铁路到武乡站，出站后打车约10分钟可达。3.长途汽车：长治市、太原市均有直达武乡的班车。纪念馆地址：山西省长治市武乡县太行街363号。',
     '历史意义': '百团大战的历史意义：1.沉重打击了日军"囚笼政策"，破坏了华北主要交通线，迟滞了日军进攻步伐。2.鼓舞了全国军民的抗战信心，打破了"亡国论"的悲观情绪。3.锻炼和壮大了八路军力量，提高了八路军的作战能力和威望。4.向世界展示了中国军民抗战的决心和力量，赢得了国际社会的尊重。5.是抗日战争由战略防御转入战略相持阶段后，中国军队主动发动的规模最大的攻势作战。',
     '可以拍照': '纪念馆内大部分区域允许拍照，但请遵守以下规定：1.请勿使用闪光灯拍摄文物，强光会损害珍贵文物。2.百团大战半景画馆和部分临时展览可能限制拍照，请注意现场提示。3.请勿使用自拍杆等可能影响其他游客的设备。4.禁止使用三脚架（如需拍摄需提前向馆方申请）。5.拍摄的照片仅限个人使用，不得用于商业用途。',
 };
@@ -1951,7 +1830,7 @@ async function sendAiMessage() {
         hideTyping();
         console.log('AI API错误:', err);
         // API失败时使用本地知识库模糊匹配
-        const fallback = localAnswer || '抱歉，网络连接出现问题。请检查网络后重试，或尝试咨询其他问题。纪念馆咨询电话：0355-6437583。';
+        const fallback = localAnswer || '抱歉，网络连接出现问题。请检查网络后重试，或尝试咨询其他问题。';
         await typewriterEffect(fallback);
     }
 }
@@ -2100,7 +1979,6 @@ function searchLocalKnowledge(query) {
         ['具体位置', '地址'],
         ['怎么联系', '地址'],
         ['联系方式', '地址'],
-        ['咨询电话', '地址'],
         ['邮编', '地址'],
         ['邮箱', '地址'],
         // 纪念馆概况
@@ -2193,27 +2071,6 @@ const observer = new IntersectionObserver(function(entries) {
 document.querySelectorAll('.fade-up').forEach(function(el) {
     observer.observe(el);
 });
-
-/* ========================================
-   触摸滑动支持（Hero轮播）
-   ======================================== */
-let touchStartX = 0;
-let touchEndX = 0;
-
-document.querySelector('.hero').addEventListener('touchstart', function(e) {
-    touchStartX = e.changedTouches[0].screenX;
-}, { passive: true });
-
-document.querySelector('.hero').addEventListener('touchend', function(e) {
-    touchEndX = e.changedTouches[0].screenX;
-    const diff = touchStartX - touchEndX;
-    if (Math.abs(diff) > 50) {
-        stopAutoSlide();
-        if (diff > 0) nextSlide();
-        else prevSlide();
-        startAutoSlide();
-    }
-}, { passive: true });
 
 /* ========================================
    3D展厅 iframe 预览切换
