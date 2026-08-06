@@ -2643,68 +2643,122 @@ function createPhotoExhibit(photoUrl, aspectRatio, itemName) {
 function createMarchingPot() {
     const group = new THREE.Group();
 
-    const texLoader = new THREE.TextureLoader();
-    const potTex = texLoader.load('images/memorial/marching_pot.jpg');
-    potTex.encoding = THREE.sRGBEncoding;
-
-    // 铁锅材质（带照片纹理）
-    const potMat = new THREE.MeshPhysicalMaterial({
-        map: potTex,
-        color: 0x3a3a3a,
-        metalness: 0.75,
-        roughness: 0.55
+    // 铸铁材质——深灰黑色，带烟熏氧化痕迹
+    const ironMat = new THREE.MeshPhysicalMaterial({
+        color: 0x2a2620, metalness: 0.6, roughness: 0.75
     });
-    const patchMat = new THREE.MeshStandardMaterial({
-        color: 0x5c4033, roughness: 0.9
+    const sootMat = new THREE.MeshPhysicalMaterial({
+        color: 0x1a1610, metalness: 0.3, roughness: 0.95
+    });
+    const rustMat = new THREE.MeshPhysicalMaterial({
+        color: 0x4a2818, metalness: 0.4, roughness: 0.9
+    });
+    const handleMat = new THREE.MeshPhysicalMaterial({
+        color: 0x3a2a18, metalness: 0.7, roughness: 0.5
     });
 
-    // 锅身（半球+圆柱组合）
-    const bottomGeo = new THREE.SphereGeometry(0.2, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2);
-    const bottom = new THREE.Mesh(bottomGeo, potMat);
-    bottom.position.y = 0.1;
-    group.add(bottom);
+    // ===== 锅体——半球形底部+收口锅身（还原军用行军锅弧度） =====
+    // 底部半球（内凹弧形底）
+    var potBottomGeo = new THREE.SphereGeometry(0.16, 28, 16, 0, Math.PI * 2, Math.PI * 0.55, Math.PI * 0.45);
+    var potBottom = new THREE.Mesh(potBottomGeo, ironMat);
+    potBottom.position.y = 0.06;
+    potBottom.castShadow = true;
+    group.add(potBottom);
 
-    const wallGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.12, 24, 1, true);
-    const wall = new THREE.Mesh(wallGeo, potMat);
-    wall.position.y = 0.22;
-    group.add(wall);
+    // 锅身——上宽下窄的圆台（略微收口）
+    var bodyGeo = new THREE.CylinderGeometry(0.17, 0.15, 0.14, 28, 1, true);
+    var body = new THREE.Mesh(bodyGeo, ironMat);
+    body.position.y = 0.14;
+    body.castShadow = true;
+    group.add(body);
 
-    // 锅沿
-    const rimGeo = new THREE.TorusGeometry(0.2, 0.012, 8, 24);
-    const rim = new THREE.Mesh(rimGeo, potMat);
+    // 锅沿——外翻卷边（厚实铸铁沿口）
+    var rimGeo = new THREE.TorusGeometry(0.175, 0.018, 10, 28);
+    var rim = new THREE.Mesh(rimGeo, ironMat);
     rim.rotation.x = Math.PI / 2;
-    rim.position.y = 0.28;
+    rim.position.y = 0.21;
     group.add(rim);
 
-    // 两个提耳
-    [-1, 1].forEach(side => {
-        const earGeo = new THREE.TorusGeometry(0.035, 0.007, 8, 12, Math.PI);
-        const ear = new THREE.Mesh(earGeo, potMat);
-        ear.position.set(side * 0.22, 0.26, 0);
-        ear.rotation.y = Math.PI / 2;
-        group.add(ear);
+    // 锅沿内圈（收口效果）
+    var innerRimGeo = new THREE.TorusGeometry(0.155, 0.008, 8, 24);
+    var innerRim = new THREE.Mesh(innerRimGeo, sootMat);
+    innerRim.rotation.x = Math.PI / 2;
+    innerRim.position.y = 0.205;
+    group.add(innerRim);
+
+    // ===== 锅底烟熏层（外部底面加深色soot） =====
+    var sootGeo = new THREE.SphereGeometry(0.155, 20, 10, 0, Math.PI * 2, Math.PI * 0.7, Math.PI * 0.3);
+    var sootLayer = new THREE.Mesh(sootGeo, sootMat);
+    sootLayer.position.y = 0.06;
+    group.add(sootLayer);
+
+    // ===== 两侧铆接提耳（方形铁耳，穿杠式） =====
+    [-1, 1].forEach(function(side) {
+        // 耳座（铆接在锅沿外侧的方形铁块）
+        var earBase = new THREE.Mesh(
+            new THREE.BoxGeometry(0.04, 0.035, 0.025),
+            ironMat
+        );
+        earBase.position.set(side * 0.18, 0.19, 0);
+        group.add(earBase);
+        // 提耳孔（圆环）
+        var earRing = new THREE.Mesh(
+            new THREE.TorusGeometry(0.022, 0.006, 8, 14),
+            handleMat
+        );
+        earRing.position.set(side * 0.205, 0.19, 0);
+        earRing.rotation.y = Math.PI / 2;
+        group.add(earRing);
+        // 铆钉
+        var rivet = new THREE.Mesh(
+            new THREE.SphereGeometry(0.006, 8, 8),
+            rustMat
+        );
+        rivet.position.set(side * 0.175, 0.19, 0);
+        group.add(rivet);
     });
 
-    // 补丁（铁片修补痕迹）
-    const patchColors = [0x5c4033, 0x6b4423, 0x4a3728];
-    for (let i = 0; i < 12; i++) {
-        const angle = (i / 12) * Math.PI * 2 + Math.random() * 0.3;
-        const height = 0.12 + Math.random() * 0.1;
-        const patch = new THREE.Mesh(
-            new THREE.BoxGeometry(0.025, 0.015, 0.004),
+    // ===== 弧形提梁（可拆卸U形铁提手） =====
+    var handleCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-0.205, 0.19, 0),
+        new THREE.Vector3(-0.15, 0.32, 0),
+        new THREE.Vector3(0, 0.35, 0),
+        new THREE.Vector3(0.15, 0.32, 0),
+        new THREE.Vector3(0.205, 0.19, 0)
+    ]);
+    var handleGeo = new THREE.TubeGeometry(handleCurve, 24, 0.008, 8, false);
+    var handle = new THREE.Mesh(handleGeo, handleMat);
+    group.add(handle);
+
+    // ===== 锅身修补铆钉 patches（斑驳铁锈补丁痕迹） =====
+    var patchColors = [0x5c4033, 0x6b4423, 0x3a2818];
+    for (var i = 0; i < 8; i++) {
+        var angle = (i / 8) * Math.PI * 2 + 0.3;
+        var height = 0.09 + Math.random() * 0.07;
+        var patch = new THREE.Mesh(
+            new THREE.BoxGeometry(0.03, 0.02, 0.003),
             new THREE.MeshStandardMaterial({
-                color: patchColors[Math.floor(Math.random() * patchColors.length)],
-                roughness: 0.9
+                color: patchColors[i % 3],
+                roughness: 0.92
             })
         );
-        patch.position.set(
-            Math.cos(angle) * 0.202,
-            height,
-            Math.sin(angle) * 0.202
-        );
+        patch.position.set(Math.cos(angle) * 0.16, height, Math.sin(angle) * 0.16);
         patch.lookAt(0, height, 0);
         group.add(patch);
+        // 铆钉钉头
+        var patchRivet = new THREE.Mesh(
+            new THREE.SphereGeometry(0.004, 6, 6),
+            rustMat
+        );
+        patchRivet.position.set(Math.cos(angle) * 0.162, height, Math.sin(angle) * 0.162);
+        group.add(patchRivet);
     }
+
+    // ===== 锅内壁深色（内部发黑氧化） =====
+    var innerGeo = new THREE.CylinderGeometry(0.155, 0.13, 0.12, 24, 1, true);
+    var inner = new THREE.Mesh(innerGeo, sootMat);
+    inner.position.y = 0.15;
+    group.add(inner);
 
     group.userData = { itemName: '行军锅' };
     return group;
@@ -2881,102 +2935,147 @@ function createMortar() {
 function createBugle() {
     const group = new THREE.Group();
 
-    const texLoader = new THREE.TextureLoader();
-    const bugleTex = texLoader.load('images/memorial/bugle.jpg');
-    bugleTex.encoding = THREE.sRGBEncoding;
-
-    // 氧化铜绿材质——深墨绿到黑褐色，匹配实景铜绿包浆
-    const patinaMat = new THREE.MeshPhysicalMaterial({
-        map: bugleTex,
-        color: 0x2a3a2a,           // 深墨绿底色
-        metalness: 0.85,
-        roughness: 0.55,              // 粗糙氧化面
-        clearcoat: 0.1               // 微弱光泽
+    // 铜制军号材质——氧化铜绿包浆，深浅两色
+    var patinaMat = new THREE.MeshPhysicalMaterial({
+        color: 0x3a4a30, metalness: 0.85, roughness: 0.45, clearcoat: 0.15
     });
-    const darkPatinaMat = new THREE.MeshPhysicalMaterial({
-        color: 0x1a2a1a, metalness: 0.8, roughness: 0.7
+    var darkPatinaMat = new THREE.MeshPhysicalMaterial({
+        color: 0x2a3520, metalness: 0.8, roughness: 0.6
     });
-    const ringMat = new THREE.MeshPhysicalMaterial({
-        color: 0x5a4a30, metalness: 0.7, roughness: 0.4  // 连接箍——较浅的黄铜原色
+    var brightBrassMat = new THREE.MeshPhysicalMaterial({
+        color: 0x8a7030, metalness: 0.85, roughness: 0.3
+    });
+    var ringMat = new THREE.MeshPhysicalMaterial({
+        color: 0x6a5a30, metalness: 0.7, roughness: 0.4
     });
 
-    // ===== 号嘴（细短圆柱，末端略收） =====
-    const mouthpiece = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.012, 0.02, 0.05, 12),
-        patinaMat
+    // ===== 号嘴（杯形号嘴——真实军号号嘴结构） =====
+    // 号嘴尾杆（细圆柱连接管身）
+    var mouthpieceStem = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.008, 0.012, 0.04, 12),
+        brightBrassMat
     );
-    mouthpiece.rotation.z = Math.PI / 2;
-    mouthpiece.position.set(-0.22, 0.02, 0);
-    group.add(mouthpiece);
-    // 号嘴杯（碗形）
-    const cupGeo = new THREE.SphereGeometry(0.018, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.6);
-    const cup = new THREE.Mesh(cupGeo, patinaMat);
-    cup.rotation.z = -Math.PI / 2;
-    cup.position.set(-0.24, 0.02, 0);
-    group.add(cup);
+    mouthpieceStem.rotation.z = Math.PI / 2;
+    mouthpieceStem.position.set(-0.26, 0, 0);
+    group.add(mouthpieceStem);
+    // 号嘴杯（半球形杯口）
+    var mouthpieceCup = new THREE.Mesh(
+        new THREE.SphereGeometry(0.016, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.55),
+        brightBrassMat
+    );
+    mouthpieceCup.rotation.z = -Math.PI / 2;
+    mouthpieceCup.position.set(-0.285, 0, 0);
+    group.add(mouthpieceCup);
+    // 号嘴 rim（圆环边沿）
+    var mouthpieceRim = new THREE.Mesh(
+        new THREE.TorusGeometry(0.016, 0.003, 8, 14),
+        brightBrassMat
+    );
+    mouthpieceRim.rotation.y = Math.PI / 2;
+    mouthpieceRim.position.set(-0.29, 0, 0);
+    group.add(mouthpieceRim);
 
-    // ===== 号管主体——精确S形曲线（用TubeGeometry沿样条曲线生成） =====
-    const curve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(-0.20, 0.02, 0),      // 号嘴连接处
-        new THREE.Vector3(-0.14, 0.01, 0),      // 略微下弯
-        new THREE.Vector3(-0.06, -0.02, 0),     // U形弯底
-        new THREE.Vector3(0.02, -0.01, 0),      // 弯底过渡
-        new THREE.Vector3(0.10, 0.02, 0),        // 向上弯曲
-        new THREE.Vector3(0.18, 0.05, 0),       // 继续上扬
-        new THREE.Vector3(0.24, 0.07, 0)        // 接喇叭口
+    // ===== 号管主体——真实S形双弯管（用TubeGeometry沿样条曲线生成） =====
+    // 军号号管特征：号嘴→前管→U形弯（180度回弯）→主管→喇叭口
+    var curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-0.24, 0, 0),       // 号嘴连接端
+        new THREE.Vector3(-0.18, 0.005, 0),   // 前管直段
+        new THREE.Vector3(-0.10, 0.02, 0),    // 开始下弯
+        new THREE.Vector3(-0.04, 0.015, 0),   // 弯底
+        new THREE.Vector3(0.02, 0.00, 0),     // U形弯最低点
+        new THREE.Vector3(0.08, -0.005, 0),   // 回弯过渡
+        new THREE.Vector3(0.14, 0.005, 0),    // 回弯上升
+        new THREE.Vector3(0.18, 0.02, 0),     // 主管起点
+        new THREE.Vector3(0.24, 0.035, 0),    // 主管中段（渐扩）
+        new THREE.Vector3(0.30, 0.055, 0)     // 接喇叭口
     ]);
-    // 管身——渐变半径用锥形管道近似
-    const tubeRadius = 0.016;
-    const tubeGeo = new THREE.TubeGeometry(curve, 32, tubeRadius, 12, false);
-    const tube = new THREE.Mesh(tubeGeo, patinaMat);
+    // 管身——均匀半径管道
+    var tubeGeo = new THREE.TubeGeometry(curve, 48, 0.014, 12, false);
+    var tube = new THREE.Mesh(tubeGeo, patinaMat);
+    tube.castShadow = true;
     group.add(tube);
 
-    // ===== 连接箍（管身弯曲处和喇叭口过渡处） =====
-    // 箍1——管身中部弯曲处
-    const ferrule1 = new THREE.Mesh(
-        new THREE.TorusGeometry(0.022, 0.004, 8, 16),
+    // ===== 号管U形弯处加粗（真实军号在弯管处有加固环） =====
+    var bendRing = new THREE.Mesh(
+        new THREE.TorusGeometry(0.018, 0.004, 8, 14),
         ringMat
     );
-    ferrule1.position.set(0.02, -0.005, 0);
-    ferrule1.rotation.y = Math.PI / 2;
-    group.add(ferrule1);
-    // 箍2——喇叭口过渡处
-    const ferrule2 = new THREE.Mesh(
-        new THREE.TorusGeometry(0.024, 0.004, 8, 16),
-        ringMat
-    );
-    ferrule2.position.set(0.22, 0.06, 0);
-    ferrule2.rotation.y = Math.PI / 2;
-    group.add(ferrule2);
+    bendRing.position.set(0.02, -0.005, 0);
+    bendRing.rotation.y = Math.PI / 2;
+    group.add(bendRing);
 
-    // ===== 喇叭口——大口径锥形扩口（匹配实物10-12cm比例） =====
-    const bellGeo = new THREE.CylinderGeometry(0.06, 0.022, 0.10, 24, 1, true);
-    const bell = new THREE.Mesh(bellGeo, patinaMat);
-    bell.position.set(0.32, 0.10, 0);
-    bell.rotation.z = 0.25;   // 喇叭口向上45度
+    // ===== 连接箍（管身2-3处装饰箍环） =====
+    var ferrulePositions = [
+        {x: -0.14, y: 0.01, r: 0.016},
+        {x: 0.18, y: 0.02, r: 0.016},
+        {x: 0.26, y: 0.04, r: 0.017}
+    ];
+    ferrulePositions.forEach(function(f) {
+        var ferrule = new THREE.Mesh(
+            new THREE.TorusGeometry(f.r, 0.003, 8, 14),
+            ringMat
+        );
+        ferrule.position.set(f.x, f.y, 0);
+        ferrule.rotation.y = Math.PI / 2;
+        group.add(ferrule);
+    });
+
+    // ===== 喇叭口——大口径锥形扩口（真实军号号碗比例） =====
+    // 喇叭口锥体
+    var bellGeo = new THREE.CylinderGeometry(0.075, 0.016, 0.12, 24, 1, true);
+    var bell = new THREE.Mesh(bellGeo, patinaMat);
+    bell.position.set(0.36, 0.08, 0);
+    bell.rotation.z = -0.35;
     group.add(bell);
-    // 喇叭口边缘（稍有不规则——模拟历史磨损）
-    const bellRimGeo = new THREE.TorusGeometry(0.06, 0.003, 8, 24);
-    const bellRim = new THREE.Mesh(bellRimGeo, darkPatinaMat);
-    bellRim.position.set(0.36, 0.13, 0);
+    // 喇叭口内壁（深色——增加层次感）
+    var bellInner = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.068, 0.014, 0.11, 20, 1, true),
+        darkPatinaMat
+    );
+    bellInner.position.set(0.355, 0.078, 0);
+    bellInner.rotation.z = -0.35;
+    group.add(bellInner);
+    // 喇叭口边缘环（厚实铜边——略有变形模拟磨损）
+    var bellRim = new THREE.Mesh(
+        new THREE.TorusGeometry(0.075, 0.005, 10, 24),
+        brightBrassMat
+    );
+    bellRim.position.set(0.415, 0.105, 0);
     bellRim.rotation.y = Math.PI / 2;
+    bellRim.rotation.z = -0.35;
     group.add(bellRim);
 
-    // ===== 护手绳金属环（号口根部） =====
-    const hookMat = new THREE.MeshPhysicalMaterial({color: 0x4a3a20, metalness: 0.7, roughness: 0.5});
-    const hookGeo = new THREE.TorusGeometry(0.012, 0.002, 6, 12);
-    const hook = new THREE.Mesh(hookGeo, hookMat);
-    hook.position.set(0.30, 0.08, 0.025);
-    group.add(hook);
-    // 绳子（棉麻质感，已腐朽残留）
-    const ropeMat = new THREE.MeshPhysicalMaterial({color: 0x6a5a3a, roughness: 0.95, metalness: 0.0});
-    const ropeGeo = new THREE.CylinderGeometry(0.003, 0.003, 0.04, 4);
-    const rope = new THREE.Mesh(ropeGeo, ropeMat);
-    rope.position.set(0.30, 0.06, 0.025);
-    group.add(rope);
+    // ===== 护手绳金属环（号口根部绑绳环） =====
+    var hookRing = new THREE.Mesh(
+        new THREE.TorusGeometry(0.015, 0.0025, 6, 12),
+        ringMat
+    );
+    hookRing.position.set(0.30, 0.05, 0);
+    hookRing.rotation.y = Math.PI / 2;
+    group.add(hookRing);
+    // 红色护手绳（棉麻质缠绕绳——绑在号管上）
+    var ropeMat = new THREE.MeshPhysicalMaterial({color: 0x8b2020, roughness: 0.95, metalness: 0.0});
+    // 绳段1（缠绕在管身上的几圈）
+    for (var ri = 0; ri < 4; ri++) {
+        var ropeRing = new THREE.Mesh(
+            new THREE.TorusGeometry(0.016, 0.003, 6, 12),
+            ropeMat
+        );
+        ropeRing.position.set(0.28 + ri * 0.008, 0.045 + ri * 0.004, 0);
+        ropeRing.rotation.y = Math.PI / 2;
+        group.add(ropeRing);
+    }
+    // 垂挂绳穗
+    var ropeTail = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.002, 0.003, 0.05, 6),
+        ropeMat
+    );
+    ropeTail.position.set(0.30, 0.02, 0.005);
+    ropeTail.rotation.z = 0.2;
+    group.add(ropeTail);
 
     // ===== 军号专用射灯 =====
-    const bugleSpot = new THREE.SpotLight(0xfff5e6, 1.0, 3.0, Math.PI / 5, 0.3, 1.5);
+    var bugleSpot = new THREE.SpotLight(0xfff5e6, 1.0, 3.0, Math.PI / 5, 0.3, 1.5);
     bugleSpot.position.set(0, 0.6, 0);
     bugleSpot.target.position.set(0, 0, 0);
     bugleSpot.castShadow = false;
@@ -2987,133 +3086,162 @@ function createBugle() {
     return group;
 }
 
-// 打字机
+// 何克的老式外文打字机（精细还原——键盘+字车+滚筒+色带）
 function createTypewriter() {
     const group = new THREE.Group();
 
-    // 铸铁材质——深褐色/铁锈色，匹配实景展品
-    const ironMat = new THREE.MeshPhysicalMaterial({
-        color: 0x2a2218,               // 深褐色铁锈
-        metalness: 0.6,
-        roughness: 0.7
+    // 铸铁材质——黑色机身，匹配老式Underwood/Olivetti打字机
+    var bodyMat = new THREE.MeshPhysicalMaterial({color: 0x1a1a18, metalness: 0.5, roughness: 0.55});
+    var ironMat = new THREE.MeshPhysicalMaterial({color: 0x2a2622, metalness: 0.6, roughness: 0.5});
+    var steelMat = new THREE.MeshPhysicalMaterial({color: 0x4a4540, metalness: 0.75, roughness: 0.35});
+    var brassMat = new THREE.MeshPhysicalMaterial({color: 0x8a7030, metalness: 0.8, roughness: 0.3});
+    var keyMat = new THREE.MeshPhysicalMaterial({color: 0xf0ead6, metalness: 0.0, roughness: 0.6});
+    var darkKeyMat = new THREE.MeshPhysicalMaterial({color: 0x1a1a1a, metalness: 0.3, roughness: 0.7});
+    var rubberMat = new THREE.MeshPhysicalMaterial({color: 0x2a2a2a, metalness: 0.1, roughness: 0.9});
+    var ribbonMat = new THREE.MeshPhysicalMaterial({color: 0x3a1a1a, metalness: 0.2, roughness: 0.8});
+
+    // ===== 底座（铸铁机身底板，前圆后方） =====
+    var baseGeo = new THREE.BoxGeometry(0.36, 0.025, 0.26);
+    var base = new THREE.Mesh(baseGeo, bodyMat);
+    base.position.y = 0.012;
+    base.castShadow = true;
+    group.add(base);
+    // 底座前沿弧形装饰
+    var frontRail = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.02, 0.02), ironMat);
+    frontRail.position.set(0, 0.03, 0.13);
+    group.add(frontRail);
+
+    // ===== 键盘区（前部——4排圆形按键） =====
+    var keyRows = [
+        {y: 0.04, z: 0.10, count: 10, offsetX: 0.15},
+        {y: 0.05, z: 0.07, count: 9, offsetX: 0.135},
+        {y: 0.06, z: 0.04, count: 9, offsetX: 0.135},
+        {y: 0.07, z: 0.01, count: 7, offsetX: 0.105}
+    ];
+    keyRows.forEach(function(row, rowIdx) {
+        for (var k = 0; k < row.count; k++) {
+            var keyX = -row.offsetX + k * (row.offsetX * 2 / (row.count - 1));
+            // 键杆（细金属柱）
+            var keyStem = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.003, 0.003, 0.03, 6),
+                steelMat
+            );
+            keyStem.position.set(keyX, row.y - 0.015, row.z);
+            group.add(keyStem);
+            // 键帽（圆形）
+            var keyCap = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.012, 0.014, 0.008, 12),
+                rowIdx < 2 ? keyMat : darkKeyMat
+            );
+            keyCap.position.set(keyX, row.y, row.z);
+            group.add(keyCap);
+        }
     });
-    const darkIronMat = new THREE.MeshPhysicalMaterial({
-        color: 0x1a1510, metalness: 0.5, roughness: 0.85  // 更深氧化面
-    });
-    const steelMat = new THREE.MeshPhysicalMaterial({
-        color: 0x3a3530, metalness: 0.75, roughness: 0.45  // 钢制传动部件
+    // 空格键（长条）
+    var spacebar = new THREE.Mesh(
+        new THREE.BoxGeometry(0.12, 0.008, 0.018),
+        darkKeyMat
+    );
+    spacebar.position.set(0, 0.04, 0.13);
+    group.add(spacebar);
+
+    // ===== 字车导轨（中部——水平金属杆） =====
+    var carriageRail = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.008, 0.008, 0.32, 8),
+        steelMat
+    );
+    carriageRail.rotation.z = Math.PI / 2;
+    carriageRail.position.set(0, 0.10, -0.02);
+    group.add(carriageRail);
+    // 第二根导轨
+    var carriageRail2 = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.006, 0.006, 0.32, 8),
+        steelMat
+    );
+    carriageRail2.rotation.z = Math.PI / 2;
+    carriageRail2.position.set(0, 0.085, -0.02);
+    group.add(carriageRail2);
+
+    // ===== 字车（滑动平台——承载滚筒和压纸板） =====
+    var carriageBase = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.02, 0.08), ironMat);
+    carriageBase.position.set(0, 0.115, -0.02);
+    group.add(carriageBase);
+
+    // ===== 滚筒（主纸筒——橡胶材质圆柱） =====
+    var platenGeo = new THREE.CylinderGeometry(0.028, 0.028, 0.22, 16);
+    var platen = new THREE.Mesh(platenGeo, rubberMat);
+    platen.rotation.z = Math.PI / 2;
+    platen.position.set(0, 0.16, -0.04);
+    group.add(platen);
+    // 滚筒旋钮（两端）
+    [-1, 1].forEach(function(side) {
+        var knob = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.022, 0.022, 0.015, 12),
+            brassMat
+        );
+        knob.rotation.z = Math.PI / 2;
+        knob.position.set(side * 0.12, 0.16, -0.04);
+        group.add(knob);
+        // 旋钮齿纹（小凸起）
+        for (var t = 0; t < 8; t++) {
+            var ang = t * Math.PI / 4;
+            var tooth = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.003, 0.003), steelMat);
+            tooth.position.set(side * 0.126, 0.16 + Math.cos(ang) * 0.022, -0.04 + Math.sin(ang) * 0.022);
+            group.add(tooth);
+        }
     });
 
-    // ===== 底座（四足铸铁框架） =====
-    const baseMat = new THREE.MeshPhysicalMaterial({color:0x222018,metalness:0.5,roughness:0.8});
-    // 底板
-    const basePlate = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.03, 0.30), baseMat);
-    basePlate.position.y = 0.015;
-    group.add(basePlate);
-    // 四条腿
-    const legGeo = new THREE.BoxGeometry(0.03, 0.06, 0.03);
-    const legPositions = [[-0.16, -0.06, -0.12],[-0.16, -0.06, 0.12],[0.16, -0.06, -0.12],[0.16, -0.06, 0.12]];
-    legPositions.forEach(p => {
-        const leg = new THREE.Mesh(legGeo, baseMat);
-        leg.position.set(p[0], p[1], p[2]);
-        group.add(leg);
+    // ===== 压纸板（滚筒后方——金属挡纸板） =====
+    var paperGuide = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.04, 0.004), ironMat);
+    paperGuide.position.set(0, 0.17, -0.075);
+    paperGuide.rotation.x = 0.1;
+    group.add(paperGuide);
+    // 纸张（白纸——插在滚筒和压纸板之间）
+    var paper = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.18, 0.06),
+        new THREE.MeshPhysicalMaterial({color: 0xf5f0e0, roughness: 0.9, side: THREE.DoubleSide})
+    );
+    paper.position.set(0, 0.19, -0.055);
+    paper.rotation.x = -0.05;
+    group.add(paper);
+
+    // ===== 色带盒（两侧——黑色带盒） =====
+    [-1, 1].forEach(function(side) {
+        var ribbonBox = new THREE.Mesh(
+            new THREE.BoxGeometry(0.05, 0.025, 0.04),
+            darkKeyMat
+        );
+        ribbonBox.position.set(side * 0.13, 0.10, 0.02);
+        group.add(ribbonBox);
+        // 色带轴
+        var ribbonSpool = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.015, 0.015, 0.022, 10),
+            ribbonMat
+        );
+        ribbonSpool.position.set(side * 0.13, 0.10, 0.02);
+        group.add(ribbonSpool);
     });
 
-    // ===== 机身框架（立式铸铁结构，前低后高） =====
-    // 左侧立柱
-    const leftPillar = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.22, 0.035), ironMat);
-    leftPillar.position.set(-0.16, 0.14, 0);
-    group.add(leftPillar);
-    // 右侧立柱
-    const rightPillar = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.22, 0.035), ironMat);
-    rightPillar.position.set(0.16, 0.14, 0);
-    group.add(rightPillar);
-    // 顶部横梁
-    const topBar = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.03, 0.035), ironMat);
-    topBar.position.set(0, 0.25, 0);
-    group.add(topBar);
-    // 中部横梁（支撑滚筒）
-    const midBar = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.025, 0.03), ironMat);
-    midBar.position.set(0, 0.18, 0);
-    group.add(midBar);
-
-    // ===== 螺旋压杆机构（顶部） =====
-    const screwMat = new THREE.MeshPhysicalMaterial({color:0x3a3525, metalness:0.7, roughness:0.4});
-    // 螺旋轴
-    const screwGeo = new THREE.CylinderGeometry(0.008, 0.008, 0.06, 8);
-    const screw = new THREE.Mesh(screwGeo, screwMat);
-    screw.position.set(0, 0.29, 0);
-    group.add(screw);
-    // 压杆横臂
-    const pressArm = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.015, 0.015), ironMat);
-    pressArm.position.set(0, 0.28, 0);
-    group.add(pressArm);
-    // 旋钮（圆形手柄）
-    const knobGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.015, 12);
-    const knob = new THREE.Mesh(knobGeo, darkIronMat);
-    knob.position.set(0.08, 0.28, 0);
-    knob.rotation.z = Math.PI / 2;
-    group.add(knob);
-
-    // ===== 滚筒系统（中部） =====
-    // 主滚筒
-    const rollerGeo = new THREE.CylinderGeometry(0.045, 0.045, 0.26, 16);
-    const roller = new THREE.Mesh(rollerGeo, darkIronMat);
-    roller.rotation.x = Math.PI / 2;
-    roller.position.set(0, 0.18, 0);
-    group.add(roller);
-    // 滚筒表面纹理环
-    for (let i = 0; i < 5; i++) {
-        const ringGeo = new THREE.TorusGeometry(0.047, 0.002, 6, 16);
-        const ring = new THREE.Mesh(ringGeo, steelMat);
-        ring.position.set(-0.10 + i * 0.05, 0.18, 0);
-        ring.rotation.y = Math.PI / 2;
-        group.add(ring);
+    // ===== 打字杆扇形架（后部——金属杆阵列向上聚拢） =====
+    for (var tp = 0; tp < 14; tp++) {
+        var tpAngle = -0.5 + tp * 0.07;
+        var typeBar = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.002, 0.002, 0.07, 4),
+            steelMat
+        );
+        typeBar.position.set(0, 0.09, -0.03);
+        typeBar.rotation.x = tpAngle;
+        typeBar.rotation.z = tpAngle * 0.5;
+        group.add(typeBar);
     }
 
-    // ===== 手摇曲柄（左侧，L形曲柄+球形握把） =====
-    // 曲柄臂
-    const crankArm = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.08, 6), steelMat);
-    crankArm.rotation.z = Math.PI / 2;
-    crankArm.position.set(-0.20, 0.18, 0);
-    group.add(crankArm);
-    // 曲柄弯头（L形竖直部分）
-    const crankBend = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.04, 6), steelMat);
-    crankBend.position.set(-0.24, 0.16, 0);
-    group.add(crankBend);
-    // 球形握把
-    const gripGeo = new THREE.SphereGeometry(0.012, 8, 8);
-    const grip = new THREE.Mesh(gripGeo, darkIronMat);
-    grip.position.set(-0.24, 0.14, 0);
-    group.add(grip);
-
-    // ===== 油墨槽/供墨平台（前部倾斜平台） =====
-    const inkBed = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.01, 0.10), darkIronMat);
-    inkBed.position.set(0, 0.07, 0.08);
-    inkBed.rotation.x = 0.15;    // 微微倾斜
-    group.add(inkBed);
-
-    // ===== 进纸托架（底部前部） =====
-    const trayGeo = new THREE.BoxGeometry(0.30, 0.008, 0.12);
-    const tray = new THREE.Mesh(trayGeo, ironMat);
-    tray.position.set(0, 0.045, -0.08);
-    group.add(tray);
-
-    // ===== 螺栓/铆钉装饰 =====
-    const boltGeo = new THREE.CylinderGeometry(0.004, 0.004, 0.01, 6);
-    const boltMat = new THREE.MeshPhysicalMaterial({color:0x5a5040, metalness:0.6, roughness:0.5});
-    const boltPositions = [
-        [-0.16, 0.06, -0.015], [-0.16, 0.06, 0.015],
-        [0.16, 0.06, -0.015], [0.16, 0.06, 0.015],
-        [-0.16, 0.22, -0.015], [-0.16, 0.22, 0.015],
-        [0.16, 0.22, -0.015], [0.16, 0.22, 0.015]
-    ];
-    boltPositions.forEach(p => {
-        const bolt = new THREE.Mesh(boltGeo, boltMat);
-        bolt.rotation.x = Math.PI / 2;
-        bolt.position.set(p[0], p[1], p[2]);
-        group.add(bolt);
-    });
+    // ===== 机身后壳（弧形顶部——半圆罩） =====
+    var shellGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.30, 20, 1, false, 0, Math.PI);
+    var shell = new THREE.Mesh(shellGeo, bodyMat);
+    shell.rotation.z = Math.PI / 2;
+    shell.rotation.y = Math.PI / 2;
+    shell.position.set(0, 0.06, -0.06);
+    group.add(shell);
 
     // ===== 打字机专用射灯 =====
     const typeSpot = new THREE.SpotLight(0xfff5e6, 1.0, 3.0, Math.PI / 5, 0.3, 1.5);
@@ -3133,7 +3261,7 @@ function createIronBoatDisplay() {
     group.userData = { itemName: '八路军东渡黄河使用的铁船' };
 
     // 仿水纹地面平台（加大以适配更大的铁船）
-    const platformGeo = new THREE.BoxGeometry(2.2, 0.03, 1.2);
+    const platformGeo = new THREE.BoxGeometry(2.8, 0.03, 1.6);
     const platformMat = new THREE.MeshPhysicalMaterial({
         color: 0x5a4a30,    // 黄褐色沙地质感
         roughness: 0.95,
@@ -3144,14 +3272,14 @@ function createIronBoatDisplay() {
     platform.receiveShadow = true;
     group.add(platform);
 
-    // 铁船模型（放在平台上——加大尺寸）
+    // 铁船模型（放在平台上——合理放大适配展台比例）
     const boat = createIronBoat();
     boat.position.set(0, 0.03, -3.0);
-    boat.scale.set(1.5, 1.5, 1.5);
+    boat.scale.set(2.0, 2.0, 2.0);
     group.add(boat);
 
-    // 绳索围栏
-    createRopeBarrier(0, -3.0, 1.6);
+    // 绳索围栏（加大尺寸适配更大的铁船）
+    createRopeBarrier(0, -3.0, 2.0);
 
     // 展品说明牌（地面立式）
     const signGroup = new THREE.Group();
@@ -3524,71 +3652,180 @@ function createIronBoat() {
 function createPrintingPress() {
     const group = new THREE.Group();
 
-    const texLoader = new THREE.TextureLoader();
-    const typeTex = texLoader.load('images/memorial/typewriter.jpg');
-    typeTex.encoding = THREE.sRGBEncoding;
+    // 铸铁材质系——还原老式铸字机金属质感
+    var ironMat = new THREE.MeshPhysicalMaterial({color: 0x3a3530, metalness: 0.6, roughness: 0.55});
+    var darkIronMat = new THREE.MeshPhysicalMaterial({color: 0x222018, metalness: 0.5, roughness: 0.75});
+    var steelMat = new THREE.MeshPhysicalMaterial({color: 0x5a5040, metalness: 0.75, roughness: 0.35});
+    var brassMat = new THREE.MeshPhysicalMaterial({color: 0x8a7030, metalness: 0.8, roughness: 0.4});
+    var leadMat = new THREE.MeshPhysicalMaterial({color: 0x4a4a50, metalness: 0.5, roughness: 0.3});
+    var woodMat = new THREE.MeshPhysicalMaterial({color: 0x4a3520, metalness: 0.0, roughness: 0.85});
 
-    // 铸字机机身材质（带照片纹理）
-    const bodyMat = new THREE.MeshPhysicalMaterial({
-        map: typeTex,
-        color: 0x3a3a3a,
-        metalness: 0.7,
-        roughness: 0.45
-    });
-    const metalMat = new THREE.MeshPhysicalMaterial({
-        color: 0x4a4a4a, metalness: 0.6, roughness: 0.5
-    });
-
-    // 机身底座
-    const baseGeo = new THREE.BoxGeometry(0.45, 0.12, 0.35);
-    const base = new THREE.Mesh(baseGeo, bodyMat);
-    base.position.y = 0.06;
-    base.castShadow = false; // 性能优化：关闭小物体阴影
+    // ===== 底座（宽厚铸铁机座，四足支撑） =====
+    var baseGeo = new THREE.BoxGeometry(0.40, 0.06, 0.30);
+    var base = new THREE.Mesh(baseGeo, ironMat);
+    base.position.y = 0.03;
+    base.castShadow = true;
     group.add(base);
-
-    // 机身主体
-    const bodyGeo = new THREE.BoxGeometry(0.38, 0.25, 0.3);
-    const body = new THREE.Mesh(bodyGeo, bodyMat);
-    body.position.y = 0.24;
-    body.castShadow = false; // 性能优化：关闭小物体阴影
-    group.add(body);
-
-    // 字盘（顶部平面）
-    const plateGeo = new THREE.BoxGeometry(0.32, 0.02, 0.25);
-    const plate = new THREE.Mesh(plateGeo, metalMat);
-    plate.position.y = 0.38;
-    group.add(plate);
-
-    // 铅字（小方块阵列）
-    const typeMat = new THREE.MeshPhysicalMaterial({
-        color: 0x1a1a1a, metalness: 0.8, roughness: 0.3
+    // 底座四脚
+    var footGeo = new THREE.BoxGeometry(0.04, 0.04, 0.04);
+    [[-0.17, -0.12], [0.17, -0.12], [-0.17, 0.12], [0.17, 0.12]].forEach(function(p) {
+        var foot = new THREE.Mesh(footGeo, darkIronMat);
+        foot.position.set(p[0], 0.0, p[1]);
+        group.add(foot);
     });
-    for (let row = 0; row < 3; row++) {
-        for (let col = 0; col < 4; col++) {
-            const type = new THREE.Mesh(
-                new THREE.BoxGeometry(0.035, 0.025, 0.035),
-                typeMat
+    // 底座前沿装饰槽
+    var frontSlot = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.02, 0.015), darkIronMat);
+    frontSlot.position.set(0, 0.04, 0.15);
+    group.add(frontSlot);
+
+    // ===== 机身立柱（两侧铸铁框架，前低后高） =====
+    // 左立柱（C形框架——前后两段不同高度）
+    var leftFrontPost = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.20, 0.035), ironMat);
+    leftFrontPost.position.set(-0.17, 0.16, 0.10);
+    group.add(leftFrontPost);
+    var leftBackPost = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.28, 0.035), ironMat);
+    leftBackPost.position.set(-0.17, 0.20, -0.10);
+    group.add(leftBackPost);
+    // 右立柱
+    var rightFrontPost = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.20, 0.035), ironMat);
+    rightFrontPost.position.set(0.17, 0.16, 0.10);
+    group.add(rightFrontPost);
+    var rightBackPost = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.28, 0.035), ironMat);
+    rightBackPost.position.set(0.17, 0.20, -0.10);
+    group.add(rightBackPost);
+    // 顶部横梁
+    var topBar = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.03, 0.035), ironMat);
+    topBar.position.set(0, 0.33, -0.10);
+    group.add(topBar);
+    // 中部横梁
+    var midBar = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.025, 0.03), ironMat);
+    midBar.position.set(0, 0.24, 0.05);
+    group.add(midBar);
+
+    // ===== 熔铅坩埚（后上方——铜制加热容器） =====
+    var crucibleGeo = new THREE.CylinderGeometry(0.06, 0.05, 0.08, 16);
+    var crucible = new THREE.Mesh(crucibleGeo, brassMat);
+    crucible.position.set(0, 0.30, -0.10);
+    group.add(crucible);
+    // 坩埚口沿
+    var crucibleRim = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.006, 8, 16), brassMat);
+    crucibleRim.rotation.x = Math.PI / 2;
+    crucibleRim.position.set(0, 0.34, -0.10);
+    group.add(crucibleRim);
+    // 熔铅液面
+    var leadSurface = new THREE.Mesh(new THREE.CircleGeometry(0.05, 16), leadMat);
+    leadSurface.rotation.x = -Math.PI / 2;
+    leadSurface.position.set(0, 0.338, -0.10);
+    group.add(leadSurface);
+    // 坩埚支架（两侧支撑臂）
+    [-0.08, 0.08].forEach(function(x) {
+        var support = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.04, 0.02), ironMat);
+        support.position.set(x, 0.28, -0.10);
+        group.add(support);
+    });
+
+    // ===== 注射喷嘴（坩埚前方，向下倾斜指向字模） =====
+    var nozzleGeo = new THREE.CylinderGeometry(0.008, 0.014, 0.05, 8);
+    var nozzle = new THREE.Mesh(nozzleGeo, steelMat);
+    nozzle.position.set(0, 0.26, -0.05);
+    nozzle.rotation.x = Math.PI / 2.5;
+    group.add(nozzle);
+
+    // ===== 字模腔体（中部平台——铸造铅字的模具） =====
+    var moldBox = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.04, 0.10), ironMat);
+    moldBox.position.set(0, 0.17, 0.04);
+    group.add(moldBox);
+    // 字模腔口（方形凹槽——可见铅字端面）
+    var moldCavity = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.025, 0.04), leadMat);
+    moldCavity.position.set(0, 0.18, 0.08);
+    group.add(moldCavity);
+
+    // ===== 冷却字盘（前部——已铸铅字排列区） =====
+    var trayGeo = new THREE.BoxGeometry(0.28, 0.015, 0.12);
+    var tray = new THREE.Mesh(trayGeo, ironMat);
+    tray.position.set(0, 0.10, 0.12);
+    group.add(tray);
+    // 已铸铅字阵列（3行x6列小方块）
+    for (var row = 0; row < 3; row++) {
+        for (var col = 0; col < 6; col++) {
+            var type = new THREE.Mesh(
+                new THREE.BoxGeometry(0.022, 0.03, 0.022),
+                leadMat
             );
-            type.position.set(-0.1 + col * 0.065, 0.42, -0.08 + row * 0.065);
+            type.position.set(-0.11 + col * 0.044, 0.123, 0.08 + row * 0.035);
             group.add(type);
         }
     }
 
-    // 摇柄
-    const handleStem = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.015, 0.015, 0.12, 8),
-        metalMat
-    );
-    handleStem.rotation.z = Math.PI / 2;
-    handleStem.position.set(0.22, 0.24, 0);
-    group.add(handleStem);
+    // ===== 压铸杆（顶部竖直——带动喷嘴下压） =====
+    var pressRod = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.10, 8), steelMat);
+    pressRod.position.set(0, 0.33, 0);
+    group.add(pressRod);
+    // 压杆弹簧（装饰圈）
+    for (var s = 0; s < 3; s++) {
+        var springRing = new THREE.Mesh(new THREE.TorusGeometry(0.012, 0.003, 6, 12), steelMat);
+        springRing.position.set(0, 0.31 - s * 0.012, 0);
+        springRing.rotation.x = Math.PI / 2;
+        group.add(springRing);
+    }
+    // 压杆顶部手轮
+    var handwheel = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.012, 16), brassMat);
+    handwheel.position.set(0, 0.39, 0);
+    group.add(handwheel);
+    // 手轮辐条（十字形）
+    [0, Math.PI/2].forEach(function(rot) {
+        var spoke = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.004, 0.006), brassMat);
+        spoke.position.set(0, 0.39, 0);
+        spoke.rotation.y = rot;
+        group.add(spoke);
+    });
 
-    const handleKnob = new THREE.Mesh(
-        new THREE.SphereGeometry(0.035, 8, 8),
-        metalMat
-    );
-    handleKnob.position.set(0.28, 0.24, 0);
-    group.add(handleKnob);
+    // ===== 飞轮（右侧——大圆盘+辐条） =====
+    var flywheelGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.015, 20);
+    var flywheel = new THREE.Mesh(flywheelGeo, ironMat);
+    flywheel.rotation.z = Math.PI / 2;
+    flywheel.position.set(0.21, 0.16, 0);
+    group.add(flywheel);
+    // 飞轮辐条（4根）
+    for (var sp = 0; sp < 4; sp++) {
+        var spokeAngle = sp * Math.PI / 2;
+        var spoke2 = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.12, 0.004), steelMat);
+        spoke2.position.set(0.21, 0.16, 0);
+        spoke2.rotation.z = spokeAngle;
+        group.add(spoke2);
+    }
+    // 飞轮中心轴
+    var flyAxle = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.06, 8), steelMat);
+    flyAxle.rotation.z = Math.PI / 2;
+    flyAxle.position.set(0.22, 0.16, 0);
+    group.add(flyAxle);
+
+    // ===== 手摇曲柄（右侧飞轮外侧——L形曲柄+木球握把） =====
+    var crankArm = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.06, 6), steelMat);
+    crankArm.position.set(0.26, 0.19, 0);
+    crankArm.rotation.z = Math.PI / 3;
+    group.add(crankArm);
+    var crankBend = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.04, 6), steelMat);
+    crankBend.position.set(0.28, 0.16, 0);
+    group.add(crankBend);
+    var gripBall = new THREE.Mesh(new THREE.SphereGeometry(0.014, 10, 10), woodMat);
+    gripBall.position.set(0.28, 0.14, 0);
+    group.add(gripBall);
+
+    // ===== 螺栓铆钉装饰 =====
+    var boltGeo = new THREE.CylinderGeometry(0.004, 0.004, 0.008, 6);
+    var boltPositions = [
+        [-0.17, 0.08, 0.10], [0.17, 0.08, 0.10],
+        [-0.17, 0.08, -0.10], [0.17, 0.08, -0.10],
+        [-0.17, 0.26, 0.10], [0.17, 0.26, 0.10],
+        [-0.17, 0.26, -0.10], [0.17, 0.26, -0.10]
+    ];
+    boltPositions.forEach(function(p) {
+        var bolt = new THREE.Mesh(boltGeo, steelMat);
+        bolt.rotation.z = Math.PI / 2;
+        bolt.position.set(p[0], p[1], p[2]);
+        group.add(bolt);
+    });
 
     group.userData = { itemName: '《新华日报》铸字机' };
     return group;
@@ -3664,8 +3901,8 @@ function checkCollision(newX, newZ) {
         {cx:-3,cz:-1.0,hw:0.3,hd:0.3},
         {cx: 0,cz:-1.0,hw:0.3,hd:0.3},
         {cx: 3,cz:-1.0,hw:0.3,hd:0.3},
-        // 铁船展位
-        {cx:0,cz:-3.0,hw:1.1,hd:0.6},
+        // 铁船展位（加大尺寸适配放大后的铁船）
+        {cx:0,cz:-3.0,hw:1.4,hd:0.8},
         // 入口手册架
         {cx:1.5,cz:3.2,hw:0.25,hd:0.2},
         // 角落绿植
