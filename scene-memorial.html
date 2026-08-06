@@ -2985,8 +2985,8 @@ function createIronBoatDisplay() {
     const group = new THREE.Group();
     group.userData = { itemName: '八路军东渡黄河使用的铁船' };
 
-    // 仿水纹地面平台
-    const platformGeo = new THREE.BoxGeometry(1.8, 0.03, 1.0);
+    // 仿水纹地面平台（加大以适配更大的铁船）
+    const platformGeo = new THREE.BoxGeometry(2.2, 0.03, 1.2);
     const platformMat = new THREE.MeshPhysicalMaterial({
         color: 0x5a4a30,    // 黄褐色沙地质感
         roughness: 0.95,
@@ -2997,10 +2997,10 @@ function createIronBoatDisplay() {
     platform.receiveShadow = true;
     group.add(platform);
 
-    // 铁船模型（放在平台上）
+    // 铁船模型（放在平台上——加大尺寸）
     const boat = createIronBoat();
     boat.position.set(0, 0.03, -2.8);
-    boat.scale.set(1.2, 1.2, 1.2);
+    boat.scale.set(1.5, 1.5, 1.5);
     group.add(boat);
 
     // 绳索围栏
@@ -3048,15 +3048,15 @@ function createIronBoatDisplay() {
     signGroup.add(signPanel);
     group.add(signGroup);
 
-    // 铁船专用射灯（双灯照射大型展品）
-    const boatSpot1 = new THREE.SpotLight(0xfff5e6, 1.5, 4.0, Math.PI / 4, 0.4, 1.5);
-    boatSpot1.position.set(0.8, 2.5, -2.2);
+    // 铁船专用射灯（双灯照射大型展品——增强光照适配更大模型）
+    const boatSpot1 = new THREE.SpotLight(0xfff5e6, 2.0, 5.0, Math.PI / 4, 0.4, 1.5);
+    boatSpot1.position.set(0.9, 2.8, -2.2);
     boatSpot1.target.position.set(0, 0.15, -2.8);
     boatSpot1.castShadow = false;
     group.add(boatSpot1);
     group.add(boatSpot1.target);
-    const boatSpot2 = new THREE.SpotLight(0xfff5e6, 1.5, 4.0, Math.PI / 4, 0.4, 1.5);
-    boatSpot2.position.set(-0.8, 2.5, -2.2);
+    const boatSpot2 = new THREE.SpotLight(0xfff5e6, 2.0, 5.0, Math.PI / 4, 0.4, 1.5);
+    boatSpot2.position.set(-0.9, 2.8, -2.2);
     boatSpot2.target.position.set(0, 0.15, -2.8);
     boatSpot2.castShadow = false;
     group.add(boatSpot2);
@@ -3073,137 +3073,301 @@ function createIronBoatDisplay() {
     scene.add(group);
 }
 
-// 铁船（高精度3D模型——基于实地调研铆接钢板结构）
+// 铁船（高精度3D模型——基于实地调研铆接钢板结构，增强版）
 function createIronBoat() {
     const group = new THREE.Group();
 
-    // 铁锈材质——深褐色/红褐色氧化层
-    const rustMat = new THREE.MeshPhysicalMaterial({
-        color: 0x4a3020,               // 深铁锈色
-        metalness: 0.6,
-        roughness: 0.85                // 粗糙锈面
+    // ===== 多层铁锈材质——模拟真实氧化层色差 =====
+    const hullRustMat = new THREE.MeshPhysicalMaterial({
+        color: 0x4a3020, metalness: 0.55, roughness: 0.88
     });
     const darkRustMat = new THREE.MeshPhysicalMaterial({
         color: 0x2a1a10, metalness: 0.5, roughness: 0.95
     });
+    const lightRustMat = new THREE.MeshPhysicalMaterial({
+        color: 0x6a4530, metalness: 0.5, roughness: 0.82
+    });
     const rivetMat = new THREE.MeshPhysicalMaterial({
-        color: 0x5a4030, metalness: 0.65, roughness: 0.5   // 铆钉——略亮的铁色
+        color: 0x5a4030, metalness: 0.7, roughness: 0.4
+    });
+    const gunwaleMat = new THREE.MeshPhysicalMaterial({
+        color: 0x5a4530, metalness: 0.6, roughness: 0.55
+    });
+    const bollardMat = new THREE.MeshPhysicalMaterial({
+        color: 0x3a2a18, metalness: 0.65, roughness: 0.5
+    });
+    const woodMat = new THREE.MeshPhysicalMaterial({
+        color: 0x4a3520, metalness: 0.0, roughness: 0.9
+    });
+    const keelMat = new THREE.MeshPhysicalMaterial({
+        color: 0x3a2515, metalness: 0.55, roughness: 0.9
     });
 
-    // ===== 船底（平底矩形） =====
-    const bottomGeo = new THREE.BoxGeometry(0.60, 0.02, 0.18);
+    // ===== 龙骨（底部纵向加强梁） =====
+    const keelGeo = new THREE.BoxGeometry(0.84, 0.035, 0.05);
+    const keel = new THREE.Mesh(keelGeo, keelMat);
+    keel.position.set(0, 0.025, 0);
+    group.add(keel);
+
+    // ===== 船底（平底，带纵向板缝） =====
+    const bottomGeo = new THREE.BoxGeometry(0.80, 0.025, 0.26);
     const bottom = new THREE.Mesh(bottomGeo, darkRustMat);
-    bottom.position.set(0, 0.04, 0);
+    bottom.position.set(0, 0.045, 0);
     group.add(bottom);
+    // 底板纵向加强条
+    for (let i = -1; i <= 1; i++) {
+        const stripGeo = new THREE.BoxGeometry(0.78, 0.008, 0.02);
+        const strip = new THREE.Mesh(stripGeo, darkRustMat);
+        strip.position.set(0, 0.06, i * 0.07);
+        group.add(strip);
+    }
 
-    // ===== 船舷侧板（左右对称，垂直舷墙） =====
-    const sideGeo = new THREE.BoxGeometry(0.60, 0.10, 0.015);
-    const leftSide = new THREE.Mesh(sideGeo, rustMat);
-    leftSide.position.set(0, 0.10, 0.09);
-    group.add(leftSide);
-    const rightSide = new THREE.Mesh(sideGeo, rustMat);
-    rightSide.position.set(0, 0.10, -0.09);
-    group.add(rightSide);
+    // ===== 船舷侧板——双层水平strake（模拟搭接钢板） =====
+    // 下层strake
+    const lowerSideGeo = new THREE.BoxGeometry(0.80, 0.075, 0.018);
+    const leftLower = new THREE.Mesh(lowerSideGeo, hullRustMat);
+    leftLower.position.set(0, 0.095, 0.13);
+    group.add(leftLower);
+    const rightLower = new THREE.Mesh(lowerSideGeo, hullRustMat);
+    rightLower.position.set(0, 0.095, -0.13);
+    group.add(rightLower);
 
-    // ===== 船首（楔形V形破浪艏——左板+右板） =====
-    // 左侧船首板
-    const bowLeftGeo = new THREE.BufferGeometry();
-    const bowLeftVerts = new Float32Array([
-        -0.28, 0.04, 0.09,   -0.28, 0.14, 0.09,   -0.34, 0.04, 0.015,
-        -0.34, 0.04, 0.015,  -0.28, 0.14, 0.09,    -0.34, 0.12, 0.015
+    // 上层strake（略内收，模拟搭接overlap）
+    const upperSideGeo = new THREE.BoxGeometry(0.78, 0.065, 0.018);
+    const leftUpper = new THREE.Mesh(upperSideGeo, lightRustMat);
+    leftUpper.position.set(0, 0.165, 0.128);
+    group.add(leftUpper);
+    const rightUpper = new THREE.Mesh(upperSideGeo, lightRustMat);
+    rightUpper.position.set(0, 0.165, -0.128);
+    group.add(rightUpper);
+
+    // ===== 垂直对接缝加强板（butt straps，3道/侧） =====
+    const buttStrapGeo = new THREE.BoxGeometry(0.018, 0.14, 0.022);
+    const buttXPositions = [-0.22, 0.0, 0.22];
+    buttXPositions.forEach(function(x) {
+        var strapL = new THREE.Mesh(buttStrapGeo, darkRustMat);
+        strapL.position.set(x, 0.13, 0.132);
+        group.add(strapL);
+        var strapR = new THREE.Mesh(buttStrapGeo, darkRustMat);
+        strapR.position.set(x, 0.13, -0.132);
+        group.add(strapR);
+    });
+
+    // ===== 船首（楔形V形破浪艏——加高加长，艏墙升高） =====
+    // 左侧船首下板
+    var bowLowerLeftGeo = new THREE.BufferGeometry();
+    var bowLowerLeftVerts = new Float32Array([
+        -0.40, 0.045, 0.13,   -0.40, 0.12, 0.13,    -0.52, 0.045, 0.02,
+        -0.52, 0.045, 0.02,   -0.40, 0.12, 0.13,    -0.52, 0.10, 0.02
     ]);
-    bowLeftGeo.setAttribute('position', new THREE.BufferAttribute(bowLeftVerts, 3));
-    bowLeftGeo.computeVertexNormals();
-    group.add(new THREE.Mesh(bowLeftGeo, rustMat));
-    // 右侧船首板
-    const bowRightGeo = new THREE.BufferGeometry();
-    const bowRightVerts = new Float32Array([
-        -0.28, 0.04, -0.09,  -0.34, 0.04, -0.015, -0.28, 0.14, -0.09,
-        -0.28, 0.14, -0.09,  -0.34, 0.04, -0.015,  -0.34, 0.12, -0.015
+    bowLowerLeftGeo.setAttribute('position', new THREE.BufferAttribute(bowLowerLeftVerts, 3));
+    bowLowerLeftGeo.computeVertexNormals();
+    group.add(new THREE.Mesh(bowLowerLeftGeo, hullRustMat));
+    // 右侧船首下板
+    var bowLowerRightGeo = new THREE.BufferGeometry();
+    var bowLowerRightVerts = new Float32Array([
+        -0.40, 0.045, -0.13,  -0.52, 0.045, -0.02,  -0.40, 0.12, -0.13,
+        -0.40, 0.12, -0.13,   -0.52, 0.045, -0.02,  -0.52, 0.10, -0.02
     ]);
-    bowRightGeo.setAttribute('position', new THREE.BufferAttribute(bowRightVerts, 3));
-    bowRightGeo.computeVertexNormals();
-    group.add(new THREE.Mesh(bowRightGeo, rustMat));
+    bowLowerRightGeo.setAttribute('position', new THREE.BufferAttribute(bowLowerRightVerts, 3));
+    bowLowerRightGeo.computeVertexNormals();
+    group.add(new THREE.Mesh(bowLowerRightGeo, hullRustMat));
+    // 左侧船首上板（升高部分——艏墙高于舷墙）
+    var bowUpperLeftGeo = new THREE.BufferGeometry();
+    var bowUpperLeftVerts = new Float32Array([
+        -0.40, 0.12, 0.128,   -0.40, 0.195, 0.128,  -0.52, 0.10, 0.02,
+        -0.52, 0.10, 0.02,    -0.40, 0.195, 0.128,  -0.52, 0.17, 0.02
+    ]);
+    bowUpperLeftGeo.setAttribute('position', new THREE.BufferAttribute(bowUpperLeftVerts, 3));
+    bowUpperLeftGeo.computeVertexNormals();
+    group.add(new THREE.Mesh(bowUpperLeftGeo, lightRustMat));
+    // 右侧船首上板
+    var bowUpperRightGeo = new THREE.BufferGeometry();
+    var bowUpperRightVerts = new Float32Array([
+        -0.40, 0.12, -0.128,  -0.52, 0.10, -0.02,   -0.40, 0.195, -0.128,
+        -0.40, 0.195, -0.128, -0.52, 0.10, -0.02,   -0.52, 0.17, -0.02
+    ]);
+    bowUpperRightGeo.setAttribute('position', new THREE.BufferAttribute(bowUpperRightVerts, 3));
+    bowUpperRightGeo.computeVertexNormals();
+    group.add(new THREE.Mesh(bowUpperRightGeo, lightRustMat));
     // 船首底板（V形底部连接）
-    const bowBottomGeo = new THREE.BufferGeometry();
-    const bowBottomVerts = new Float32Array([
-        -0.28, 0.04, 0.09,   -0.34, 0.04, 0.015,  -0.28, 0.04, -0.09,
-        -0.34, 0.04, -0.015, -0.28, 0.04, -0.09,  -0.34, 0.04, 0.015
+    var bowBottomGeo = new THREE.BufferGeometry();
+    var bowBottomVerts = new Float32Array([
+        -0.40, 0.045, 0.13,   -0.52, 0.045, 0.02,   -0.40, 0.045, -0.13,
+        -0.52, 0.045, -0.02,  -0.40, 0.045, -0.13,  -0.52, 0.045, 0.02
     ]);
     bowBottomGeo.setAttribute('position', new THREE.BufferAttribute(bowBottomVerts, 3));
     bowBottomGeo.computeVertexNormals();
     group.add(new THREE.Mesh(bowBottomGeo, darkRustMat));
 
-    // ===== 船尾板（方正） =====
-    const sternGeo = new THREE.BoxGeometry(0.015, 0.10, 0.18);
-    const stern = new THREE.Mesh(sternGeo, rustMat);
-    stern.position.set(0.30, 0.10, 0);
-    group.add(stern);
+    // 艏柱（stem post——船首正中纵向立柱，高出舷墙）
+    var stemPostGeo = new THREE.BoxGeometry(0.022, 0.20, 0.03);
+    var stemPost = new THREE.Mesh(stemPostGeo, keelMat);
+    stemPost.position.set(-0.52, 0.14, 0);
+    stemPost.rotation.z = -0.25;
+    group.add(stemPost);
 
-    // ===== 舷缘加强（外翻卷边） =====
-    const gunwaleMat = new THREE.MeshPhysicalMaterial({color:0x5a4530, metalness:0.6, roughness:0.6});
+    // ===== 船尾板（方正transom） =====
+    var sternGeo = new THREE.BoxGeometry(0.02, 0.14, 0.26);
+    var stern = new THREE.Mesh(sternGeo, hullRustMat);
+    stern.position.set(0.40, 0.12, 0);
+    group.add(stern);
+    // 船尾底板加强
+    var sternBottomGeo = new THREE.BoxGeometry(0.04, 0.025, 0.26);
+    var sternBottom = new THREE.Mesh(sternBottomGeo, darkRustMat);
+    sternBottom.position.set(0.40, 0.045, 0);
+    group.add(sternBottom);
+
+    // ===== 舷缘加强（外翻卷边——角铁cap rail） =====
     // 左舷缘
-    const leftGunwale = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.012, 0.025), gunwaleMat);
-    leftGunwale.position.set(0.01, 0.15, 0.10);
+    var leftGunwale = new THREE.Mesh(new THREE.BoxGeometry(0.80, 0.015, 0.03), gunwaleMat);
+    leftGunwale.position.set(0, 0.20, 0.14);
     group.add(leftGunwale);
     // 右舷缘
-    const rightGunwale = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.012, 0.025), gunwaleMat);
-    rightGunwale.position.set(0.01, 0.15, -0.10);
+    var rightGunwale = new THREE.Mesh(new THREE.BoxGeometry(0.80, 0.015, 0.03), gunwaleMat);
+    rightGunwale.position.set(0, 0.20, -0.14);
     group.add(rightGunwale);
+    // 船首舷缘（斜向延伸至艏柱顶部）
+    var bowGunwaleLeftGeo = new THREE.BufferGeometry();
+    var bowGunwaleLeftVerts = new Float32Array([
+        -0.40, 0.20, 0.14,    -0.40, 0.215, 0.14,   -0.52, 0.17, 0.02,
+        -0.52, 0.17, 0.02,    -0.40, 0.215, 0.14,   -0.52, 0.185, 0.02
+    ]);
+    bowGunwaleLeftGeo.setAttribute('position', new THREE.BufferAttribute(bowGunwaleLeftVerts, 3));
+    bowGunwaleLeftGeo.computeVertexNormals();
+    group.add(new THREE.Mesh(bowGunwaleLeftGeo, gunwaleMat));
+    var bowGunwaleRightGeo = new THREE.BufferGeometry();
+    var bowGunwaleRightVerts = new Float32Array([
+        -0.40, 0.20, -0.14,   -0.52, 0.17, -0.02,   -0.40, 0.215, -0.14,
+        -0.40, 0.215, -0.14,  -0.52, 0.17, -0.02,   -0.52, 0.185, -0.02
+    ]);
+    bowGunwaleRightGeo.setAttribute('position', new THREE.BufferAttribute(bowGunwaleRightVerts, 3));
+    bowGunwaleRightGeo.computeVertexNormals();
+    group.add(new THREE.Mesh(bowGunwaleRightGeo, gunwaleMat));
 
-    // ===== 横向隔板（内部舱壁，3道） =====
-    const bulkheadGeo = new THREE.BoxGeometry(0.012, 0.10, 0.16);
-    for (let i = 0; i < 3; i++) {
-        const bulkhead = new THREE.Mesh(bulkheadGeo, darkRustMat);
-        bulkhead.position.set(-0.12 + i * 0.16, 0.10, 0);
-        group.add(bulkhead);
+    // ===== 内部横向肋骨（ribs/frames——6道，可见） =====
+    var ribGeo = new THREE.BoxGeometry(0.025, 0.13, 0.24);
+    var ribXPositions = [-0.30, -0.18, -0.06, 0.06, 0.18, 0.30];
+    ribXPositions.forEach(function(x) {
+        var rib = new THREE.Mesh(ribGeo, darkRustMat);
+        rib.position.set(x, 0.11, 0);
+        group.add(rib);
+    });
+
+    // ===== 内部木横座板（thwarts——2道木质座椅/结构加强） =====
+    var thwartGeo = new THREE.BoxGeometry(0.06, 0.025, 0.22);
+    var thwart1 = new THREE.Mesh(thwartGeo, woodMat);
+    thwart1.position.set(-0.10, 0.13, 0);
+    group.add(thwart1);
+    var thwart2 = new THREE.Mesh(thwartGeo, woodMat);
+    thwart2.position.set(0.15, 0.13, 0);
+    group.add(thwart2);
+
+    // ===== 铆钉阵列（沿所有板缝和对接缝密集排列） =====
+    var rivetGeo = new THREE.SphereGeometry(0.005, 6, 6);
+
+    // 左舷下层strake铆钉（上下两排，沿水平缝）
+    for (var col = 0; col < 16; col++) {
+        var rivetU = new THREE.Mesh(rivetGeo, rivetMat);
+        rivetU.position.set(-0.37 + col * 0.05, 0.135, 0.14);
+        group.add(rivetU);
+        var rivetD = new THREE.Mesh(rivetGeo, rivetMat);
+        rivetD.position.set(-0.37 + col * 0.05, 0.065, 0.14);
+        group.add(rivetD);
     }
-
-    // ===== 铆钉阵列（沿舷侧和接缝排列） =====
-    const rivetGeo = new THREE.SphereGeometry(0.004, 6, 6);
-    // 左舷铆钉（4排 x 12列）
-    for (let row = 0; row < 4; row++) {
-        for (let col = 0; col < 12; col++) {
-            const rivet = new THREE.Mesh(rivetGeo, rivetMat);
-            rivet.position.set(-0.27 + col * 0.048, 0.06 + row * 0.025, 0.098);
-            group.add(rivet);
+    // 右舷下层strake铆钉（对称）
+    for (var col = 0; col < 16; col++) {
+        var rivetU2 = new THREE.Mesh(rivetGeo, rivetMat);
+        rivetU2.position.set(-0.37 + col * 0.05, 0.135, -0.14);
+        group.add(rivetU2);
+        var rivetD2 = new THREE.Mesh(rivetGeo, rivetMat);
+        rivetD2.position.set(-0.37 + col * 0.05, 0.065, -0.14);
+        group.add(rivetD2);
+    }
+    // 左舷上层strake铆钉（沿舷缘连接缝）
+    for (var col = 0; col < 16; col++) {
+        var rivetG = new THREE.Mesh(rivetGeo, rivetMat);
+        rivetG.position.set(-0.37 + col * 0.05, 0.195, 0.14);
+        group.add(rivetG);
+    }
+    // 右舷上层strake铆钉
+    for (var col = 0; col < 16; col++) {
+        var rivetG2 = new THREE.Mesh(rivetGeo, rivetMat);
+        rivetG2.position.set(-0.37 + col * 0.05, 0.195, -0.14);
+        group.add(rivetG2);
+    }
+    // 垂直对接缝铆钉（3道/侧，每道5颗）
+    buttXPositions.forEach(function(x) {
+        for (var row = 0; row < 5; row++) {
+            var rivetBL = new THREE.Mesh(rivetGeo, rivetMat);
+            rivetBL.position.set(x, 0.07 + row * 0.03, 0.143);
+            group.add(rivetBL);
+            var rivetBR = new THREE.Mesh(rivetGeo, rivetMat);
+            rivetBR.position.set(x, 0.07 + row * 0.03, -0.143);
+            group.add(rivetBR);
+        }
+    });
+    // 船首板铆钉（4排 x 5列/侧）
+    for (var row = 0; row < 4; row++) {
+        for (var col = 0; col < 5; col++) {
+            var t = (col + 1) / 6;
+            var xPos = -0.41 - col * 0.022;
+            var rivetBL2 = new THREE.Mesh(rivetGeo, rivetMat);
+            rivetBL2.position.set(xPos, 0.06 + row * 0.025, 0.13 - t * 0.11);
+            group.add(rivetBL2);
+            var rivetBR2 = new THREE.Mesh(rivetGeo, rivetMat);
+            rivetBR2.position.set(xPos, 0.06 + row * 0.025, -0.13 + t * 0.11);
+            group.add(rivetBR2);
         }
     }
-    // 右舷铆钉（对称）
-    for (let row = 0; row < 4; row++) {
-        for (let col = 0; col < 12; col++) {
-            const rivet = new THREE.Mesh(rivetGeo, rivetMat);
-            rivet.position.set(-0.27 + col * 0.048, 0.06 + row * 0.025, -0.098);
-            group.add(rivet);
-        }
-    }
-    // 船首板铆钉（3排 x 4列）
-    for (let row = 0; row < 3; row++) {
-        for (let col = 0; col < 4; col++) {
-            const t = (col + 1) / 5;
-            // 左侧
-            const rivetL = new THREE.Mesh(rivetGeo, rivetMat);
-            rivetL.position.set(-0.29 - col * 0.012, 0.06 + row * 0.03, 0.09 - t * 0.075);
-            group.add(rivetL);
-            // 右侧
-            const rivetR = new THREE.Mesh(rivetGeo, rivetMat);
-            rivetR.position.set(-0.29 - col * 0.012, 0.06 + row * 0.03, -0.09 + t * 0.075);
-            group.add(rivetR);
-        }
-    }
 
-    // ===== 系缆环（舷缘上的金属环扣） =====
-    const hookMat2 = new THREE.MeshPhysicalMaterial({color:0x3a2a18, metalness:0.7, roughness:0.5});
-    const hookPositions = [[-0.18, 0.16, 0.11], [0.0, 0.16, 0.11], [0.18, 0.16, 0.11],
-                            [-0.18, 0.16, -0.11], [0.0, 0.16, -0.11], [0.18, 0.16, -0.11],
-                            [-0.30, 0.16, 0.03], [-0.30, 0.16, -0.03]];
-    hookPositions.forEach(p => {
-        const hookGeo = new THREE.TorusGeometry(0.008, 0.002, 6, 12);
-        const hook = new THREE.Mesh(hookGeo, hookMat2);
+    // ===== T形系缆桩（bollards——4个，前后各一对） =====
+    var bollardPositions = [[-0.22, 0.14], [-0.22, -0.14], [0.25, 0.14], [0.25, -0.14]];
+    bollardPositions.forEach(function(p) {
+        // 底座
+        var bBase = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.018, 0.022, 0.015, 8), bollardMat
+        );
+        bBase.position.set(p[0], 0.2075, p[1]);
+        group.add(bBase);
+        // 立柱
+        var bPost = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.012, 0.014, 0.05, 8), bollardMat
+        );
+        bPost.position.set(p[0], 0.24, p[1]);
+        group.add(bPost);
+        // 顶部横梁（T形头）
+        var bCross = new THREE.Mesh(
+            new THREE.BoxGeometry(0.04, 0.012, 0.014), bollardMat
+        );
+        bCross.position.set(p[0], 0.27, p[1]);
+        group.add(bCross);
+        // 顶部圆头
+        var bCap = new THREE.Mesh(
+            new THREE.SphereGeometry(0.014, 8, 8), bollardMat
+        );
+        bCap.position.set(p[0], 0.278, p[1]);
+        group.add(bCap);
+    });
+
+    // ===== 系缆环（舷缘上的金属环扣——8个） =====
+    var hookMat2 = new THREE.MeshPhysicalMaterial({color:0x3a2a18, metalness:0.7, roughness:0.5});
+    var hookPositions = [[-0.28, 0.21, 0.15], [-0.08, 0.21, 0.15], [0.08, 0.21, 0.15], [0.28, 0.21, 0.15],
+                         [-0.28, 0.21, -0.15], [-0.08, 0.21, -0.15], [0.08, 0.21, -0.15], [0.28, 0.21, -0.15]];
+    hookPositions.forEach(function(p) {
+        var hook = new THREE.Mesh(new THREE.TorusGeometry(0.01, 0.003, 6, 12), hookMat2);
         hook.position.set(p[0], p[1], p[2]);
         hook.rotation.y = Math.PI / 2;
         group.add(hook);
     });
+
+    // ===== 船底排水孔（船尾底部） =====
+    var drain = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.008, 0.008, 0.03, 8), darkRustMat
+    );
+    drain.position.set(0.40, 0.045, 0);
+    drain.rotation.z = Math.PI / 2;
+    group.add(drain);
 
     group.userData = { itemName: '八路军东渡黄河使用的铁船' };
     return group;
