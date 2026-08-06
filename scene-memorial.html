@@ -1739,15 +1739,16 @@ function createExhibitionHall() {
         scene.add(lampGroup);
     });
 
-    // ========== 中间课桌式布局：2列 x 4行，等距排列，两侧留出走廊 ==========
-    // 左列
-    createMainDisplay(-1.5, -1.5, '行军锅', ()=>createMarchingPot());
+    // ========== 沿中央通道左右交替排列，从入口向前依次展示 ==========
+    // 前端：军号（左）、迫击炮（右）——大件靠前便于观赏
+    createMainDisplay(-1.5,  2.5, '崔振芳的军号', ()=>createBugle());
+    createMainDisplay( 1.5,  1.5, '八路军拉发式迫击炮', ()=>createMortar());
+    // 中段：行军锅（左）→ 叶成焕的草鞋（左，位置锁定不动）
+    createMainDisplay(-1.5,  0.5, '行军锅', ()=>createMarchingPot());
     createMainDisplay(-1.5, -0.5, '叶成焕的草鞋', ()=>createStrawSandals());
-    createMainDisplay(-1.5,  1.5, '崔振芳的军号', ()=>createBugle());
-    // 右列
-    createMainDisplay(1.5, -1.5, '何克的打字机', ()=>createTypewriter());
-    createMainDisplay(1.5, -0.5, '《新华日报》铸字机', ()=>createPrintingPress());
-    createMainDisplay(1.5,  1.5, '八路军拉发式迫击炮', ()=>createMortar());
+    // 后段：打字机（右）→ 铸字机（左）——依次向后排布
+    createMainDisplay( 1.5, -1.5, '何克的打字机', ()=>createTypewriter());
+    createMainDisplay(-1.5, -2.2, '《新华日报》铸字机', ()=>createPrintingPress());
 
     // ========== 后方大型展品：八路军东渡黄河铁船（地面独立展位） ==========
     createIronBoatDisplay();
@@ -2993,18 +2994,18 @@ function createIronBoatDisplay() {
         metalness: 0.0
     });
     const platform = new THREE.Mesh(platformGeo, platformMat);
-    platform.position.set(0, 0.015, -2.8);
+    platform.position.set(0, 0.015, -3.0);
     platform.receiveShadow = true;
     group.add(platform);
 
     // 铁船模型（放在平台上——加大尺寸）
     const boat = createIronBoat();
-    boat.position.set(0, 0.03, -2.8);
+    boat.position.set(0, 0.03, -3.0);
     boat.scale.set(1.5, 1.5, 1.5);
     group.add(boat);
 
     // 绳索围栏
-    createRopeBarrier(0, -2.8, 1.6);
+    createRopeBarrier(0, -3.0, 1.6);
 
     // 展品说明牌（地面立式）
     const signGroup = new THREE.Group();
@@ -3013,7 +3014,7 @@ function createIronBoatDisplay() {
         new THREE.BoxGeometry(0.3, 0.01, 0.15),
         new THREE.MeshPhysicalMaterial({color: 0x1a1a1a, metalness: 0.3, roughness: 0.5})
     );
-    signBase.position.set(0, 0.005, -3.35);
+    signBase.position.set(0, 0.005, -3.55);
     signGroup.add(signBase);
     // 说明牌面板（Canvas纹理）
     const signCanvas = document.createElement('canvas');
@@ -3043,21 +3044,21 @@ function createIronBoatDisplay() {
         new THREE.PlaneGeometry(0.3, 0.15),
         new THREE.MeshBasicMaterial({ map: signTex })
     );
-    signPanel.position.set(0, 0.08, -3.35);
+    signPanel.position.set(0, 0.08, -3.55);
     signPanel.rotation.x = -Math.PI / 6;
     signGroup.add(signPanel);
     group.add(signGroup);
 
     // 铁船专用射灯（双灯照射大型展品——增强光照适配更大模型）
     const boatSpot1 = new THREE.SpotLight(0xfff5e6, 2.0, 5.0, Math.PI / 4, 0.4, 1.5);
-    boatSpot1.position.set(0.9, 2.8, -2.2);
-    boatSpot1.target.position.set(0, 0.15, -2.8);
+    boatSpot1.position.set(0.9, 2.8, -2.4);
+    boatSpot1.target.position.set(0, 0.15, -3.0);
     boatSpot1.castShadow = false;
     group.add(boatSpot1);
     group.add(boatSpot1.target);
     const boatSpot2 = new THREE.SpotLight(0xfff5e6, 2.0, 5.0, Math.PI / 4, 0.4, 1.5);
-    boatSpot2.position.set(-0.9, 2.8, -2.2);
-    boatSpot2.target.position.set(0, 0.15, -2.8);
+    boatSpot2.position.set(-0.9, 2.8, -2.4);
+    boatSpot2.target.position.set(0, 0.15, -3.0);
     boatSpot2.castShadow = false;
     group.add(boatSpot2);
     group.add(boatSpot2.target);
