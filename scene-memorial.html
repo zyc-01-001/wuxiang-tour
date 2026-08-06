@@ -703,6 +703,7 @@
     <div class="loader-ring"></div>
     <div class="loader-percent" id="loaderPercent">0%</div>
     <div class="loader-text">正在加载精品展厅...</div>
+    <div id="loadingTip" style="margin-top:16px;color:rgba(255,255,255,0.4);font-size:12px;max-width:360px;text-align:center;line-height:1.6;">首次加载需要下载3D模型资源，请耐心等待</div>
 </div>
 <div class="loading-bar-container">
     <div class="loading-bar" id="loadingBar"></div>
@@ -1410,6 +1411,20 @@ function init() {
 
     updateLoading(100);
     animate();
+
+    // 加载超时保护：15秒后如果仍在加载界面，强制进入开始界面
+    // 避免因网络慢（GitHub Pages国内访问慢）导致用户长时间卡在加载界面
+    setTimeout(function() {
+        var overlay = document.getElementById('loadingOverlay');
+        if (overlay && !overlay.classList.contains('hidden')) {
+            console.warn('加载超时保护触发——强制进入开始界面');
+            overlay.classList.add('hidden');
+            document.querySelector('.loading-bar-container').style.display = 'none';
+            document.getElementById('startOverlay').classList.remove('hidden');
+            var tip = document.getElementById('loadingTip');
+            if (tip) tip.textContent = '部分3D模型仍在后台加载中，草鞋展品会在加载完成后自动显示';
+        }
+    }, 15000);
 }
 
 function showHUD(show) {
@@ -2695,9 +2710,21 @@ function createMarchingPot() {
     return group;
 }
 
+// ========== 草鞋模型加载状态 ==========
+let sandalModelLoaded = false;
+let sandalLoadFailed = false;
+
 // 草鞋（Tripo3D高质量GLB模型——磨损针织拖鞋风格，真实老化质感）
 function createStrawSandals() {
     const group = new THREE.Group();
+
+    // 占位几何体——模型加载前先显示一个草色小台座，避免展台空置
+    var placeholder = new THREE.Mesh(
+        new THREE.BoxGeometry(0.15, 0.03, 0.25),
+        new THREE.MeshPhysicalMaterial({color: 0xc4a44a, roughness: 0.9})
+    );
+    placeholder.position.y = 0.02;
+    group.add(placeholder);
 
     // ===== 加载Tripo3D高质量GLB模型 =====
     const loader = new THREE.GLTFLoader();
@@ -2729,19 +2756,26 @@ function createStrawSandals() {
             });
 
             // 模型缩放与定位调整
-            // Tripo3D模型默认尺寸较大，需要缩放到展台合适比例
             model.scale.set(0.5, 0.5, 0.5);
             model.rotation.y = Math.PI / 2;  // 旋转90度使草鞋横向展示
             model.position.y = 0;
             model.position.x = 0;
 
+            // 移除占位体，替换为真实模型
+            group.remove(placeholder);
             group.add(model);
+            sandalModelLoaded = true;
         },
         function(xhr) {
-            console.log('草鞋模型加载进度: ' + (xhr.loaded / xhr.total * 100).toFixed(1) + '%');
+            if (xhr.total) {
+                var pct = (xhr.loaded / xhr.total * 100).toFixed(0);
+                console.log('草鞋模型加载进度: ' + pct + '%');
+            }
         },
         function(error) {
             console.error('草鞋模型加载失败:', error);
+            sandalLoadFailed = true;
+            // 保留占位体，不阻塞展厅使用
         }
     );
 
