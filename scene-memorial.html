@@ -1325,8 +1325,8 @@ function init() {
     updateLoading(20);
 
     camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
-    // 从后墙入口前方开始（z=3.5：远离前排展品，避免进门即触发迫击炮讲解）
-    camera.position.set(0, PLAYER_HEIGHT, 3.5);
+    // 从后墙入口前方开始
+    camera.position.set(0, PLAYER_HEIGHT, 2.5);
 
     updateLoading(30);
 
@@ -4023,12 +4023,6 @@ function checkItemFocus() {
 }
 
 // ========== 自动讲解 ==========
-// 各展品自动讲解触发距离阈值（默认1.8）
-// 迫击炮：收紧至1.7，仅玩家主动靠近至合理观赏距离才触发，消除进门自动播报
-const NARRATION_TRIGGER_DISTANCES = {
-    '八路军拉发式迫击炮': 1.7
-};
-
 function checkAutoNarration() {
     // 靠近展品时自动触发朗读
     if(isPanelOpen || isPaused) return;
@@ -4055,10 +4049,7 @@ function checkAutoNarration() {
     const narrationBar = document.getElementById('narrationBar');
     const narrationText = document.getElementById('narrationText');
 
-    // 获取当前最近展品的触发距离阈值（默认1.8，迫击炮单独收紧至1.7）
-    const triggerDist = (closestItem && NARRATION_TRIGGER_DISTANCES[closestItem]) || 1.8;
-
-    if(closestDist < triggerDist && closestItem){
+    if(closestDist < 1.8 && closestItem){
         if(autoNarrateItem !== closestItem){
             stopAutoNarration();
             autoNarrateItem = closestItem;
