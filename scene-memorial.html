@@ -1027,7 +1027,6 @@ let isPanelOpen = false;
 let _perfMonitor = null;
 let autoNarrating = false;
 let autoNarrateItem = null;
-let narrationGracePeriod = 0;  // 进入展厅后的宽限期倒计时（毫秒），期间不触发自动讲解
 
 // ========== 故事模式全局变量 ==========
 let isStoryMode = false;
@@ -1327,7 +1326,7 @@ function init() {
 
     camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
     // 从后墙入口前方开始
-    camera.position.set(0, PLAYER_HEIGHT, 3.5);
+    camera.position.set(0, PLAYER_HEIGHT, 2.5);
 
     updateLoading(30);
 
@@ -1449,10 +1448,6 @@ function startGame(storyMode) {
     document.getElementById('startOverlay').classList.add('hidden');
     isPlaying = true;
 
-    // 进入展厅后设置3秒宽限期，期间不触发自动讲解
-    // 避免出生位置离展品太近导致立即开始语音
-    narrationGracePeriod = 3000;
-
     if (isMobile) {
         document.getElementById('joystickLeftZone').style.display = 'block';
         document.getElementById('joystickRightZone').style.display = 'block';
@@ -1473,8 +1468,6 @@ function startGame(storyMode) {
 
 function resumeGame() {
     document.getElementById('pauseOverlay').classList.remove('visible');
-    // 恢复后设置短暂宽限期，避免暂停位置靠近展品立即触发讲解
-    narrationGracePeriod = 1500;
     if (isMobile) {
         showHUD(true);
     } else {
@@ -4033,12 +4026,6 @@ function checkItemFocus() {
 function checkAutoNarration() {
     // 靠近展品时自动触发朗读
     if(isPanelOpen || isPaused) return;
-
-    // 宽限期倒计时——进入展厅后几秒内不触发自动讲解
-    if(narrationGracePeriod > 0){
-        narrationGracePeriod -= 16;  // 每帧约16ms
-        return;
-    }
 
     const playerPos = camera.position;
     let closestItem = null;
