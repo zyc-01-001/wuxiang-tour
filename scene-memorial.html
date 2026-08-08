@@ -2643,122 +2643,200 @@ function createPhotoExhibit(photoUrl, aspectRatio, itemName) {
 function createMarchingPot() {
     const group = new THREE.Group();
 
-    // 铸铁材质——深灰黑色，带烟熏氧化痕迹
-    const ironMat = new THREE.MeshPhysicalMaterial({
-        color: 0x2a2620, metalness: 0.6, roughness: 0.75
+    // ===== 材质定义（还原铁皮打制行军锅：铁褐色、烟熏、铁锈） =====
+    // 主体铁皮——铁褐色，粗糙铁皮质感
+    var ironMat = new THREE.MeshPhysicalMaterial({
+        color: 0x4a3a2a, metalness: 0.55, roughness: 0.82
     });
-    const sootMat = new THREE.MeshPhysicalMaterial({
-        color: 0x1a1610, metalness: 0.3, roughness: 0.95
+    // 烟熏层——锅底深黑炭化痕迹
+    var sootMat = new THREE.MeshPhysicalMaterial({
+        color: 0x1a1410, metalness: 0.25, roughness: 0.97
     });
-    const rustMat = new THREE.MeshPhysicalMaterial({
-        color: 0x4a2818, metalness: 0.4, roughness: 0.9
+    // 铁锈——棕红色锈蚀
+    var rustMat = new THREE.MeshPhysicalMaterial({
+        color: 0x6a3a20, metalness: 0.35, roughness: 0.93
     });
-    const handleMat = new THREE.MeshPhysicalMaterial({
-        color: 0x3a2a18, metalness: 0.7, roughness: 0.5
-    });
+    // 补丁铁皮——与主体略有色差
+    var patchMats = [
+        new THREE.MeshPhysicalMaterial({color: 0x5a4030, metalness: 0.5, roughness: 0.88}),
+        new THREE.MeshPhysicalMaterial({color: 0x3a2a1a, metalness: 0.45, roughness: 0.9}),
+        new THREE.MeshPhysicalMaterial({color: 0x6a4a30, metalness: 0.4, roughness: 0.85}),
+        new THREE.MeshPhysicalMaterial({color: 0x4a3020, metalness: 0.55, roughness: 0.87})
+    ];
 
-    // ===== 锅体——半球形底部+收口锅身（还原军用行军锅弧度） =====
-    // 底部半球（内凹弧形底）
-    var potBottomGeo = new THREE.SphereGeometry(0.16, 28, 16, 0, Math.PI * 2, Math.PI * 0.55, Math.PI * 0.45);
-    var potBottom = new THREE.Mesh(potBottomGeo, ironMat);
-    potBottom.position.y = 0.06;
-    potBottom.castShadow = true;
-    group.add(potBottom);
+    // ===== 锅体——直口宽平沿、平底、深腹（还原真实71cm口径49cm通高比例） =====
+    var potRadius = 0.17;   // 锅身半径
+    var potHeight = 0.20;   // 锅身高度（深腹）
+    var rimWidth = 0.045;   // 宽平沿宽度
 
-    // 锅身——上宽下窄的圆台（略微收口）
-    var bodyGeo = new THREE.CylinderGeometry(0.17, 0.15, 0.14, 28, 1, true);
+    // 锅身——直筒深腹（铁皮打制，略带不规则的微收口）
+    var bodyGeo = new THREE.CylinderGeometry(potRadius, potRadius * 0.96, potHeight, 32, 4, false);
     var body = new THREE.Mesh(bodyGeo, ironMat);
-    body.position.y = 0.14;
+    body.position.y = potHeight / 2 + 0.01;
     body.castShadow = true;
+    body.receiveShadow = true;
     group.add(body);
 
-    // 锅沿——外翻卷边（厚实铸铁沿口）
-    var rimGeo = new THREE.TorusGeometry(0.175, 0.018, 10, 28);
-    var rim = new THREE.Mesh(rimGeo, ironMat);
-    rim.rotation.x = Math.PI / 2;
-    rim.position.y = 0.21;
-    group.add(rim);
+    // 宽平沿——口沿外延的平面法兰边（还原"直口宽平沿"）
+    var rimGeo = new THREE.RingGeometry(potRadius, potRadius + rimWidth, 36);
+    var rimTop = new THREE.Mesh(rimGeo, ironMat);
+    rimTop.rotation.x = -Math.PI / 2;
+    rimTop.position.y = potHeight + 0.01;
+    group.add(rimTop);
+    var rimBottom = new THREE.Mesh(rimGeo, ironMat);
+    rimBottom.rotation.x = -Math.PI / 2;
+    rimBottom.position.y = potHeight - 0.005;
+    group.add(rimBottom);
+    // 沿口卷边——外侧薄边向上微卷（还原"锅沿卷边"）
+    var rimEdgeGeo = new THREE.TorusGeometry(potRadius + rimWidth, 0.008, 8, 36);
+    var rimEdge = new THREE.Mesh(rimEdgeGeo, ironMat);
+    rimEdge.rotation.x = Math.PI / 2;
+    rimEdge.position.y = potHeight + 0.003;
+    group.add(rimEdge);
 
-    // 锅沿内圈（收口效果）
-    var innerRimGeo = new THREE.TorusGeometry(0.155, 0.008, 8, 24);
-    var innerRim = new THREE.Mesh(innerRimGeo, sootMat);
-    innerRim.rotation.x = Math.PI / 2;
-    innerRim.position.y = 0.205;
-    group.add(innerRim);
+    // 平底——厚实铁皮平底（还原"平底"特征）
+    var bottomGeo = new THREE.CylinderGeometry(potRadius * 0.96, potRadius * 0.96, 0.015, 32);
+    var bottom = new THREE.Mesh(bottomGeo, ironMat);
+    bottom.position.y = 0.0075;
+    bottom.castShadow = true;
+    bottom.receiveShadow = true;
+    group.add(bottom);
 
-    // ===== 锅底烟熏层（外部底面加深色soot） =====
-    var sootGeo = new THREE.SphereGeometry(0.155, 20, 10, 0, Math.PI * 2, Math.PI * 0.7, Math.PI * 0.3);
-    var sootLayer = new THREE.Mesh(sootGeo, sootMat);
-    sootLayer.position.y = 0.06;
-    group.add(sootLayer);
+    // ===== 锅底烟熏层——平底及下部烟灰火烧痕迹 =====
+    var sootBottomGeo = new THREE.CylinderGeometry(potRadius * 0.93, potRadius * 0.93, 0.003, 28);
+    var sootBottom = new THREE.Mesh(sootBottomGeo, sootMat);
+    sootBottom.position.y = 0.001;
+    group.add(sootBottom);
+    // 锅身下部烟熏渐变带
+    var sootBandGeo = new THREE.CylinderGeometry(potRadius * 0.97, potRadius * 0.96, 0.06, 32, 1, true);
+    var sootBand = new THREE.Mesh(sootBandGeo, sootMat);
+    sootBand.position.y = 0.04;
+    group.add(sootBand);
 
-    // ===== 两侧铆接提耳（方形铁耳，穿杠式） =====
+    // ===== 两侧提耳——口沿上的方形铁耳（还原"口沿有两提耳"） =====
     [-1, 1].forEach(function(side) {
-        // 耳座（铆接在锅沿外侧的方形铁块）
-        var earBase = new THREE.Mesh(
-            new THREE.BoxGeometry(0.04, 0.035, 0.025),
-            ironMat
+        // 提耳——从宽平沿向上伸出的长方形铁片耳
+        var earGeo = new THREE.BoxGeometry(0.05, 0.04, 0.012);
+        var ear = new THREE.Mesh(earGeo, ironMat);
+        ear.position.set(side * (potRadius + rimWidth * 0.5), potHeight + 0.025, 0);
+        ear.castShadow = true;
+        group.add(ear);
+        // 提耳孔——中间穿的圆孔（用深色小圆柱模拟穿孔）
+        var earHole = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.008, 0.008, 0.014, 12),
+            sootMat
         );
-        earBase.position.set(side * 0.18, 0.19, 0);
-        group.add(earBase);
-        // 提耳孔（圆环）
-        var earRing = new THREE.Mesh(
-            new THREE.TorusGeometry(0.022, 0.006, 8, 14),
-            handleMat
-        );
-        earRing.position.set(side * 0.205, 0.19, 0);
-        earRing.rotation.y = Math.PI / 2;
-        group.add(earRing);
-        // 铆钉
-        var rivet = new THREE.Mesh(
-            new THREE.SphereGeometry(0.006, 8, 8),
+        earHole.rotation.x = Math.PI / 2;
+        earHole.position.set(side * (potRadius + rimWidth * 0.5), potHeight + 0.025, 0);
+        group.add(earHole);
+        // 提耳铆钉——铆接在沿口上的铁钉
+        var earRivet = new THREE.Mesh(
+            new THREE.SphereGeometry(0.005, 8, 8),
             rustMat
         );
-        rivet.position.set(side * 0.175, 0.19, 0);
-        group.add(rivet);
+        earRivet.position.set(side * (potRadius + rimWidth * 0.5), potHeight - 0.002, 0.008);
+        group.add(earRivet);
+        var earRivet2 = new THREE.Mesh(
+            new THREE.SphereGeometry(0.005, 8, 8),
+            rustMat
+        );
+        earRivet2.position.set(side * (potRadius + rimWidth * 0.5), potHeight - 0.002, -0.008);
+        group.add(earRivet2);
     });
 
-    // ===== 弧形提梁（可拆卸U形铁提手） =====
-    var handleCurve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(-0.205, 0.19, 0),
-        new THREE.Vector3(-0.15, 0.32, 0),
-        new THREE.Vector3(0, 0.35, 0),
-        new THREE.Vector3(0.15, 0.32, 0),
-        new THREE.Vector3(0.205, 0.19, 0)
-    ]);
-    var handleGeo = new THREE.TubeGeometry(handleCurve, 24, 0.008, 8, false);
-    var handle = new THREE.Mesh(handleGeo, handleMat);
-    group.add(handle);
-
-    // ===== 锅身修补铆钉 patches（斑驳铁锈补丁痕迹） =====
-    var patchColors = [0x5c4033, 0x6b4423, 0x3a2818];
-    for (var i = 0; i < 8; i++) {
-        var angle = (i / 8) * Math.PI * 2 + 0.3;
-        var height = 0.09 + Math.random() * 0.07;
-        var patch = new THREE.Mesh(
-            new THREE.BoxGeometry(0.03, 0.02, 0.003),
-            new THREE.MeshStandardMaterial({
-                color: patchColors[i % 3],
-                roughness: 0.92
-            })
-        );
-        patch.position.set(Math.cos(angle) * 0.16, height, Math.sin(angle) * 0.16);
-        patch.lookAt(0, height, 0);
+    // ===== 17块铁补丁——不规则形状、大小各异，覆盖弹孔和磨损（还原文物标志性17块补丁） =====
+    var patchData = [
+        {a: 0.2,  h: 0.04, w: 0.055, ht: 0.04, m: 0},
+        {a: 0.7,  h: 0.10, w: 0.04,  ht: 0.05, m: 1},
+        {a: 1.3,  h: 0.16, w: 0.06,  ht: 0.035,m: 2},
+        {a: 2.0,  h: 0.06, w: 0.035, ht: 0.05, m: 0},
+        {a: 2.6,  h: 0.13, w: 0.05,  ht: 0.04, m: 3},
+        {a: 3.2,  h: 0.03, w: 0.04,  ht: 0.045,m: 1},
+        {a: 3.9,  h: 0.09, w: 0.055, ht: 0.035,m: 2},
+        {a: 4.5,  h: 0.17, w: 0.035, ht: 0.05, m: 0},
+        {a: 5.1,  h: 0.07, w: 0.045, ht: 0.04, m: 3},
+        {a: 5.8,  h: 0.12, w: 0.05,  ht: 0.035,m: 1},
+        {a: 0.5,  h: 0.19, w: 0.04,  ht: 0.04, m: 2},
+        {a: 1.8,  h: 0.185,w: 0.035, ht: 0.045,m: 0},
+        {a: 3.5,  h: 0.195,w: 0.045, ht: 0.035,m: 3},
+        {a: 4.9,  h: 0.18, w: 0.04,  ht: 0.05, m: 1},
+        {a: 2.3,  h: 0.155,w: 0.055, ht: 0.03, m: 2},
+        {a: 5.5,  h: 0.15, w: 0.035, ht: 0.045,m: 0},
+        {a: 1.1,  h: 0.045,w: 0.05,  ht: 0.035,m: 3}
+    ];
+    patchData.forEach(function(pd) {
+        var angle = pd.a;
+        var yPos = pd.h;
+        var patchW = pd.w;
+        var patchH = pd.ht;
+        // 补丁铁皮——不规则形状（用稍微变形的BoxGeometry模拟手工剪切铁皮）
+        var patchGeo = new THREE.BoxGeometry(patchW, patchH, 0.004);
+        var patch = new THREE.Mesh(patchGeo, patchMats[pd.m]);
+        var radius = potRadius * 0.97;
+        patch.position.set(Math.cos(angle) * radius, yPos + 0.01, Math.sin(angle) * radius);
+        patch.lookAt(0, yPos + 0.01, 0);
+        patch.castShadow = true;
         group.add(patch);
-        // 铆钉钉头
-        var patchRivet = new THREE.Mesh(
-            new THREE.SphereGeometry(0.004, 6, 6),
+        // 补丁铆钉——每块补丁打2~4颗铆钉
+        var rivetCount = 2 + Math.floor(Math.random() * 3);
+        for (var r = 0; r < rivetCount; r++) {
+            var rx = (Math.random() - 0.5) * patchW * 0.7;
+            var ry = (Math.random() - 0.5) * patchH * 0.7;
+            var rivet = new THREE.Mesh(
+                new THREE.SphereGeometry(0.004, 6, 6),
+                rustMat
+            );
+            // 将铆钉放在补丁表面外侧
+            var localX = Math.cos(angle) * (radius + 0.003) + rx * Math.cos(angle + Math.PI / 2);
+            var localZ = Math.sin(angle) * (radius + 0.003) + rx * Math.sin(angle + Math.PI / 2);
+            rivet.position.set(localX, yPos + 0.01 + ry, localZ);
+            group.add(rivet);
+        }
+    });
+
+    // ===== 锅身裂纹——长条状暗色裂缝（还原"长长的裂缝"） =====
+    var crackData = [
+        {a: 0.4, h: 0.05, len: 0.12, tilt: 0.3},
+        {a: 1.6, h: 0.08, len: 0.10, tilt: -0.2},
+        {a: 2.8, h: 0.11, len: 0.14, tilt: 0.15},
+        {a: 4.2, h: 0.06, len: 0.09, tilt: -0.35},
+        {a: 5.3, h: 0.14, len: 0.11, tilt: 0.25}
+    ];
+    crackData.forEach(function(cd) {
+        var crackGeo = new THREE.BoxGeometry(0.002, cd.len, 0.003);
+        var crack = new THREE.Mesh(crackGeo, sootMat);
+        var radius = potRadius * 0.985;
+        crack.position.set(Math.cos(cd.a) * radius, cd.h + 0.01, Math.sin(cd.a) * radius);
+        crack.lookAt(0, cd.h + 0.01, 0);
+        crack.rotation.z = cd.tilt;
+        group.add(crack);
+    });
+
+    // ===== 锅身铁锈斑块——局部锈蚀痕迹 =====
+    for (var i = 0; i < 6; i++) {
+        var angle = (i / 6) * Math.PI * 2 + 0.6;
+        var yPos = 0.04 + (i % 3) * 0.05;
+        var rustSpot = new THREE.Mesh(
+            new THREE.CircleGeometry(0.025 + Math.random() * 0.015, 12),
             rustMat
         );
-        patchRivet.position.set(Math.cos(angle) * 0.162, height, Math.sin(angle) * 0.162);
-        group.add(patchRivet);
+        var radius = potRadius * 0.99;
+        rustSpot.position.set(Math.cos(angle) * radius, yPos + 0.01, Math.sin(angle) * radius);
+        rustSpot.lookAt(0, yPos + 0.01, 0);
+        group.add(rustSpot);
     }
 
-    // ===== 锅内壁深色（内部发黑氧化） =====
-    var innerGeo = new THREE.CylinderGeometry(0.155, 0.13, 0.12, 24, 1, true);
+    // ===== 锅内壁——深色氧化内壁 =====
+    var innerGeo = new THREE.CylinderGeometry(potRadius * 0.94, potRadius * 0.9, potHeight * 0.9, 28, 1, true);
     var inner = new THREE.Mesh(innerGeo, sootMat);
-    inner.position.y = 0.15;
+    inner.position.y = potHeight / 2 + 0.015;
     group.add(inner);
+    // 内底——锅底内侧食物残渣焦化痕迹
+    var innerBottomGeo = new THREE.CircleGeometry(potRadius * 0.9, 28);
+    var innerBottom = new THREE.Mesh(innerBottomGeo, sootMat);
+    innerBottom.rotation.x = -Math.PI / 2;
+    innerBottom.position.y = 0.018;
+    group.add(innerBottom);
 
     group.userData = { itemName: '行军锅' };
     return group;
